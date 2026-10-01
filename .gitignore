@@ -1,0 +1,38 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+
+# Secrets — .env.example is the tracked template
+.env
+.env.backup
+.env.production
+.env.*.local
+
+# Build tooling
+/node_modules
+/.phpunit.cache
+.phpunit.result.cache
+
+# Laravel runtime
+/storage/*.key
+/storage/pail
+/storage/framework/*
+!/storage/framework/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/public/hot
+/public/build
+/bootstrap/cache/*.php
+
+# Vendored PHP dependencies are deliberately committed: the shared host that
+# serves this application has no Composer, so vendor/ ships with the deploy.
+# Do not add /vendor here without changing how the site is deployed.
+
+# Local-only tooling
+/.fleet
+/auth.json
+npm-debug.log
+yarn-error.log

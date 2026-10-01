@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "name": "Full Sleeve Dawah Jersey Combo",
+    "price": 825,
+    "originalPrice": 1650,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/j_5yvkMR-jir_qbK-5i.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Combo"
+  },
+  {
+    "id": 2,
+    "name": "Full Sleeve T-shirt Triple Combo",
+    "price": 735,
+    "originalPrice": 1470,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/DSC04401-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Combo"
+  },
+  {
+    "id": 3,
+    "name": "Men's Comfortable Soft Side-striped Trousers – Black",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/f9EdZsJlVw5C0jwSjJb-400x400.webp",
+    "discount": 50,
+    "isSoldOut": true,
+    "category": "Men's Clothing"
+  },
+  {
+    "id": 4,
+    "name": "Men's Comfortable Soft Trouser – Ash",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2024/12/royal-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Men's Clothing"
+  },
+  {
+    "id": 5,
+    "name": "Men's Comfortable Soft Trouser – Ash",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/DSC04401-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Men's Clothing"
+  },
+  {
+    "id": 6,
+    "name": "Full Sleeve Dawah Jersey Combo",
+    "price": 825,
+    "originalPrice": 1650,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/j_5yvkMR-jir_qbK-5i.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Combo"
+  },
+  {
+    "id": 7,
+    "name": "Full Sleeve T-shirt Triple Combo",
+    "price": 735,
+    "originalPrice": 1470,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/DSC04401-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Combo"
+  },
+  {
+    "id": 8,
+    "name": "Men's Comfortable Soft Side-striped Trousers – Black",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/f9EdZsJlVw5C0jwSjJb-400x400.webp",
+    "discount": 50,
+    "isSoldOut": true,
+    "category": "Men's Clothing"
+  },
+  {
+    "id": 9,
+    "name": "Men's Comfortable Soft Trouser – Ash",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2024/12/royal-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Men's Clothing"
+  },
+  {
+    "id": 10,
+    "name": "Men's Comfortable Soft Trouser – Ash",
+    "price": 345,
+    "originalPrice": 690,
+    "image": "https://believerssign.com/wp-content/uploads/2025/01/DSC04401-400x400.webp",
+    "discount": 50,
+    "isSoldOut": false,
+    "category": "Men's Clothing"
+  }
+]

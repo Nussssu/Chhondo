@@ -1,0 +1,86 @@
+/*
+ * Admin design tokens.
+ *
+ * The single source of truth for spacing, type, radii, elevation and status
+ * colour in the admin panel. Component styles reference these; no page-level
+ * <style scoped> block should declare a raw hex value.
+ *
+ * Brand colour tokens (--admin-*, --bs-*) live in admin-shell.css, which
+ * loads first.
+ */
+
+:root {
+  /* ── Spacing: 4px base ─────────────────────────────────── */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  24px;
+  --sp-6:  32px;
+  --sp-7:  48px;
+
+  /* ── Type ramp ─────────────────────────────────────────── */
+  --fs-xs:  12px;   /* table labels, meta */
+  --fs-sm:  13px;   /* table body, dense UI */
+  --fs-md:  14px;   /* form controls, buttons */
+  --fs-base:16px;   /* body copy */
+  --fs-lg:  20px;   /* card titles */
+  --fs-xl:  26px;   /* page titles */
+  --fs-2xl: 34px;   /* page title, hero figures */
+
+  --lh-tight: 1.25;
+  --lh-base:  1.5;
+
+  /* ── Radii ─────────────────────────────────────────────── */
+  --r-sm:   6px;
+  --r-md:  10px;
+  --r-full: 999px;
+
+  /* ── Elevation ─────────────────────────────────────────── */
+  --el-1: 0 1px 2px rgba(28, 51, 13, 0.06), 0 1px 3px rgba(28, 51, 13, 0.05);
+  --el-2: 0 8px 24px rgba(28, 51, 13, 0.12);
+
+  /* ── Surfaces & lines ──────────────────────────────────── */
+  --surface:      #ffffff;
+  --surface-sunk: #f7f8f5;
+  --surface-alt:  #fbfaf7;
+  --line:         #e5e8df;
+  --line-strong:  #d3d9cb;
+
+  /* ── Text ──────────────────────────────────────────────── */
+  --text:       #1f2a17;
+  --text-muted: #6b7563;
+  --text-faint: #98a08f;
+
+  /* ── Status ramp ───────────────────────────────────────────
+     Deliberately separate from the brand green: brand = identity,
+     these = state. Each has an ink and a soft ground so a pill can be
+     read at a glance without relying on colour alone. */
+  --st-neutral:      #475467;
+  --st-neutral-soft: #eceef1;
+  --st-info:         #1d4ed8;
+  --st-info-soft:    #dbeafe;
+  --st-progress:     #6d28d9;
+  --st-progress-soft:#ede9fe;
+  --st-success:      #15803d;
+  --st-success-soft: #dcfce7;
+  --st-warning:      #b45309;
+  --st-warning-soft: #fef3c7;
+  --st-danger:       #b91c1c;
+  --st-danger-soft:  #fee2e2;
+  --st-return:       #c2410c;
+  --st-return-soft:  #ffedd5;
+
+  /* ── Table geometry ────────────────────────────────────── */
+  --row-h:      44px;
+  --cell-pad-y: 12px;
+  --cell-pad-x: 16px;
+
+  /* ── Motion ────────────────────────────────────────────── */
+  --dur: 150ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 0ms; }
+}
