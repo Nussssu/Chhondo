@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from "vue"
-import PhoneField from "@/components/Form/PhoneField.vue"
 import { useCartStore } from "@/Store/cartStore"
 import { useHomeStore } from "@/Store/homeStore"
 import { useAuthStore } from "@/Store/authStore"
@@ -73,15 +72,14 @@ const total = computed(
     subtotal.value + form.value.delivery_charge - (form.value.discount || 0),
 )
 
+const formatPrice = (value) => new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+}).format(Number(value) || 0)
+
 // Set by PageController::checkout(); false keeps checkout cash-only.
 const onlinePaymentAvailable = computed(() => Boolean(usePage().props.onlinePaymentAvailable))
 // Set by PageController::checkout() from the bKash switch in Integrations.
 const bkashPaymentAvailable = computed(() => Boolean(usePage().props.bkashPaymentAvailable))
-
-// A gateway that sends the customer back (cancelled, failed, unconfirmed)
-// redirects here with the reason under errors.payment.
-// Served from public/, so bound as a string rather than bundled by Vite.
-const bkashLogo = "/assets/images/payment/bkash-pay.png"
 
 const paymentError = computed(() => usePage().props.errors?.payment || "")
 
@@ -98,10 +96,6 @@ const fieldErrors = ref({
   name: "", mobile: "", address: "", delivery_area: "",
 })
 
-// Reported by PhoneField: the number matches the selected country's numbering
-// plan, not just a digit count.
-const phoneValid = ref(false)
-
 const form = ref({
   email: "",
   name: "",
@@ -111,13 +105,17 @@ const form = ref({
   order_status: "pending",
   order_type: "checkout",
   delivery: "cod",
-  delivery_area: "",
-  payment_type: "cod",
+  delivery_area: "inside",
+  payment_type: "",
   delivery_charge: 0,
   discount: 0,
-  create_account: true,
+  create_account: false,
   password: "",
 })
+
+const phoneValid = computed(() =>
+  /^(?:\+?88)?01[3-9]\d{8}$/.test(form.value.mobile.replace(/[\s()-]/g, "")),
+)
 
 // Whether the visitor is already authenticated — the create-account option is
 // only offered to guests.
@@ -262,7 +260,7 @@ const applyCoupon = async () => {
   const code = couponCode.value.trim()
 
   if (!code) {
-    toast.error("Enter a coupon code.")
+    toast.error("কুপন কোড লিখুন।")
     return
   }
 
@@ -289,16 +287,16 @@ const applyCoupon = async () => {
       // Never discount below zero — a fixed coupon can exceed a small basket.
       form.value.discount = Math.min(discount, subtotal.value)
 
-      toast.success("Coupon applied.")
+      toast.success("কুপন প্রয়োগ করা হয়েছে।")
     } else {
       // The server says why: expired, used up, or not valid for these items.
       // Collapsing all of it into "invalid code" sent people hunting for a
       // typo that was not there.
-      toast.error(data.error || "That coupon could not be applied.")
+      toast.error(data.error || "এই কুপনটি প্রয়োগ করা যায়নি।")
     }
   } catch (error) {
     console.error("Error applying coupon:", error)
-    toast.error("Could not check that coupon. Please try again.")
+    toast.error("কুপনটি যাচাই করা যায়নি। আবার চেষ্টা করুন।")
   } finally {
     applyingCoupon.value = false
   }
@@ -338,6 +336,20 @@ const removeCartItem = (item) => {
   } else {
     cartStore.removeItem(item.id)
   }
+}
+
+const clearCheckoutCart = () => {
+  if (cartStore.is_direct_order) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("directOrderProductData")
+      localStorage.removeItem("is_direct_order")
+    }
+    directOrderProduct.value = null
+    cartStore.is_direct_order = false
+    return
+  }
+
+  cartStore.clearCart()
 }
 
 const validateFormBasic = () => {
@@ -524,7 +536,7 @@ const placeOrder = () => {
       console.error("[Checkout] errors:", errors)
       isPlacingOrder.value = false
       const msg = errors.cart || errors.user_name || errors.phone_number || errors.address || errors.delivery_area || Object.values(errors)[0]
-      toast.error(msg || "Failed to place order. Please try again.")
+      toast.error(msg || "অর্ডার সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।")
     },
     onFinish: () => { isPlacingOrder.value = false },
   })
@@ -590,159 +602,99 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="py-8 md:py-12">
-    <div class="container max-w-6xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+  <div class="checkout-shell">
+    <div class="container">
+      <!-- Figma: 900px form column, 20px gap, 440px cart summary -->
+      <div class="checkout-grid">
         <!-- ========== LEFT COLUMN: FORM ========== -->
-        <div class="lg:col-span-8">
+        <div class="checkout-form-col">
           <!-- Shipping Address Card -->
           <div class="checkout-card">
-            <h2 class="checkout-card-title">ডেলিভারি ঠিকানা</h2>
+            <h2 class="checkout-card-title">ডেলিভারির ঠিকানা</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="checkout-label">ইমেইল</label>
+                <label class="checkout-label">ই-মেইল</label>
                 <input
                   v-model="form.email"
                   type="email"
                   placeholder="example@email.com"
-                  class="checkout-input"
+                  class="checkout-input checkout-placeholder--poppins"
                 />
                 <p v-if="fieldErrors.email" class="text-red-500 text-xs mt-1">{{ fieldErrors.email }}</p>
                 <p v-else class="checkout-hint">
-                  আপনার ক্যাশ মেমো পেতে অনুগ্রহ করে ইমেইল দিন।
+                  ক্যাশ মেমো পেতে আপনার ই-মেইল অ্যাড্রেসটি দিন।
                 </p>
               </div>
               <div>
-                <label class="checkout-label"
-                  >ফোন নম্বর <span class="text-red-500">*</span></label
-                >
-                <PhoneField
+                <label class="checkout-label">ফোন নম্বর</label>
+                <input
                   v-model="form.mobile"
-                  v-model:valid="phoneValid"
-                  :invalid="!!fieldErrors.mobile"
+                  type="tel"
+                  inputmode="tel"
+                  placeholder="01XXXXXXXXX"
+                  :class="['checkout-input checkout-placeholder--poppins', fieldErrors.mobile ? 'border-red-500' : '']"
                 />
                 <p v-if="fieldErrors.mobile" class="text-red-500 text-xs mt-1">{{ fieldErrors.mobile }}</p>
               </div>
             </div>
 
-            <!-- Optional: create an account (guests only) -->
-            <div v-if="!isLoggedIn" class="mt-5">
-              <label class="flex items-center gap-2 cursor-pointer select-none">
-                <input type="checkbox" v-model="form.create_account" class="h-4 w-4" />
-                <span class="checkout-label mb-0">অ্যাকাউন্ট তৈরি করুন</span>
-              </label>
-              <p class="checkout-hint">আপনার ইমেইলই হবে ইউজারনেম। পরবর্তীতে দ্রুত চেকআউটের জন্য একটি পাসওয়ার্ড দিন। টিক না দিলে অতিথি হিসেবে অর্ডার সম্পন্ন হবে, কোনো অ্যাকাউন্ট তৈরি হবে না।</p>
-
-              <div v-if="form.create_account" class="mt-3">
-                <label class="checkout-label">পাসওয়ার্ড <span class="text-red-500">*</span></label>
-                <input
-                  v-model="form.password"
-                  type="password"
-                  placeholder="কমপক্ষে ৮ অক্ষর"
-                  :class="['checkout-input', fieldErrors.password ? 'border-red-500' : '']"
-                />
-                <p v-if="fieldErrors.password" class="text-red-500 text-xs mt-1">{{ fieldErrors.password }}</p>
-              </div>
-            </div>
-
             <div class="mt-5">
-              <label class="checkout-label"
-                >আপনার নাম <span class="text-red-500">*</span></label
-              >
+              <label class="checkout-label">সম্পূর্ণ নাম</label>
               <input
                 v-model="form.name"
                 type="text"
-                placeholder="আপনার সম্পূর্ণ নাম"
-                :class="['checkout-input', fieldErrors.name ? 'border-red-500' : '']"
+                placeholder="সম্পূর্ণ নাম"
+                :class="['checkout-input checkout-placeholder--poppins', fieldErrors.name ? 'border-red-500' : '']"
               />
               <p v-if="fieldErrors.name" class="text-red-500 text-xs mt-1">{{ fieldErrors.name }}</p>
             </div>
 
             <div class="mt-5">
-              <label class="checkout-label"
-                >সম্পূর্ণ ঠিকানা <span class="text-red-500">*</span></label
-              >
-              <input
+              <label class="checkout-label">বিস্তারিত ঠিকানা</label>
+              <textarea
                 v-model="form.address"
-                type="text"
-                placeholder="বাসা/ফ্ল্যাটি নাম্বর, রোড নাম্বর, এলাকা, শহর"
-                :class="['checkout-input', fieldErrors.address ? 'border-red-500' : '']"
-              />
+                rows="4"
+                placeholder="বাড়ি/ফ্ল্যাট নম্বর, রাস্তা, এলাকা, শহর"
+                :class="['checkout-input checkout-textarea checkout-placeholder--bangla resize-none', fieldErrors.address ? 'border-red-500' : '']"
+              ></textarea>
               <p v-if="fieldErrors.address" class="text-red-500 text-xs mt-1">{{ fieldErrors.address }}</p>
             </div>
           </div>
 
           <!-- Delivery Method Card -->
           <div class="checkout-card">
-            <h2 class="checkout-card-title">ডেলিভারি পদ্ধতি</h2>
+            <h2 class="checkout-card-title">ডেলিভারির ধরন</h2>
 
-            <div
-              class="flex items-start gap-4 bg-[#FFF8F0] border border-[#f0e6d8] rounded-xl p-5"
-            >
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="39"
-                  height="39"
-                  viewBox="0 0 39 39"
-                  fill="none"
-                >
-                  <path
-                    d="M3.85645 21.2945L4.53368 18.5855H11.9832L11.306 21.2945H3.85645ZM12.6605 30.3355C11.5318 30.3355 10.5723 29.9405 9.78223 29.1504C8.99213 28.3603 8.59707 27.4008 8.59707 26.2721H5.21091L5.88814 23.3262H12.8975L14.1165 18.3824H16.9609L18.654 11.61H9.27431L9.47748 10.7973C9.61292 10.1653 9.92355 9.65192 10.4093 9.25732C10.8952 8.86272 11.4649 8.66497 12.1187 8.66406H27.5596L26.3067 14.0819H30.2685L34.3319 19.4998L32.9775 26.2721H30.2685C30.2685 27.4008 29.8735 28.3603 29.0834 29.1504C28.2933 29.9405 27.3338 30.3355 26.2051 30.3355C25.0764 30.3355 24.117 29.9405 23.3269 29.1504C22.5368 28.3603 22.1417 27.4008 22.1417 26.2721H16.7239C16.7239 27.4008 16.3288 28.3603 15.5387 29.1504C14.7486 29.9405 13.7892 30.3355 12.6605 30.3355ZM6.56538 16.3507L7.24261 13.6417H16.0466L15.3694 16.3507H6.56538ZM12.6605 27.6266C13.0442 27.6266 13.3661 27.4966 13.6262 27.2365C13.8863 26.9764 14.0158 26.655 14.0149 26.2721C14.014 25.8893 13.884 25.5678 13.6249 25.3077C13.3657 25.0477 13.0442 24.9177 12.6605 24.9177C12.2767 24.9177 11.9552 25.0477 11.6961 25.3077C11.4369 25.5678 11.3069 25.8893 11.306 26.2721C11.3051 26.655 11.4351 26.9769 11.6961 27.2378C11.9571 27.4988 12.2785 27.6284 12.6605 27.6266ZM26.2051 27.6266C26.5889 27.6266 26.9108 27.4966 27.1709 27.2365C27.4309 26.9764 27.5605 26.655 27.5596 26.2721C27.5587 25.8893 27.4287 25.5678 27.1695 25.3077C26.9104 25.0477 26.5889 24.9177 26.2051 24.9177C25.8214 24.9177 25.4999 25.0477 25.2407 25.3077C24.9816 25.5678 24.8516 25.8893 24.8507 26.2721C24.8498 26.655 24.9798 26.9769 25.2407 27.2378C25.5017 27.4988 25.8232 27.6284 26.2051 27.6266ZM24.7491 20.8543H31.2844L31.4198 20.1432L28.9141 16.7909H25.6972L24.7491 20.8543Z"
-                    fill="#D4A276"
-                  />
-                </svg>
-              </div>
+            <div class="checkout-delivery-box">
+              <img :src="'/assets/chhondo/checkout/delivery-truck.svg'" alt="" class="checkout-delivery-icon" />
               <div>
-                <p class="body-1-sb text-gray-800">
-                  ঢাকার ভেতরে ডেলিভারি: ২-৩ দিন
+                <p class="checkout-delivery-line">
+                  ঢাকার ভেতরে ডেলিভারি: ১-২ দিন
                 </p>
-                <p class="body-1-r text-gray-500">
-                  ঢাকার বাইরে ডেলিভারি: ৩-৪ দিন
+                <p class="checkout-delivery-line">
+                  ঢাকার বাইরে ডেলিভারি: ২-৩ দিন
                 </p>
               </div>
             </div>
 
+            <!-- Delivery note — Figma keeps it inside this card -->
             <div class="mt-5">
-              <label class="checkout-label"
-                >আপনার এরিয়া সিলেক্ট করুন
-                <span class="text-red-500">*</span></label
-              >
-              <select
-                :class="['checkout-input', fieldErrors.delivery_area ? 'border-red-500' : '']"
-                v-model="form.delivery_area"
-                @change="updateDeliveryCharge"
-              >
-                <option value="" selected disabled>
-                  আপনার এরিয়া সিলেক্ট করুন
-                </option>
-                <option value="inside">ঢাকার ভেতরে</option>
-                <option value="outside">ঢাকার বাহিরে</option>
-              </select>
-              <p v-if="fieldErrors.delivery_area" class="text-red-500 text-xs mt-1">{{ fieldErrors.delivery_area }}</p>
+              <label class="checkout-label">ডেলিভারি ইন্সট্রাকশন যোগ করুন</label>
+              <textarea
+                v-model="form.note"
+                rows="4"
+                placeholder="পার্সেল রিসিভ করার ক্ষেত্রে কোনো বিশেষ নির্দেশনা থাকলে এখানে লিখুন..."
+                class="checkout-input checkout-textarea checkout-placeholder--bangla resize-none"
+              ></textarea>
             </div>
-
-          </div>
-
-          <!-- Delivery Note Card -->
-          <div class="checkout-card">
-            <h2 class="checkout-card-title">ডেলিভারি নোট (অপশনাল)</h2>
-            <textarea
-              v-model="form.note"
-              rows="3"
-              placeholder="বিশেষ কোনো ডেলিভারি নির্দেশনা থাকলে এখানে লিখুন..."
-              class="checkout-input resize-none"
-            ></textarea>
           </div>
 
           <!-- Payment Method Card -->
           <div class="checkout-card">
-            <h2 class="checkout-card-title">পেমেন্ট মেথড</h2>
+            <h2 class="checkout-card-title checkout-card-title--payment">পেমেন্টের মাধ্যম</h2>
 
-            <div class="space-y-3">
+            <div class="payment-options">
               <!-- Cash on delivery -->
               <label
                 class="payment-option"
@@ -767,33 +719,15 @@ onUnmounted(() => {
                     }"
                   ></div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="text-gray-600"
-                  >
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                  </svg>
-                  <div>
-                    <span class="body-1-sb text-gray-700">ক্যাশ অন ডেলিভারি</span>
-                    <span class="payment-note">পণ্য হাতে পেয়ে টাকা দিন</span>
-                  </div>
+                <div class="payment-option-content">
+                  <img :src="'/assets/chhondo/checkout/cash.svg'" alt="" class="payment-icon payment-icon--cash" />
+                  <span class="payment-name">ক্যাশ অন ডেলিভারি</span>
                 </div>
               </label>
 
               <!-- Online payment. Replaces the card and bKash placeholders,
                    which were never wired to anything; SSLCommerz covers both. -->
               <label
-                v-if="onlinePaymentAvailable"
                 class="payment-option"
                 :class="{ 'payment-option--active': form.payment_type === 'online' }"
               >
@@ -803,6 +737,7 @@ onUnmounted(() => {
                   value="online"
                   v-model="form.payment_type"
                   class="sr-only"
+                  :disabled="!onlinePaymentAvailable"
                 />
                 <div
                   class="payment-radio"
@@ -816,33 +751,14 @@ onUnmounted(() => {
                     }"
                   ></div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="text-gray-600"
-                  >
-                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                    <path d="M2 10h20"></path>
-                    <path d="M6 15h4"></path>
-                  </svg>
-                  <div>
-                    <span class="body-1-sb text-gray-700">অনলাইনে পেমেন্ট করুন</span>
-                    <span class="payment-note">কার্ড, বিকাশ, নগদ বা ব্যাংক</span>
-                  </div>
+                <div class="payment-option-content">
+                  <img :src="'/assets/chhondo/checkout/credit-card.svg'" alt="" class="payment-icon" />
+                  <span class="payment-name">ডেবিট / ক্রেডিট কার্ড</span>
                 </div>
               </label>
 
               <!-- bKash Tokenized Checkout, switched on under Integrations › bKash. -->
               <label
-                v-if="bkashPaymentAvailable"
                 class="payment-option"
                 :class="{ 'payment-option--active': form.payment_type === 'bkash' }"
               >
@@ -852,6 +768,7 @@ onUnmounted(() => {
                   value="bkash"
                   v-model="form.payment_type"
                   class="sr-only"
+                  :disabled="!bkashPaymentAvailable"
                 />
                 <div
                   class="payment-radio"
@@ -865,37 +782,28 @@ onUnmounted(() => {
                     }"
                   ></div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <img
-                    :src="bkashLogo"
-                    alt="bKash"
-                    class="payment-logo"
-                    width="52"
-                    height="20"
-                  />
-                  <div>
-                    <span class="body-1-sb text-gray-700">বিকাশ</span>
-                    <span class="payment-note">বিকাশ অ্যাকাউন্ট থেকে পেমেন্ট করুন</span>
-                  </div>
+                <div class="payment-option-content">
+                  <img :src="'/assets/chhondo/checkout/bkash.svg'" alt="" class="payment-icon payment-icon--bkash" />
+                  <span class="payment-name">বিকাশ</span>
                 </div>
               </label>
             </div>
 
-            <p v-if="form.payment_type === 'online'" class="payment-hint">
-              অর্ডার নিশ্চিত করলে আপনি নিরাপদ পেমেন্ট পেজে যাবেন।
-            </p>
-            <p v-if="form.payment_type === 'bkash'" class="payment-hint">
-              অর্ডার নিশ্চিত করলে আপনি বিকাশ পেমেন্ট পেজে যাবেন।
-            </p>
             <p v-if="paymentError" class="payment-error" role="alert">{{ paymentError }}</p>
           </div>
         </div>
 
         <!-- ========== RIGHT COLUMN: ORDER SUMMARY ========== -->
-        <div class="lg:col-span-4">
+        <div class="checkout-summary-col">
           <div class="lg:sticky lg:top-25">
-            <div class="checkout-card">
-              <h2 class="checkout-card-title">অর্ডার সামারি</h2>
+            <div class="checkout-card checkout-card--summary">
+              <div class="checkout-summary-head">
+                <h2 class="checkout-card-title">আপনার কার্ট ({{ String(cartStore.is_direct_order ? (directOrderProduct?.quantity || 0) : cartStore.cartCount).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[d]) }})</h2>
+                <button type="button" class="checkout-clear" @click="clearCheckoutCart">
+                  <span>সব মুছুন</span>
+                  <span class="checkout-clear-icon"><img :src="'/assets/chhondo/checkout/clear.svg'" alt="" /></span>
+                </button>
+              </div>
 
               <!-- Pre Order Banner -->
               <div
@@ -906,50 +814,38 @@ onUnmounted(() => {
                 আপনার অর্ডারে এক বা একাধিক পণ্য বর্তমানে স্টকে নেই।
               </div>
 
-              <!-- Direct Order Product -->
-              <div
-                v-if="cartStore.is_direct_order && directOrderProduct"
-                class="order-item"
-              >
+              <div class="checkout-order-list">
+                <!-- Direct Order Product -->
+                <div
+                  v-if="cartStore.is_direct_order && directOrderProduct"
+                  class="order-item"
+                >
                 <div class="flex gap-4">
                   <div
-                    class="w-[70px] h-[85px] rounded-xl overflow-hidden bg-gray-100 shrink-0"
+                    class="order-item-thumb"
                   >
                     <img
-                      :src="directOrderProduct?.featured_image"
+                      :src="directOrderProduct?.featured_image || '/placeholder.svg'"
                       :alt="directOrderProduct?.product_name"
                       class="w-full h-full object-cover"
                       fetchpriority="low"
+                      loading="lazy"
+                      decoding="async"
+                      width="80"
+                      height="80"
+                      @error="$event.target.src = '/placeholder.svg'"
                     />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
-                      <h3 class="body-1-sb text-gray-800 truncate">
+                      <h3 class="order-item-name">
                         {{ directOrderProduct?.product_name }}
                       </h3>
-                      <button
-                        @click="removeCartItem(directOrderProduct)"
-                        class="text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path
-                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                          ></path>
-                        </svg>
+                      <button type="button" @click="removeCartItem(directOrderProduct)" class="order-remove">
+                        <img :src="'/assets/chhondo/checkout/trash.svg'" alt="" />
                       </button>
                     </div>
-                    <p class="body-1-r text-[#356019] mt-0.5">
+                    <p class="order-item-price">
                       {{ directOrderProduct?.price }}
                       <span class="bangla-font">৳</span>
                     </p>
@@ -958,14 +854,14 @@ onUnmounted(() => {
                       class="blouse-badge"
                       :class="directOrderProduct.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                     >
-                      {{ directOrderProduct.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
+                      {{ directOrderProduct.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                     </span>
-                    <div class="flex items-center gap-0 mt-2">
+                    <div class="checkout-qty">
                       <button
                         @click="updateQuantity(directOrderProduct, -1)"
                         class="qty-btn rounded-l-lg"
                       >
-                        —
+                        <img :src="'/assets/chhondo/checkout/minus.svg'" alt="" />
                       </button>
                       <span class="qty-value">{{
                         directOrderProduct?.quantity
@@ -974,67 +870,54 @@ onUnmounted(() => {
                         @click="updateQuantity(directOrderProduct, 1)"
                         class="qty-btn rounded-r-lg"
                       >
-                        +
+                        <img :src="'/assets/chhondo/checkout/plus.svg'" alt="" />
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
 
-              <!-- Cart Products -->
-              <template v-if="!cartStore.is_direct_order">
-                <div
-                  v-for="item in cartItems"
-                  :key="item.id"
-                  class="order-item"
-                >
+                <!-- Cart Products -->
+                <template v-if="!cartStore.is_direct_order">
+                  <div
+                    v-for="item in cartItems"
+                    :key="item.id"
+                    class="order-item"
+                  >
                   <div class="flex gap-4">
                     <div
-                      class="w-[70px] h-[85px] rounded-xl overflow-hidden bg-gray-100 shrink-0"
+                      class="order-item-thumb"
                     >
                       <img
-                        :src="item.product.featured_image"
+                        :src="item.product.featured_image || '/placeholder.svg'"
                         :alt="item.product.product_name"
                         class="w-full h-full object-cover"
                         fetchpriority="low"
+                        loading="lazy"
+                        decoding="async"
+                        width="80"
+                        height="80"
+                        @error="$event.target.src = '/placeholder.svg'"
                       />
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="flex items-start justify-between gap-2">
-                        <h3 class="body-1-sb text-gray-800 truncate">
+                        <h3 class="order-item-name">
                           {{ item.product.product_name }}
                         </h3>
-                        <button
-                          @click="removeCartItem(item)"
-                          class="text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path
-                              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                            ></path>
-                          </svg>
+                        <button type="button" @click="removeCartItem(item)" class="order-remove">
+                          <img :src="'/assets/chhondo/checkout/trash.svg'" alt="" />
                         </button>
                       </div>
-                      <p class="body-1-r mt-0.5">
+                      <p class="order-item-price">
                         <span
                           v-if="item.regular_individual_price"
-                          class="text-gray-400 line-through mr-1.5"
+                          class="order-item-was"
                         >
                           {{ item.regular_individual_price }}
                           <span class="bangla-font">৳</span>
                         </span>
-                        <span class="text-[#356019]">
+                        <span>
                           {{ item.individual_price }}
                           <span class="bangla-font">৳</span>
                         </span>
@@ -1044,30 +927,31 @@ onUnmounted(() => {
                         class="blouse-badge"
                         :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                       >
-                        {{ item.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
+                        {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                       </span>
-                      <div class="flex items-center gap-0 mt-2">
+                      <div class="checkout-qty">
                         <button
                           @click="updateQuantity(item, -1)"
                           class="qty-btn rounded-l-lg"
                         >
-                          —
+                          <img :src="'/assets/chhondo/checkout/minus.svg'" alt="" />
                         </button>
                         <span class="qty-value">{{ item.quantity }}</span>
                         <button
                           @click="updateQuantity(item, 1)"
                           class="qty-btn rounded-r-lg"
                         >
-                          +
+                          <img :src="'/assets/chhondo/checkout/plus.svg'" alt="" />
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              </template>
+                  </div>
+                </template>
+              </div>
 
               <!-- Coupon -->
-              <div class="mt-6">
+              <div class="checkout-coupon-section">
                 <label class="checkout-label">কুপন কোড</label>
 
                 <!-- Applied: show what was accepted, with a way back out.
@@ -1078,88 +962,87 @@ onUnmounted(() => {
                   <button type="button" class="coupon-remove" @click="removeCoupon">বাতিল</button>
                 </div>
 
-                <div v-else class="flex gap-2">
+                <div v-else class="checkout-coupon-row">
                   <input
                     v-model="couponCode"
                     type="text"
                     placeholder="কুপন কোড লিখুন"
-                    class="checkout-input flex-1"
+                    class="checkout-input checkout-coupon-input checkout-placeholder--bangla"
                     :disabled="applyingCoupon"
                     @keyup.enter="applyCoupon"
                   />
                   <button type="button" class="coupon-submit-btn" :disabled="applyingCoupon" @click="applyCoupon">
-                    {{ applyingCoupon ? '...' : 'Submit' }}
+                    {{ applyingCoupon ? '...' : 'সাবমিট' }}
                   </button>
                 </div>
               </div>
 
               <!-- Totals -->
-              <div class="mt-6 space-y-3 pt-5 border-t border-[#f0e6d8]">
-                <div class="flex justify-between body-1-r text-gray-600">
+              <div class="checkout-totals">
+                <div class="checkout-total-row">
                   <span>সাবটোটাল</span>
-                  <span>৳{{ subtotal }}</span>
+                  <span>৳{{ formatPrice(subtotal) }}</span>
                 </div>
                 <!-- What the product discounts already took off, so the saving
                      is visible rather than just baked into the subtotal. -->
                 <div
                   v-if="productSaving > 0"
-                  class="flex justify-between body-1-r text-green-600"
+                  class="checkout-total-row text-green-600"
                 >
                   <span>পণ্যে ছাড়</span>
-                  <span>-৳{{ productSaving }}</span>
+                  <span>-৳{{ formatPrice(productSaving) }}</span>
                 </div>
                 <div
                   v-if="form.discount > 0"
-                  class="flex justify-between body-1-r text-green-600"
+                  class="checkout-total-row text-green-600"
                 >
                   <span>ডিসকাউন্ট</span>
-                  <span>-৳{{ form.discount }}</span>
+                  <span>-৳{{ formatPrice(form.discount) }}</span>
                 </div>
                 <!-- A waived fee is said in words rather than shown as ৳0, so the
                      customer reads it as a saving instead of a missing figure. -->
                 <div
-                  class="flex justify-between body-1-r"
+                  class="checkout-total-row"
                   :class="deliveryIsFree ? 'text-green-600' : 'text-gray-600'"
                 >
                   <span>ডেলিভারি চার্জ</span>
-                  <span v-if="deliveryIsFree" class="font-semibold">Delivery Free</span>
-                  <span v-else>৳{{ form.delivery_charge }}</span>
+                  <span v-if="deliveryIsFree" class="font-semibold">ফ্রি ডেলিভারি</span>
+                  <span v-else>৳{{ formatPrice(form.delivery_charge) }}</span>
                 </div>
               </div>
 
               <!-- Total -->
-              <div
-                class="flex justify-between items-center mt-5 pt-5 border-t border-[#f0e6d8]"
-              >
-                <span class="title-2 text-gray-900">মোট মূল্য</span>
-                <span class="title-2 text-gray-900">৳{{ total }}</span>
-              </div>
+              <div class="checkout-final">
+                <div class="checkout-final-row">
+                  <span class="checkout-total-label">মোট মূল্য</span>
+                  <span class="checkout-total-label">৳{{ formatPrice(total) }}</span>
+                </div>
 
-              <!-- Place Order Button -->
-              <button
-                @click.prevent="placeOrder"
-                :disabled="isPlacingOrder"
-                :class="[
-                  'checkout-order-btn mt-6',
-                  isPreOrder ? 'bg-orange-500 hover:bg-orange-600' : '',
-                  isPlacingOrder ? 'opacity-70 cursor-not-allowed' : '',
-                ]"
-              >
-                <span v-if="isPlacingOrder" class="flex items-center justify-center gap-2">
-                  <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  অর্ডার প্রক্রিয়াধীন...
-                </span>
-                <span v-else>
-                  {{
-                    isPreOrder
-                      ? "প্রি-অর্ডার নিশ্চিত করুন"
-                      : "অর্ডার নিশ্চিত করুন"
-                  }}
-                </span>
-              </button>
+                <button
+                  @click.prevent="placeOrder"
+                  :disabled="isPlacingOrder"
+                  :class="[
+                    'checkout-order-btn',
+                    isPreOrder ? 'bg-orange-500 hover:bg-orange-600' : '',
+                    isPlacingOrder ? 'opacity-70 cursor-not-allowed' : '',
+                  ]"
+                >
+                  <span v-if="isPlacingOrder" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    অর্ডার প্রক্রিয়াধীন...
+                  </span>
+                  <span v-else>
+                    {{
+                      isPreOrder
+                        ? "প্রি-অর্ডার নিশ্চিত করুন"
+                        : "চেকআউট করুন"
+                    }}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1185,7 +1068,7 @@ onUnmounted(() => {
 }
 
 .checkout-card-title {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 20px;
   font-weight: 700;
   color: #1a1a1a;
@@ -1201,7 +1084,7 @@ onUnmounted(() => {
 /* ===== FORM ELEMENTS ===== */
 .checkout-label {
   display: block;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
@@ -1404,6 +1287,7 @@ onUnmounted(() => {
 .coupon-remove:hover { text-decoration: underline; }
 
 .coupon-submit-btn {
+  flex: 0 0 101px;
   padding: 12px 24px;
   background: #fffaf4;
   border: 1.5px solid #356019;
@@ -1427,7 +1311,7 @@ onUnmounted(() => {
   padding: 16px 24px;
   background-color: #356019;
   color: white;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 18px;
   font-weight: 600;
   border: none;
@@ -1458,4 +1342,304 @@ onUnmounted(() => {
 .blouse-badge--without {
   background-color: #8c7256;
 }
+
+/* ===== Figma "Check Out Process" (💫 Final design) ===== */
+.checkout-shell { padding: 40px 0 96px; }
+.checkout-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 1024px) {
+  .checkout-grid { grid-template-columns: minmax(0, 900fr) minmax(0, 440fr); }
+}
+.checkout-form-col { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+.checkout-summary-col { min-width: 0; }
+@media (min-width: 1024px) {
+  /* Sticky summary: fixed while the left form column scrolls. The grid uses
+     align-items: start, so this column is only as tall as its content and
+     sticky binds it to the grid row — once both columns' bottoms align, the
+     row ends and they scroll upward together naturally. The panel expands
+     with its content; all scrolling is handled by the main page. */
+  .checkout-summary-col {
+    position: sticky;
+    top: 100px;
+    align-self: start;
+  }
+}
+
+.checkout-card {
+  margin: 0;
+  padding: 32px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+}
+.checkout-card--summary { padding: 42px; }
+
+.checkout-card-title {
+  margin-bottom: 20px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  color: #3c3834;
+}
+.checkout-card-title--payment {
+  font-family: "Poppins", sans-serif;
+  font-variation-settings: "wdth" 100;
+}
+.checkout-card--summary .checkout-card-title { margin: 0; color: #1a1817; }
+
+.checkout-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 48px;
+}
+.checkout-clear {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  color: #1a1817;
+  font: 400 16px/24px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+}
+.checkout-clear-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  padding: 8px;
+  border: 1px solid #efe0bb;
+  border-radius: 2px;
+  background: #faf5e9;
+}
+.checkout-clear-icon img { display: block; }
+
+.checkout-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #1a1817;
+}
+
+/* Fields — Black/50 fill, Black/200 hairline, r8, 56px */
+.checkout-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 16px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #f3f3f3;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1a1817;
+}
+.checkout-input:focus { border-color: #d6af51; background: #fff; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); outline: none; }
+.checkout-input::placeholder {
+  color: #9c9591;
+  opacity: 1;
+  font: 400 16px/24px "Li Ador Noirrit", sans-serif;
+  font-style: normal;
+  letter-spacing: 0;
+  font-synthesis: none;
+}
+.checkout-placeholder--poppins,
+.checkout-placeholder--poppins::placeholder {
+  font-family: "Poppins", sans-serif;
+}
+.checkout-placeholder--poppins::placeholder {
+  font: 400 16px/24px "Poppins", sans-serif;
+  font-variation-settings: "wdth" 100;
+}
+.checkout-placeholder--bangla,
+.checkout-placeholder--bangla::placeholder {
+  font-family: "Li Ador Noirrit", sans-serif;
+}
+.checkout-textarea { min-height: 141px; }
+.checkout-hint {
+  margin-top: 8px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #6d6560;
+}
+
+/* Delivery box — Gold/50 fill, Gold/100 hairline */
+.checkout-delivery-box {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  border: 1px solid #efe0bb;
+  border-radius: 8px;
+  background: #faf5e9;
+}
+.checkout-delivery-line {
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.checkout-delivery-line + .checkout-delivery-line { margin-top: 4px; }
+.checkout-delivery-icon { display: block; flex-shrink: 0; }
+
+/* Payment — grey 56px rows with a 20px radio */
+.payment-option {
+  min-height: 56px;
+  padding: 8px 16px;
+  gap: 16px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #f3f3f3;
+}
+.payment-option:hover { border-color: #d6af51; }
+.payment-option--active { border-color: #252f17; background: #fff; }
+.payment-option:has(input:disabled) { cursor: not-allowed; }
+.payment-radio { width: 20px; height: 20px; border: 1.5px solid #9c9591; }
+.payment-radio--active { border-color: #252f17; }
+.payment-radio-dot { background: #252f17; }
+.payment-name {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #6d6560;
+}
+.payment-note { display: none; }
+.payment-options { display: flex; flex-direction: column; gap: 20px; }
+.payment-option-content { display: flex; align-items: center; gap: 8px; }
+.payment-icon { display: block; flex-shrink: 0; }
+
+/* Summary items — 96 × 102 thumbs, 24px apart */
+.checkout-order-list { display: flex; flex-direction: column; gap: 24px; }
+.order-item { padding: 0; border: 0; margin: 0; }
+.order-item:first-of-type { padding-top: 0; }
+.order-item-thumb { width: 96px; height: 102px; flex-shrink: 0; overflow: hidden; border-radius: 8px; background: #f3f3f3; }
+.order-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.order-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #3c3834;
+}
+.order-item-price {
+  margin-top: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #cc9b25;
+}
+.order-item-was { margin-right: 6px; color: #9c9591; font-weight: 400; font-size: 14px; text-decoration: line-through; }
+.order-remove { width: 20px; height: 20px; padding: 0; flex-shrink: 0; border: 0; background: none; }
+.order-remove img { display: block; }
+.checkout-qty { display: flex; align-items: center; gap: 8px; height: 32px; margin-top: 8px; }
+.qty-btn img { display: block; }
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1cdca;
+  border-radius: 9999px !important;
+  background: #fff;
+  color: #1a1817;
+  font-size: 14px;
+  padding: 0;
+}
+.qty-btn:hover { background: #faf5e9; border-color: #d6af51; }
+.qty-value { width: auto; min-width: 28px; height: 32px; border: 0; background: none; font-family: "Poppins", sans-serif; font-size: 14px; color: #1a1817; }
+
+.checkout-coupon-section {
+  margin-top: 28px;
+  padding: 28px 0;
+  border-top: 1px solid #e4e1e0;
+  border-bottom: 1px solid #e4e1e0;
+}
+.checkout-coupon-row { display: flex; align-items: center; gap: 8px; }
+.checkout-coupon-input { flex: 1 1 auto; min-width: 0; }
+
+/* Coupon — 56px field + outlined Submit */
+.coupon-submit-btn {
+  flex: 0 0 101px;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #1a2110;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a2110;
+  font-family: "Li Ador Noirrit", "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+.coupon-submit-btn:hover:not(:disabled) { background: #1a2110; color: #fff; }
+
+.checkout-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+  font: 400 16px/24px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  color: #6d6560;
+}
+.checkout-total-row { display: flex; align-items: center; justify-content: space-between; }
+.checkout-total-row > :last-child {
+  font-family: "Poppins", "Li Ador Noirrit", sans-serif;
+  font-weight: 600;
+  color: #3c3834;
+}
+.checkout-final { margin-top: 28px; padding-top: 28px; border-top: 1px solid #e4e1e0; }
+.checkout-final-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+
+.checkout-total-label {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  color: #3c3834;
+}
+
+.checkout-order-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 8px;
+  background: #1a2110;
+  color: #fff;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.checkout-order-btn:hover { background: #252f17; }
+
+@media (max-width: 767px) {
+  .checkout-shell { padding: 20px 0 48px; }
+  .checkout-shell .container { padding-inline: 20px; }
+  .checkout-card,
+  .checkout-card--summary { padding: 20px; }
+  .checkout-card-title,
+  .checkout-total-label { font-size: 22px; line-height: 30px; }
+  .checkout-summary-head { margin-bottom: 24px; }
+}
+
+/* Phone field matches its Figma siblings */
+.phone-field :deep(.iti__tel-input) {
+  height: 56px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #f3f3f3;
+  color: #1a1817;
+}
+.phone-field :deep(.iti__tel-input):focus { border-color: #d6af51; background: #fff; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); }
 </style>

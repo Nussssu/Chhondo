@@ -167,7 +167,7 @@ onMounted(() => {
 .pf-legend {
   font-size: 11.5px;
   font-weight: 700;
-  color: #234011;
+  color: #1a2110;
   text-transform: uppercase;
   letter-spacing: .05em;
   margin: 0 0 10px;

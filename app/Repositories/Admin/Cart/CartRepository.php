@@ -152,6 +152,17 @@ class CartRepository implements CartRepositoryInterface
             DB::transaction(function () use ($cartId, $quantity, $attributeValues) {
                 $cart      = Cart::findOrFail($cartId);
                 $productId = $cart->product_id;
+                $product   = Product::findOrFail($productId);
+
+                // "In stock" and pre-order products do not use the numeric
+                // quantity column. Their quantity is commonly zero, so running
+                // the managed-stock check below incorrectly rejects every +
+                // click. This mirrors addToCart(): only managed stock is
+                // bounded by a numeric quantity.
+                if (! $product->tracks_stock) {
+                    $cart->increment('quantity', $quantity);
+                    return;
+                }
 
                 // Check if the product has attributes
                 $hasAttributes = ProductAttribute::where('product_id', $productId)->exists();

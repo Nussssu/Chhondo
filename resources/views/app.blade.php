@@ -28,7 +28,7 @@
             . '&family=Hind+Siliguri:wght@300;400;500;600;700'
             . '&family=Manrope:wght@400;500;600;700'
             . '&family=Playfair+Display:wght@700'
-            . '&family=Poppins:wght@400;500;600;700;800'
+            . '&family=Poppins:wght@300;400;500;600;700;800'
             . '&family=Sora:wght@400;500;600;700'
             . '&display=swap';
     @endphp
@@ -81,6 +81,7 @@
             'call_now_bg'   => '#ff0000',
             'whatsapp_bg'   => 'green',
         ];
+        $isAdminPage = str_starts_with($page['component'] ?? '', 'Admin/');
     @endphp
 
     @php
@@ -91,10 +92,10 @@
 
     <style>
         :root {
-            --color-theme:         {{ $colors['main'] }};
-            --color-secondary:     {{ $colors['secondary'] }};
-            --color-cart-bg:       {{ $colors['cart_bg'] }};
-            --color-order-now-bg:  {{ $colors['order_now_bg'] }};
+            --color-theme:         {{ $isAdminPage ? $colors['main'] : '#252f17' }};
+            --color-secondary:     {{ $isAdminPage ? $colors['secondary'] : '#cc9b25' }};
+            --color-cart-bg:       {{ $isAdminPage ? $colors['cart_bg'] : '#1a2110' }};
+            --color-order-now-bg:  {{ $isAdminPage ? $colors['order_now_bg'] : '#1a2110' }};
             --color-call-now-bg:   {{ $colors['call_now_bg'] }};
             --color-whatsapp-bg:   {{ $colors['whatsapp_bg'] }};
         }
@@ -103,7 +104,7 @@
     {!! $marketingSlots['head'] !!}
 </head>
 
-<body class="body_area">
+<body class="body_area {{ $isAdminPage ? 'admin-area' : 'storefront-area' }}">
     {!! $marketingSlots['body_start'] !!}
 
     @inertia

@@ -80,7 +80,7 @@ export const useWishlistStore = defineStore("wishlist", () => {
         /* if sessionStorage is unavailable, just show it */
       }
     }
-    authPrompt.open("Log in to save your wishlist permanently and access it on any device.");
+    authPrompt.open("পছন্দের তালিকা স্থায়ীভাবে রাখতে এবং যেকোনো ডিভাইসে দেখতে লগ ইন করুন।");
   };
 
   const toggle = async (product) => {
@@ -111,10 +111,10 @@ export const useWishlistStore = defineStore("wishlist", () => {
     try {
       if (wasWishlisted) {
         await axiosInstance.post(`/remove/from/wishlist/${productId}`);
-        toast.success("Removed from wishlist");
+        toast.success("পছন্দের তালিকা থেকে সরানো হয়েছে");
       } else {
         await axiosInstance.post(`/add/to/wishlist/${productId}`);
-        toast.success("Added to wishlist");
+        toast.success("পছন্দের তালিকায় যোগ হয়েছে");
       }
     } catch (e) {
       // Revert optimistic change on failure.
@@ -123,7 +123,7 @@ export const useWishlistStore = defineStore("wishlist", () => {
       ids.value = revert;
 
       if (e?.response?.status !== 401) {
-        toast.error("Could not update wishlist. Please try again.");
+        toast.error("পছন্দের তালিকা আপডেট করা যায়নি। আবার চেষ্টা করুন।");
       }
     } finally {
       const done = new Set(pending.value);

@@ -11,7 +11,7 @@
           <span v-for="opt in item.option || []" :key="opt.id" class="text-muted">
             {{ opt.attributeOption?.attribute?.name ?? 'N/A' }}: {{ opt.attributeOption?.name ?? 'N/A' }}<br>
           </span>
-          <span v-if="item.blouse_choice" class="badge" :style="{ backgroundColor: item.blouse_choice === 'with' ? '#356019' : '#8c7256', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }">
+          <span v-if="item.blouse_choice" class="badge" :style="{ backgroundColor: item.blouse_choice === 'with' ? '#252f17' : '#8c7256', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }">
             {{ item.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
           </span>
         </div>

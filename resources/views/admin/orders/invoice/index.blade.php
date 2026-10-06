@@ -52,7 +52,7 @@
             bottom: 0;
             width: 55%;
             min-width: 260px;
-            background: linear-gradient(90deg, #1c330d 0%, #356019 100%);
+            background: linear-gradient(90deg, #1a2110 0%, #252f17 100%);
             clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
             display: flex;
             align-items: center;
@@ -82,6 +82,16 @@
             height: 60px;
         }
 
+        /* The Chhondo logo: mark over word */
+        .chhondo-invoice-logo {
+            display: inline-grid;
+            justify-items: center;
+            gap: 4px;
+        }
+
+        .header-logo img.chhondo-invoice-mark { width: 60px; height: 52px; }
+        .header-logo img.chhondo-invoice-word { width: 72px; height: 9px; }
+
         /* Invoice Meta */
         .invoice-meta {
             padding: 20px 40px;
@@ -106,7 +116,7 @@
         .invoice-info {
             width: 40%;
             background-color: #f8f9fa;
-            border-left: 3px solid #356019;
+            border-left: 3px solid #252f17;
             padding: 10px 20px;
             border-radius: 5px;
             text-align: right;
@@ -124,7 +134,7 @@
         }
 
         table.invoice-details th {
-            background: #356019;
+            background: #252f17;
             color: white;
             padding: 12px 15px;
             text-align: center;
@@ -158,7 +168,7 @@
         }
 
         table.invoice-details th:last-child {
-            background-color: #234011;
+            background-color: #1a2110;
         }
 
         /* Totals Section */
@@ -187,7 +197,7 @@
             font-weight: bold;
             color: white;
             padding: 10px 15px;
-            background: linear-gradient(to right, #234011, #356019);
+            background: linear-gradient(to right, #1a2110, #252f17);
             border-radius: 5px;
             margin-top: 10px;
         }
@@ -241,7 +251,7 @@
             right: 0;
             bottom: 0;
             left: 0;
-            background: linear-gradient(90deg, #356019 0%, #1c330d 100%);
+            background: linear-gradient(90deg, #252f17 0%, #1a2110 100%);
             clip-path: polygon(35% 0, 100% 0, 100% 100%, 20% 100%);
             z-index: 1;
         }
@@ -315,7 +325,7 @@
             }
 
             .invoice-details th {
-                background: #356019 !important;
+                background: #252f17 !important;
                 color: white !important;
             }
 
@@ -324,7 +334,7 @@
             }
 
             .invoice-details th:last-child {
-                background-color: #234011 !important;
+                background-color: #1a2110 !important;
             }
 
             .invoice-details td:nth-child(2),
@@ -334,20 +344,20 @@
 
             .invoice-info {
                 background-color: #f8f9fa !important;
-                border-left: 3px solid #356019 !important;
+                border-left: 3px solid #252f17 !important;
             }
 
             .grand-total {
-                background: linear-gradient(to right, #234011, #356019) !important;
+                background: linear-gradient(to right, #1a2110, #252f17) !important;
                 color: white !important;
             }
 
             .header-ribbon {
-                background: linear-gradient(90deg, #1c330d 0%, #356019 100%) !important;
+                background: linear-gradient(90deg, #1a2110 0%, #252f17 100%) !important;
             }
 
             .footer-ribbon {
-                background: linear-gradient(90deg, #356019 0%, #1c330d 100%) !important;
+                background: linear-gradient(90deg, #252f17 0%, #1a2110 100%) !important;
             }
 
             .icon-circle {
@@ -370,7 +380,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #356019;
+            background-color: #252f17;
             color: white;
             border: none;
             border-radius: 4px;
@@ -398,7 +408,10 @@
                 </div>
                 <div class="header-content">
                     <div class="header-logo">
-                        <img src="{{ asset(getMedia('logo')) }}" alt="Logo">
+                        <span class="chhondo-invoice-logo" role="img" aria-label="Chhondo">
+                        <img src="{{ asset('assets/chhondo/logo-mark-dark.svg') }}" alt="" class="chhondo-invoice-mark">
+                        <img src="{{ asset('assets/chhondo/logo-word-dark.svg') }}" alt="" class="chhondo-invoice-word">
+                    </span>
                     </div>
                 </div>
             </div>

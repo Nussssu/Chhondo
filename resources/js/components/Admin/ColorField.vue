@@ -136,7 +136,7 @@ const swatchNeedsRing = computed(() => ['#ffffff', '#fffffe'].includes(color.val
 }
 
 .cf-swatch:focus-within {
-  outline: 2px solid var(--color-theme, #356019);
+  outline: 2px solid var(--color-theme, #252f17);
   outline-offset: 2px;
 }
 
@@ -179,6 +179,6 @@ const swatchNeedsRing = computed(() => ['#ffffff', '#fffffe'].includes(color.val
 }
 
 .cf-preset--on {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-theme, #356019);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-theme, #252f17);
 }
 </style>

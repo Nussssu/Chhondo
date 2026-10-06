@@ -22,22 +22,21 @@ const initialFilters = computed(() => page.props.filters || {})
 
 const isLoading = ref(false)
 
-// Both are set per category in the admin (Categories › Edit). Falling back to
-// the generated wording keeps every existing category reading as it did.
-const DEFAULT_SUBTITLE =
-  "প্রিমিয়াম কোয়ালিটির শাড়ি আর আধুনিকতার মেলবন্ধনে, নিজেকে সাজান ঐতিহ্যবাহী কারুশিল্পে।"
+// A category's own title and subtitle (Categories › Edit) come first; otherwise
+// the shop's wording from Content › Pages › Shop.
+const texts = computed(() => page.props.texts || {})
 
 const title = computed(() => {
   const custom = page.props.categoryTitle
   if (custom) return custom
 
-  return categoryName.value ? `আমাদের সব ${categoryName.value}` : "আমাদের সব শাড়ি"
+  return (texts.value.category_title || "{category}").replace("{category}", categoryName.value)
 })
 
-const description = computed(() => page.props.categorySubtitle || DEFAULT_SUBTITLE)
+const description = computed(() => page.props.categorySubtitle || page.props.intro?.subtitle || "")
 
 const breadcrumbs = computed(() => [
-  { label: "Shop", href: "/shop" },
+  { label: texts.value.breadcrumb, href: "/shop" },
   { label: categoryName.value, href: null },
 ])
 

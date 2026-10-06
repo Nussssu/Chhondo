@@ -549,30 +549,30 @@ onMounted(() => {
 .pu-summary-value.is-due  { color: var(--st-danger); }
 
 :root {
-  --primary-color: #356019;
-  --primary-hover: #234011;
+  --primary-color: #252f17;
+  --primary-hover: #1a2110;
   --success-color: #24A148;
   --warning-color: #FFB612;
   --danger-color: #F9461C;
-  --info-color: #3E711D;
+  --info-color: #4C5441;
 }
 .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
 .filter-card { background: linear-gradient(145deg,#ffffff,#f8fafc); border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-radius: 16px; }
 .modern-table { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: none; }
-.modern-table thead { background: linear-gradient(135deg,#356019,#2C5015); color: white; }
+.modern-table thead { background: linear-gradient(135deg,#252f17,#1A2110); color: white; }
 .modern-table thead th { border: none; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 1rem 0.75rem; }
 .modern-table tbody tr { border: none; transition: all 0.3s ease; }
-.modern-table tbody tr:hover { background: linear-gradient(90deg,rgba(53,96,25,0.05),rgba(44,80,21,0.05)); }
+.modern-table tbody tr:hover { background: linear-gradient(90deg,rgba(37, 47, 23,0.05),rgba(44,80,21,0.05)); }
 .modern-table tbody td { border: none; padding: 1rem 0.75rem; vertical-align: middle; }
 .modern-table tfoot { background: linear-gradient(135deg,#f3f4f6,#e5e7eb); font-weight: 600; }
 .due-amount { font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 6px; transition: all 0.3s ease; }
 .due-high { background: linear-gradient(135deg,#fef2f2,#fee2e2); color: #F9461C; border: 1px solid #fecaca; }
 .due-medium { background: linear-gradient(135deg,#fffbeb,#fef3c7); color: #FFB612; border: 1px solid #fed7aa; }
 .due-low { background: linear-gradient(135deg,#f0fdf4,#dcfce7); color: #24A148; border: 1px solid #bbf7d0; }
-.page-title { background: linear-gradient(135deg,#356019,#2C5015); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; font-size: 2rem; }
+.page-title { background: linear-gradient(135deg,#252f17,#1A2110); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; font-size: 2rem; }
 .stats-card { background: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .stats-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-.vibrant-blue { background: linear-gradient(135deg,#356019,#234011); color: #ffffff; }
+.vibrant-blue { background: linear-gradient(135deg,#252f17,#1a2110); color: #ffffff; }
 .vibrant-blue p { color: #ffffff !important; }
 .vibrant-green { background: linear-gradient(135deg,#24A148,#15803d); color: #ffffff; }
 .vibrant-green p { color: #ffffff !important; }
@@ -582,10 +582,10 @@ onMounted(() => {
 .vibrant-purple p { color: #ffffff !important; }
 .badge-success-modern { background: linear-gradient(135deg,#24A148,#1a7a35); color: white; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
 .modal-modern .modal-content { border: none; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); overflow: hidden; }
-.modal-modern .modal-header { background: linear-gradient(135deg,#356019,#2C5015); color: white; border: none; padding: 1.5rem 2rem; }
+.modal-modern .modal-header { background: linear-gradient(135deg,#252f17,#1A2110); color: white; border: none; padding: 1.5rem 2rem; }
 .modal-modern .modal-body { padding: 2rem; }
 .form-control-modern, .form-select-modern { border: 2px solid #e5e7eb; border-radius: 10px; padding: 0.75rem 1rem; transition: all 0.3s ease; }
-.form-control-modern:focus, .form-select-modern:focus { border-color: #356019; box-shadow: 0 0 0 3px rgba(53,96,25,0.1); outline: none; }
+.form-control-modern:focus, .form-select-modern:focus { border-color: #252f17; box-shadow: 0 0 0 3px rgba(37, 47, 23,0.1); outline: none; }
 .pay-btn { padding: 2px 10px; font-size: 0.75rem; line-height: 1.2; border-radius: 6px; }
 .product-list-p { width: 220px; max-width: 220px; }
 .product-list-p .text-truncate { max-width: 220px; }

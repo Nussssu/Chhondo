@@ -217,8 +217,8 @@ function save() {
 .ps-row.is-dragging { opacity: .45; }
 
 .ps-row.is-over {
-  border-color: var(--bs-primary, #356019);
-  box-shadow: inset 0 2px 0 var(--bs-primary, #356019);
+  border-color: var(--bs-primary, #252f17);
+  box-shadow: inset 0 2px 0 var(--bs-primary, #252f17);
 }
 
 /* Below the widget's limit: still orderable, just not rendered on the page. */

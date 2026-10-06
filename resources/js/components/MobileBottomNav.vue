@@ -2,45 +2,40 @@
 import { computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import { useCartStore } from "@/Store/cartStore";
-import { useAuthStore } from "@/Store/authStore";
 
 const cartStore = useCartStore();
-const authStore = useAuthStore();
 
 const currentUrl = computed(() => usePage().url);
 
+// Figma "phone navbar": Home, Categories, Cart, Contact. Account and wishlist
+// stay one tap away in the menu drawer.
 const navItems = computed(() => [
   {
     label: "Home",
     href: "/",
-    activeIcon: "/assets/images/icons/icoHomeActive.svg",
-    inactiveIcon: "/assets/images/icons/icoHomeInactive.svg",
+    icon: "/assets/chhondo/nav-home.svg",
     match: (url) => url === "/" || url === "",
     action: null,
   },
   {
     label: "Categories",
     href: "/categories",
-    activeIcon: "/assets/images/icons/icoCategoriesActive.svg",
-    inactiveIcon: "/assets/images/icons/icoCategoriesInActive.svg",
+    icon: "/assets/chhondo/nav-categories.svg",
     match: (url) => url.startsWith("/categories") || url.startsWith("/product-category"),
     action: null,
   },
   {
     label: "Cart",
     href: null,
-    activeIcon: "/assets/images/icons/icoCartActive.svg",
-    inactiveIcon: "/assets/images/icons/icoCartInActive.svg",
+    icon: "/assets/chhondo/nav-bag.svg",
     match: () => false,
     action: () => cartStore.toggleCart(),
   },
   {
-    // Account when logged in, otherwise the login page — same as the header.
-    label: "Account",
-    href: authStore.isAuthenticated ? "/account" : "/login",
-    activeIcon: "/assets/images/icons/icoAccountActive.svg",
-    inactiveIcon: "/assets/images/icons/icoAccountInActive.svg",
-    match: (url) => url.startsWith("/account") || url.startsWith("/login"),
+    label: "Contact",
+    href: "/contact-us",
+    icon: "/assets/chhondo/nav-contact.svg",
+    match: (url) => url.startsWith("/contact-us"),
     action: null,
   },
 ]);
@@ -58,19 +53,10 @@ const isActive = (item) => item.match(currentUrl.value);
         :class="{ 'nav-item--active': isActive(item) }"
         @click="item.action"
       >
-        <div class="nav-icon-wrapper">
-          <img
-            :src="isActive(item) ? item.activeIcon : item.inactiveIcon"
-            :alt="item.label"
-            class="nav-icon"
-          />
-          <span
-            v-if="item.label === 'Cart' && cartStore.cartCount > 0"
-            class="cart-badge"
-          >
-            {{ cartStore.cartCount }}
-          </span>
-        </div>
+        <span class="nav-icon-wrapper">
+          <span class="nav-icon" :style="{ '--icon': `url('${item.icon}')` }" aria-hidden="true"></span>
+          <span v-if="cartStore.cartCount > 0" class="cart-badge">{{ cartStore.cartCount > 99 ? '99+' : cartStore.cartCount }}</span>
+        </span>
         <span class="nav-label">{{ item.label }}</span>
       </button>
 
@@ -81,11 +67,7 @@ const isActive = (item) => item.match(currentUrl.value);
         class="nav-item"
         :class="{ 'nav-item--active': isActive(item) }"
       >
-        <img
-          :src="isActive(item) ? item.activeIcon : item.inactiveIcon"
-          :alt="item.label"
-          class="nav-icon"
-        />
+        <span class="nav-icon" :style="{ '--icon': `url('${item.icon}')` }" aria-hidden="true"></span>
         <span class="nav-label">{{ item.label }}</span>
       </Link>
     </template>
@@ -101,16 +83,15 @@ const isActive = (item) => item.match(currentUrl.value);
   .mobile-bottom-nav {
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 40;
     background-color: #ffffff;
-    border-top: 1px solid #f0e6d8;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+    padding: 16px 37px calc(16px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.03), 0 -4px 16px -4px rgba(0, 0, 0, 0.12);
   }
 }
 
@@ -119,9 +100,8 @@ const isActive = (item) => item.match(currentUrl.value);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  flex: 1;
-  padding: 6px 0;
+  gap: 0;
+  padding: 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -135,34 +115,39 @@ const isActive = (item) => item.match(currentUrl.value);
 }
 
 .nav-icon {
+  display: block;
   width: 24px;
   height: 24px;
+  background-color: #d6af51;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
+
+.nav-item:active .nav-icon { transform: scale(0.92); }
 
 .nav-label {
   font-family: "Poppins", sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: #9ca3af;
-  line-height: 1;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #1a1817;
 }
 
-.nav-item--active .nav-label {
-  color: #8B6914;
-  font-weight: 600;
-}
+.nav-item--active .nav-icon { background-color: #cc9b25; }
+.nav-item--active .nav-label { font-weight: 500; }
 
 .cart-badge {
   position: absolute;
   top: -6px;
-  right: -8px;
+  right: -9px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background-color: #ef4444;
+  background-color: #252f17;
   color: white;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: 999px;
   display: flex;
   align-items: center;

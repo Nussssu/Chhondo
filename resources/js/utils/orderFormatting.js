@@ -1,5 +1,5 @@
 export function asset(path) {
-  if (!path) return ''
+  if (!path) return '/placeholder.svg'
   return path.startsWith('http') ? path : `/${path.replace(/^\//, '')}`
 }
 

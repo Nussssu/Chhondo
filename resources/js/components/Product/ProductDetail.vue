@@ -1,8 +1,9 @@
 <template>
-  <div class="container py-6 md:py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start max-w-[1300px] mx-auto">
+  <div class="container pdp-wrap">
+    <!-- Figma: 555px gallery, 20px gap, 785px info column (23px inset) -->
+    <div class="pdp-grid">
       <!-- Product Images (sticky on desktop) -->
-      <div class="lg:col-span-5 lg:sticky lg:top-6">
+      <div class="pdp-gallery-col">
         <ProductImages
           :product="product"
           @imageFunction="handleImageFunction"
@@ -13,7 +14,7 @@
       <section
         id="product-section"
         v-if="product"
-        class="lg:col-span-7 space-y-6"
+        class="pdp-info-col"
       >
         <!-- Product Name + rating + price -->
         <div class="space-y-3">
@@ -31,8 +32,8 @@
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
-                  :fill="n <= Math.round(averageRating) ? '#b47f54' : 'none'"
-                  stroke="#b47f54"
+                  :fill="n <= Math.round(averageRating) ? '#d6af51' : 'none'"
+                  stroke="#d6af51"
                   stroke-width="1.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -48,7 +49,7 @@
           <!-- Price + Stock Status -->
           <div class="flex items-center gap-3 flex-wrap">
             <span class="product-price" :class="{ 'price-flash': priceFlash }">
-              {{ displayPrice }} <span class="bangla-font">৳</span>
+              {{ displayPrice }} <span class="product-price-sign">৳</span>
             </span>
             <!-- Strike the price this was reduced from: the coupon or campaign
                  price when one applies, otherwise the regular previous price. -->
@@ -70,7 +71,7 @@
         <!-- Short Description -->
         <div
           class="pdp-description"
-          v-html="product.short_description"
+          v-html="rebrand(product.short_description)"
         ></div>
 
         <!-- Blouse Option (only when has_blouse_option) -->
@@ -93,7 +94,7 @@
                 class="sr-only"
               />
               <span>{{ opt.label }}</span>
-              <span v-if="opt.value === 'with' && blouseExtra" class="whitespace-nowrap">+ {{ blouseExtra }}৳</span>
+              <span v-if="opt.value === 'with' && blouseExtra" class="whitespace-nowrap">(+ {{ blouseExtra }}৳)</span>
               <span v-if="blouseChoice === opt.value" class="pdp-pill-check">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12" />
@@ -147,10 +148,7 @@
 
         <!-- Quantity Selector. Hidden entirely when nothing can be bought: a
              quantity to choose implies an order to place. The sold-out notice
-             takes its place in the same row, so the wishlist heart beside it
-             stays put — and stays a single copy — instead of being stranded on
-             a line of its own. Saving it for later is exactly what is wanted
-             when a product is unavailable. -->
+             takes its place in the same row. -->
         <div class="space-y-2">
           <label v-if="!cannotBuy" class="pdp-option-label">পরিমাণ:</label>
           <div class="pdp-qty-row" :class="{ 'is-soldout': cannotBuy }">
@@ -190,28 +188,6 @@
             </button>
           </div>
 
-            <button
-              type="button"
-              class="pdp-wishlist-btn"
-              :class="{ 'is-active': wishlistStore.isWishlisted(product) }"
-              :aria-pressed="wishlistStore.isWishlisted(product)"
-              :aria-label="wishlistStore.isWishlisted(product) ? 'Remove from wishlist' : 'Add to wishlist'"
-              :title="wishlistStore.isWishlisted(product) ? 'Saved to wishlist' : 'Save to wishlist'"
-              @click="wishlistStore.toggle(product)"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                :fill="wishlistStore.isWishlisted(product) ? 'currentColor' : 'none'"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -228,7 +204,7 @@
              Sold out drops the row entirely rather than showing a disabled
              pair: there is no action to offer, and the notice above already
              says so. -->
-        <div v-if="!cannotBuy" class="flex gap-4 pt-2">
+        <div v-if="!cannotBuy" class="pdp-actions">
           <button
             type="button"
             @click="addToCart"
@@ -237,7 +213,8 @@
               isPreOrderProduct ? 'pdp-btn--preorder' : 'pdp-btn--primary',
             ]"
           >
-            {{ isPreOrderProduct ? "প্রি-অর্ডার কার্টে যোগ করুন" : "Add to cart" }}
+            <img v-if="!isPreOrderProduct" :src="'/assets/chhondo/cart-light.svg'" alt="" width="24" height="24" />
+            {{ isPreOrderProduct ? "প্রি-অর্ডার কার্টে যোগ করুন" : "কার্টে রাখুন" }}
           </button>
 
           <button
@@ -248,7 +225,7 @@
               isPreOrderProduct ? 'pdp-btn--preorder-outline' : 'pdp-btn--outline-green',
             ]"
           >
-            {{ isPreOrderProduct ? "প্রি-অর্ডার করুন" : "Buy now" }}
+            {{ isPreOrderProduct ? "প্রি-অর্ডার করুন" : "এখনই কিনুন" }}
           </button>
         </div>
 
@@ -262,17 +239,13 @@
               width="22"
               height="22"
               viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              fill="currentColor"
             >
               <path
                 d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
               ></path>
             </svg>
-            Call now
+            কল করুন
           </a>
           <a
             :href="`https://wa.me/${otherInfo.whatsapp_number}`"
@@ -289,17 +262,13 @@
                 d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
               />
             </svg>
-            WhatsApp
+            হোয়াটসঅ্যাপ
           </a>
           <button type="button" class="pdp-btn pdp-btn--ghost" @click="shareProduct">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M13 5.5V3l8 7.5-8 7.5v-2.6c-5.2 0-8.6 1.6-11 5.1.9-5 3.8-9.9 11-11V5.5z" />
             </svg>
-            Share
+            শেয়ার করুন
           </button>
         </div>
 
@@ -326,7 +295,7 @@
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
@@ -368,12 +337,12 @@
 </template>
 
 <script setup>
+import { rebrand } from "@/utils/rebrand"
 import { ref, computed, watch, onMounted } from "vue"
 import { toast } from "@steveyuowo/vue-hot-toast"
 import { router } from "@inertiajs/vue3"
 import { useAuthStore } from "@/Store/authStore"
 import { useCartStore } from "@/Store/cartStore"
-import { useWishlistStore } from "@/Store/wishlistStore"
 import { useHomeStore } from "@/Store/homeStore"
 
 import ProductImages from "./ProductImages.vue"
@@ -406,7 +375,6 @@ const props = defineProps({
 
 // Drives the heart beside the quantity stepper. The store keeps guests in
 // localStorage and signed-in customers on the server, so this works either way.
-const wishlistStore = useWishlistStore()
 
 const homeStore = useHomeStore()
 
@@ -468,8 +436,8 @@ function onAccordionLeave(el) {
 }
 const accordionItems = computed(() => [
   {
-    title: "শাড়ির যত্ন গাইড",
-    html: props.product?.description || "",
+    title: "যেভাবে শাড়ি যত্নে রাখবেন:",
+    html: rebrand(props.product?.description || ""),
   },
   {
     title: "রিফান্ড ও রিটার্ন পলিসি",
@@ -477,9 +445,9 @@ const accordionItems = computed(() => [
 
 ডিভাইস বা আলোর তারতম্যের কারণে কাপড় বা ব্লক প্রিন্ট এর রং ছবিতে এবং বাস্তবে হালকা পার্থক্য মনে হতে পারে। রং নিয়ে কোন কনফিউশন থাকলে কেনার আগে আমাদের ফেইসবুক পেইজে নক করতে পারেন। আমরা সর্বোচ্চ চেষ্টা করি গ্রাহককে ছবি দিয়ে সহায়তা করতে।
 
-প্রডাক্টটি অবশ্যই ডেলিভারি ম্যান এর সামনে চেক করতে হবে। রিটার্ন করতে চাইলে সাথে সাথে ডেলিভারি ম্যান কে ফেরত দিতে পারবেন। রিটার্ন করতে চাইলে ডেলিভারি চার্জ আপনাকে দিতে হবে। চারুকথন সেই খরচ বহন করবে না।
+প্রডাক্টটি অবশ্যই ডেলিভারি ম্যান এর সামনে চেক করতে হবে। রিটার্ন করতে চাইলে সাথে সাথে ডেলিভারি ম্যান কে ফেরত দিতে পারবেন। রিটার্ন করতে চাইলে ডেলিভারি চার্জ আপনাকে দিতে হবে। ছন্দ সেই খরচ বহন করবে না।
 
-শুধু মাত্র শাড়িতে কোন ছেঁড়াফাটা থাকলে ফিরিয়ে দিতে পারবেন। সেই ক্ষেত্রে যাবতীয় খরচ চারুকথন বহন করবে।
+শুধু মাত্র শাড়িতে কোন ছেঁড়াফাটা থাকলে ফিরিয়ে দিতে পারবেন। সেই ক্ষেত্রে যাবতীয় খরচ ছন্দ বহন করবে।
 
 ডেলিভারি ম্যান চলে আসার পর আর কোন রকম রিটার্ন বা কমপ্লেইন নেয়া হবে না।`,
   },
@@ -491,7 +459,7 @@ const accordionItems = computed(() => [
     </ul>`,
   },
   {
-    title: "ডেলিভারি সময়সীমা",
+    title: "ডেলিভারির সময়",
     content:
       "ঢাকার মধ্যে মাত্র ২-৩ দিন এবং সারাদেশে ৩-৪ দিনের মধ্যে পেয়ে যাবেন।",
   },
@@ -534,8 +502,8 @@ const hasBlouseOption = computed(
 )
 const blouseChoice = ref("without") // 'without' | 'with' — default Without Blouse
 const blouseChoices = [
-  { value: "without", label: "Without blouse" },
-  { value: "with", label: "With blouse" },
+  { value: "without", label: "ব্লাউজ পিস ছাড়া" },
+  { value: "with", label: "ব্লাউজ পিস সহ" },
 ]
 
 // Extra cost of the with-blouse option, shown as "+ N৳" on the pill
@@ -912,12 +880,12 @@ const pushAddToCartEvent = (product, quantity, selectedAttributes) => {
  */
 const guardUnavailable = () => {
   if (isSoldOut.value) {
-    toast.error("This product is currently out of stock.")
+    toast.error("এই পণ্যটি বর্তমানে স্টকে নেই।")
     return true
   }
 
   if (selectedVariantSoldOut.value) {
-    toast.error("The option you selected is currently out of stock.")
+    toast.error("নির্বাচিত অপশনটি বর্তমানে স্টকে নেই।")
     return true
   }
 
@@ -1014,7 +982,7 @@ useHead({
     {
       property: "og:image",
       content:
-        props.product.featured_image || "https://example.org/default.jpg",
+        props.product.featured_image || "/placeholder.svg",
     },
     {
       property: "product:availability",
@@ -1046,7 +1014,7 @@ useHead({
 
 /* ===== PRODUCT TITLE — Figma: HS SB 40/52 Black/700 ===== */
 .product-title {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 28px;
   font-weight: 600;
   color: #3c3834;
@@ -1061,7 +1029,7 @@ useHead({
 }
 
 .pdp-rating-text {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
@@ -1070,7 +1038,7 @@ useHead({
 
 /* ===== PRICE — Figma: Poppins Medium 28/32 Warm/700 ===== */
 .product-price {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 24px;
   font-weight: 500;
   color: #9a663f;
@@ -1133,7 +1101,7 @@ useHead({
   flex: 1;
   min-width: 0;
   color: #c0392b;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 15px;
   line-height: 22px;
 }
@@ -1145,7 +1113,7 @@ useHead({
   border-radius: 8px;
   background: #f8dcdc;
   color: #c0392b;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;
@@ -1176,7 +1144,7 @@ useHead({
 
 /* ===== DESCRIPTION — HS 16/24 Black/600 ===== */
 .pdp-description {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   line-height: 24px;
   color: #4d4944;
@@ -1189,7 +1157,7 @@ useHead({
 /* ===== OPTION LABELS ===== */
 .pdp-option-label {
   display: block;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
@@ -1209,7 +1177,7 @@ useHead({
   border: 1px solid #d1cdca;
   border-radius: 8px;
   background: white;
-  font-family: "Manrope", "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Manrope", "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 28px;
@@ -1302,45 +1270,12 @@ useHead({
   }
 }
 
-/* Stepper and wishlist sit on one line; the heart matches the stepper's box. */
+/* Stepper row (or the sold-out notice in its place). */
 .pdp-qty-row {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.pdp-wishlist-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border: 1px solid #d1cdca;
-  border-radius: 8px;
-  background: white;
-  color: #6b625c;
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.pdp-wishlist-btn:hover {
-  border-color: #b47f54;
-  color: #b47f54;
-}
-
-.pdp-wishlist-btn.is-active {
-  border-color: #b47f54;
-  background: #fdf3ea;
-  color: #b47f54;
-}
-
-@media (min-width: 768px) {
-  .pdp-wishlist-btn {
-    width: 56px;
-    height: 56px;
-  }
 }
 
 .pdp-qty-btn {
@@ -1440,7 +1375,7 @@ useHead({
   gap: 8px;
   height: 48px;
   padding: 0 20px;
-  font-family: "Manrope", "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Manrope", "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 28px;
@@ -1547,7 +1482,7 @@ useHead({
   background: transparent;
   border: none;
   cursor: pointer;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 28px;
@@ -1613,7 +1548,7 @@ useHead({
 }
 
 .pd-accordion-text {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   color: #4b5563;
   line-height: 1.7;
@@ -1633,7 +1568,7 @@ useHead({
 .product-description :deep(h4),
 .product-description :deep(h5),
 .product-description :deep(h6) {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-weight: 700;
   color: #1a1a1a;
   margin-top: 24px;
@@ -1676,7 +1611,7 @@ useHead({
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   color: #4b5563;
   margin-bottom: 0;
@@ -1729,5 +1664,218 @@ useHead({
     background-color: rgba(53, 96, 25, 0);
     transform: scale(1);
   }
+}
+
+/* ===== Figma "Product Details" (💫 Final design) ===== */
+.pdp-wrap { padding-top: 40px; padding-bottom: 76px; }
+.pdp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .pdp-grid { grid-template-columns: minmax(0, 555fr) minmax(0, 785fr); gap: 20px; }
+  .pdp-gallery-col { position: sticky; top: 24px; }
+  .pdp-info-col { padding-left: 23px; }
+}
+@media (min-width: 1280px) {
+  .pdp-gallery-col { top: 100px; }
+}
+.pdp-info-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.pdp-gallery-col { min-width: 0; }
+
+/* Name — Hind Siliguri SB 40/52, Black/700 */
+.product-title {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #3c3834;
+}
+.pdp-rating-text {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #3c3834;
+}
+
+/* Price — Gold/600 Poppins SB 32/40, ৳ in Hind 32 */
+.product-price {
+  padding: 0;
+  background: none;
+  font-family: "Poppins", sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  color: #ba8d22;
+}
+.product-price-sign { font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif; }
+.pdp-stock {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: "Poppins", "Li Ador Noirrit", sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  color: #24a148;
+}
+.pdp-stock--soldout { background: none; color: #c0392b; }
+.pdp-stock--preorder { background: none; color: #ea580c; }
+
+.pdp-description,
+.pdp-description :deep(*) {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+  color: #4d4944;
+}
+
+.pdp-option-label {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #1a1817;
+}
+
+/* Blouse pills — 56px, 32px side padding, r8, Li Ador SB 20/28 */
+.pdp-blouse-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.pdp-pill {
+  position: relative;
+  height: 56px;
+  padding: 0 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d1cdca;
+  border-radius: 8px;
+  background: #fff;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #2c5015;
+  cursor: pointer;
+  transition: border-color .2s ease;
+}
+.pdp-pill:hover { border-color: #3e711d; }
+.pdp-pill--active { border: 2px solid #3e711d; background: #fff; color: #2c5015; }
+.pdp-pill-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #3e711d;
+  color: #fff;
+}
+.pdp-pill-check svg { width: 13px; height: 13px; }
+
+/* Quantity — 174 × 56, Black/300 border */
+.pdp-qty-stepper {
+  width: 174px;
+  height: 56px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border: 1px solid #d1cdca;
+  border-radius: 8px;
+  background: #fff;
+}
+.pdp-qty-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: #1a1817; border-radius: 6px; }
+.pdp-qty-btn:hover:not(:disabled) { background: #faf5e9; }
+.pdp-qty-value { font-family: "Li Ador Noirrit", "Poppins", sans-serif; font-size: 20px; line-height: 28px; color: #1a1817; }
+
+/* Add to cart + Buy now — 56px, 16px apart, Li Ador SB 20/28 */
+.pdp-actions { display: flex; gap: 16px; margin-top: 8px; }
+.pdp-actions .pdp-btn {
+  flex: 1 1 0;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.pdp-btn--primary { background: #1a2110; color: #fff; border: 1px solid #1a2110; }
+.pdp-btn--primary:hover { background: #252f17; }
+.pdp-btn--outline-green { background: #fff; color: #1a2110; border: 1px solid #1a2110; }
+.pdp-btn--outline-green:hover { background: #1a2110; color: #fff; }
+
+/* Call / WhatsApp / Share — outlined 56px chips */
+.pdp-contact-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.pdp-contact-row .pdp-btn {
+  height: 56px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d1cdca;
+  border-radius: 8px;
+  background: #fff;
+  color: #3c3834;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.pdp-contact-row .pdp-btn svg { width: 24px; height: 24px; color: #1a1817; }
+.pdp-contact-row .pdp-btn:hover { border-color: #d6af51; background: #faf5e9; }
+
+/* Accordion — Li Ador 20/28 headers, 28px chevrons, Gold/100 rules */
+.pd-accordion { margin-top: 24px; border: 0; }
+.pd-accordion-item { border: 0; border-bottom: 1px solid #efe0bb; padding: 0 0 24px; margin-bottom: 24px; background: none; }
+.pd-accordion-item:last-child { margin-bottom: 0; }
+.pd-accordion-header {
+  width: 100%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: none;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  color: #1a1817;
+  text-align: left;
+}
+.pd-accordion-chevron { width: 28px; height: 28px; flex-shrink: 0; color: #1a1817; transition: transform .3s ease; }
+.pd-accordion-body { padding-top: 20px; }
+.pd-accordion-text,
+.pd-accordion-body :deep(p),
+.pd-accordion-body :deep(li) {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 32px;
+  color: #3c3834;
+}
+
+@media (max-width: 767px) {
+  .pdp-wrap { padding-top: 20px; padding-bottom: 64px; padding-inline: 20px; }
+  .product-title { font-size: 28px; line-height: 36px; }
+  .product-price { font-size: 26px; line-height: 34px; }
+  .pdp-stock { font-size: 16px; }
+  .pdp-pill { height: 48px; padding: 0 18px; font-size: 16px; line-height: 24px; }
+  .pdp-actions .pdp-btn { height: 52px; font-size: 18px; }
+  .pdp-contact-row { gap: 10px; }
+  .pdp-contact-row .pdp-btn { flex: 1 1 auto; justify-content: center; height: 48px; padding: 0 12px; font-size: 16px; }
+  .pd-accordion-header { font-size: 18px; }
 }
 </style>

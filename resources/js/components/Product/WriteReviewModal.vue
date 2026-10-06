@@ -300,7 +300,7 @@ const submitReview = () => {
 }
 
 .review-modal-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 22px;
   font-weight: 600;
   line-height: 32px;
@@ -314,7 +314,7 @@ const submitReview = () => {
 }
 
 .review-modal-subtitle {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 15px;
   font-weight: 500;
   line-height: 24px;
@@ -353,7 +353,7 @@ const submitReview = () => {
 }
 
 .review-label {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;
@@ -409,7 +409,7 @@ const submitReview = () => {
   background-color: #fffaf4;
   border: 1px solid #fff0df;
   border-radius: 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 15px;
   color: #1a1817;
   transition: border-color 0.2s ease;
@@ -465,7 +465,7 @@ const submitReview = () => {
 
 .review-upload-title {
   display: block;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;

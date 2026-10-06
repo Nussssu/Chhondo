@@ -60,7 +60,7 @@ class PageController extends Controller
             ->first();
 
         if (! $product) {
-            return Inertia::render('Public/Error/NotFound');
+            return Inertia::render('Public/Error/NotFound', ['texts' => $this->pageTexts('not_found')]);
         }
 
         // Related by any shared category, not only the primary one: a product
@@ -150,6 +150,10 @@ class PageController extends Controller
             // falls back to its own generated wording.
             'categoryTitle'     => $category?->title,
             'categorySubtitle'  => $category?->subtitle,
+            // The shop's wording (breadcrumb, heading pattern, subtitle) is
+            // shared by every category page.
+            'texts'             => $this->pageTexts('shop'),
+            'intro'             => $this->pageIntro('shop'),
             'activeCategoryId'  => $category?->id,
             'lastPage'          => $lastPage,
             'total'             => $total,
@@ -602,6 +606,7 @@ class PageController extends Controller
     {
         return Inertia::render('Public/Auth/Registration', [
             'reviews' => $this->authReviews(),
+            'texts'   => $this->pageTexts('auth'),
         ]);
     }
 
@@ -609,6 +614,7 @@ class PageController extends Controller
     {
         return Inertia::render('Public/Auth/Login', [
             'reviews' => $this->authReviews(),
+            'texts'   => $this->pageTexts('auth'),
             // Set by registration, and by anything else that hands the visitor
             // back to this page with something to say.
             'status'  => session('status'),
@@ -830,6 +836,6 @@ class PageController extends Controller
 
     public function notFound()
     {
-        return Inertia::render('Public/Error/NotFound')->toResponse(request())->setStatusCode(404);
+        return Inertia::render('Public/Error/NotFound', ['texts' => $this->pageTexts('not_found')])->toResponse(request())->setStatusCode(404);
     }
 }

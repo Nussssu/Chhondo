@@ -162,7 +162,7 @@ function onPaymentTypeChange() {
 .oi-facts b { color: #3C3834; font-weight: 700; margin-right: 4px; }
 
 .oi-section {
-  font-size: 11.5px; font-weight: 700; color: #234011;
+  font-size: 11.5px; font-weight: 700; color: #1a2110;
   text-transform: uppercase; letter-spacing: .05em;
   margin: 0 0 10px;
 }

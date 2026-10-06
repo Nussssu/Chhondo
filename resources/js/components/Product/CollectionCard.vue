@@ -29,6 +29,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Figma words this per page: "কার্টে অ্যাড করুন" on the home page,
+  // "কার্টে রাখুন" on the shop and product pages.
+  buttonLabel: {
+    type: String,
+    default: "কার্টে অ্যাড করুন",
+  },
 })
 
 const getProductCampaign = (product) =>
@@ -81,7 +87,7 @@ const addToCart = () => {
       @focusin="hoverLoaded = true"
     >
       <ResponsiveImage
-        :src="product.featured_image"
+        :src="product.featured_image || '/placeholder.svg'"
         :alt="product.product_name"
         :width="3"
         :height="4"
@@ -110,8 +116,9 @@ const addToCart = () => {
         class="wishlist-btn"
         :class="{ 'is-active': wishlistStore.isWishlisted(product) }"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" :fill="wishlistStore.isWishlisted(product) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        <!-- Figma "Favourtite" glyph -->
+        <svg class="wishlist-icon" viewBox="0 0 20 20" :fill="wishlistStore.isWishlisted(product) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 5.02C8.36 2.9 4.58 2.45 2.83 4.94c-1.26 1.79-.8 4.1.51 5.6l4.59 4.44a2.86 2.86 0 0 0 2.15.95 2.84 2.84 0 0 0 2.12-.96l4.48-4.43c1.36-1.52 1.79-3.85.49-5.63C15.4 2.43 11.66 2.9 10 5.02Z" />
         </svg>
       </button>
       <!-- Quick Preview - Desktop bottom bar -->
@@ -143,14 +150,12 @@ const addToCart = () => {
         v-if="isPreOrder(product)"
         class="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg z-10"
       >
-        Pre Order
+        প্রি-অর্ডার
       </div>
       <div
         v-else-if="isOutOfStock(product)"
         class="absolute top-3 left-3 soldout-badge text-xs font-bold px-2.5 py-1 rounded-lg z-10"
-      >
-        Out of Stock
-      </div>
+      >স্টকে নেই</div>
     </div>
 
     <!-- Product Info -->
@@ -161,14 +166,14 @@ const addToCart = () => {
       <p class="collection-price">
         <span
           v-if="getRegularPrice(product)"
-          class="line-through text-gray-400 mr-1 text-sm"
+          class="collection-was-price"
         >{{ getRegularPrice(product) }}৳</span>
-        {{ getCampaignDiscountedPrice(product) }} <span class="bangla-font">৳</span>
+        {{ getCampaignDiscountedPrice(product) }}৳
       </p>
     </div>
 
     <!-- Add to Cart Button -->
-    <div class="collection-btn-wrap">
+    <div>
       <button
         @click.stop="addToCart"
         :disabled="addingToCart || soldOut"
@@ -176,12 +181,10 @@ const addToCart = () => {
         class="collection-buy-btn"
         :class="{ 'is-soldout': soldOut, 'is-preorder': preOrder }"
       >
-        <template v-if="soldOut">Out of Stock</template>
+        <template v-if="soldOut">স্টকে নেই</template>
         <template v-else>
-          {{ addingToCart ? 'Adding...' : (preOrder ? 'Pre-Order' : 'Add to cart') }}
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <img :src="'/assets/chhondo/cart-light.svg'" alt="" width="24" height="24" />
+          {{ addingToCart ? 'যোগ হচ্ছে...' : (preOrder ? 'প্রি-অর্ডার' : buttonLabel) }}
         </template>
       </button>
     </div>
@@ -189,36 +192,32 @@ const addToCart = () => {
 </template>
 
 <style scoped>
-/* Card container — Figma: Warm/200 bg, Warm/300 border, r16, p20, gap 20 */
+/* Figma "Component 12": white, r16, p20, 16px between the image block and
+   the button; soft two-layer shadow that deepens on hover. */
 .collection-card {
-  background-color: #fff0df;
-  border: 1px solid #f7e2cb;
+  background-color: #fff;
   border-radius: 16px;
-  padding: 12px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
   cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+  transition: box-shadow 0.3s ease, transform .3s ease;
 }
 
 .collection-card:hover {
-  border-color: #E9C39C;
-  box-shadow: 0 4px 16px rgba(139, 105, 20, 0.1);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .28);
+  transform: translateY(-3px);
 }
 
-@media (min-width: 768px) {
-  .collection-card {
-    padding: 20px;
-  }
-}
-
-/* Image wrapper */
+/* Image — 285 × 322, r8 */
 .collection-image-wrapper {
   position: relative;
-  aspect-ratio: 377 / 468;
+  aspect-ratio: 285 / 322;
   overflow: hidden;
   border-radius: 8px;
-  background-color: #f0ece6;
+  background-color: #f3f3f3;
 }
 
 .collection-image-wrapper img {
@@ -229,7 +228,7 @@ const addToCart = () => {
   transform: scale(1.05);
 }
 
-/* Quick Preview button — full width bar at bottom */
+/* Quick Preview — 36px bar, Black/900 at 80%, r8, slides up on hover */
 .quick-preview-btn {
   position: absolute;
   bottom: 0;
@@ -238,56 +237,59 @@ const addToCart = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 12px 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(6px);
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
+  height: 36px;
+  padding: 8px;
+  background: rgba(26, 24, 23, 0.8);
+  color: #fff;
+  font: 400 14px/20px "Poppins", sans-serif;
   border: none;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
   cursor: pointer;
   opacity: 0;
   transform: translateY(100%);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color .2s ease;
   z-index: 5;
 }
 
 .quick-preview-btn:hover {
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(26, 24, 23, 0.92);
 }
 
-.collection-image-wrapper:hover .quick-preview-btn {
+.collection-card:hover .quick-preview-btn,
+.quick-preview-btn:focus-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Wishlist heart */
+/* Wishlist — 36px white circle, 12px in from the image corner */
 .wishlist-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: 12px;
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
+  color: #1a1817;
+  background: #fff;
   border: none;
   border-radius: 9999px;
   cursor: pointer;
   z-index: 6;
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
+.wishlist-icon { width: 20px; height: 20px; display: block; }
+
 .wishlist-btn:hover {
-  background: rgba(0, 0, 0, 0.55);
   transform: scale(1.08);
+}
+
+.wishlist-btn.is-active {
+  color: #60141d;
 }
 
 .wishlist-btn.is-active svg {
@@ -300,42 +302,26 @@ const addToCart = () => {
   100% { transform: scale(1); }
 }
 
-/* Mobile eye icon */
+/* Mobile eye icon — phones have no hover, so quick preview is a tap target */
 .mobile-eye-btn {
   display: none;
 }
 
-@media (max-width: 767px) {
-  .mobile-eye-btn {
-    position: absolute;
-    top: 8px;
-    right: 52px; /* sit just left of the wishlist heart */
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 5;
-  }
-}
-
-/* Product info — Figma: gap 20 above, name 24/32 SB Black/600, price 20/28 Warm/700, gap 4 */
+/* Info — name Poppins 20/28 Black/700, price Poppins SB 16/24, both 8px in */
 .collection-info {
-  padding: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex-grow: 1;
 }
 
 .collection-product-name {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: #4d4944;
+  padding-left: 8px;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  color: #3c3834;
   text-decoration: underline transparent;
   transition: text-decoration-color 0.3s ease;
 }
@@ -344,38 +330,24 @@ const addToCart = () => {
   text-decoration-color: #4d4944;
 }
 
-@media (min-width: 768px) {
-  .collection-info {
-    padding-top: 20px;
-  }
-
-  .collection-product-name {
-    font-size: 24px;
-    line-height: 32px;
-  }
-}
-
 .collection-price {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  padding-inline: 8px;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 24px;
-  color: #9a663f;
-  margin-top: 4px;
+  color: #1a1817;
 }
 
-@media (min-width: 768px) {
-  .collection-price {
-    font-size: 20px;
-    line-height: 28px;
-  }
+.collection-was-price {
+  margin-right: 6px;
+  color: #9c9591;
+  font-weight: 400;
+  font-size: 14px;
+  text-decoration: line-through;
 }
 
-/* Add to cart button — Figma: Green/600, h48, r8, px20, Manrope SB 16 + chevron */
-.collection-btn-wrap {
-  margin-top: 14px;
-}
-
+/* Add to cart — Green/700, h44, r8, cart icon + Li Ador SB 16/24 */
 .collection-buy-btn {
   display: inline-flex;
   align-items: center;
@@ -383,11 +355,11 @@ const addToCart = () => {
   gap: 8px;
   width: 100%;
   height: 44px;
-  padding: 0 20px;
-  background-color: #356019;
+  padding: 0 16px;
+  background-color: #1a2110;
   color: white;
-  font-family: "Manrope", "Poppins", sans-serif;
-  font-size: 14px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 16px;
   font-weight: 600;
   line-height: 24px;
   border-radius: 8px;
@@ -397,19 +369,8 @@ const addToCart = () => {
   transition: background-color 0.2s ease;
 }
 
-@media (min-width: 768px) {
-  .collection-btn-wrap {
-    margin-top: 20px;
-  }
-
-  .collection-buy-btn {
-    height: 48px;
-    font-size: 16px;
-  }
-}
-
 .collection-buy-btn:hover:not(:disabled) {
-  background-color: #2a4d14;
+  background-color: #252f17;
 }
 
 .collection-buy-btn:disabled {
@@ -441,5 +402,36 @@ const addToCart = () => {
   border: 1px solid #f3c9c9;
   opacity: 1;
   cursor: not-allowed;
+}
+
+/* Figma phone card: p12, r9, image r4, 24px heart, 12px type, 47px button. */
+@media (max-width: 767px) {
+  .collection-card { padding: 12px; gap: 9px; border-radius: 9px; }
+  .collection-card:hover { transform: none; }
+  .collection-image-wrapper { aspect-ratio: 152 / 172; border-radius: 4px; }
+  .wishlist-btn { top: 8px; right: 8px; width: 24px; height: 24px; }
+  .wishlist-icon { width: 16px; height: 16px; }
+  .mobile-eye-btn {
+    position: absolute;
+    top: 8px;
+    right: 38px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26, 24, 23, 0.6);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 5;
+  }
+  .mobile-eye-btn svg { width: 14px; height: 14px; }
+  .collection-info { gap: 3px; }
+  .collection-product-name { padding-left: 0; font-size: 12px; line-height: 15px; }
+  .collection-price { padding-inline: 0; font-size: 12px; line-height: 20px; }
+  .collection-was-price { font-size: 11px; }
+  .collection-buy-btn { height: 47px; padding: 0 10px; font-size: 12px; line-height: 20px; }
+  .collection-buy-btn img { width: 20px; height: 20px; }
 }
 </style>

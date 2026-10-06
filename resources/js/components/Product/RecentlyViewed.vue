@@ -88,15 +88,17 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section v-if="recentProducts.length > 0" class="bg-[#FFFAF4] py-12 md:py-16">
+  <section v-if="recentProducts.length > 0" class="recently-viewed">
     <div class="container">
-      <h2 class="recently-viewed-title text-center mb-8 md:mb-12">Recently viewed</h2>
+      <!-- Figma "যে শাড়িগুলো দেখছিলেন" -->
+      <h2 class="recently-viewed-title">যে শাড়িগুলো <span class="recently-viewed-accent">দেখছিলেন</span></h2>
 
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 max-w-[1300px] mx-auto">
+      <div class="recently-viewed-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <CollectionCard
           v-for="p in recentProducts"
           :key="p.id"
           :product="p"
+          button-label="কার্টে রাখুন"
           :openPreview="openPreview"
         />
       </div>
@@ -105,18 +107,26 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.recently-viewed { background: #fff; padding-top: 132px; }
 .recently-viewed-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  margin-bottom: 48px;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 32px;
   font-weight: 600;
-  line-height: 1.25;
-  color: #3c3834;
+  line-height: 40px;
+  color: #1a1817;
 }
+.recently-viewed-accent { color: #cc9b25; }
+.recently-viewed-grid { gap: 20px; }
 
 @media (min-width: 768px) {
-  .recently-viewed-title {
-    font-size: 56px;
-    line-height: 68px;
-  }
+  .recently-viewed-title { font-size: 56px; line-height: 68px; }
+}
+@media (max-width: 767px) {
+  .recently-viewed { padding-top: 48px; }
+  .recently-viewed .container { padding-inline: 20px; }
+  .recently-viewed-title { margin-bottom: 32px; }
+  .recently-viewed-grid { gap: 12px; }
 }
 </style>

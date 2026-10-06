@@ -220,7 +220,7 @@ onMounted(() => {
 
 .products-section { border-top: 1px solid #F0EDE9; padding-top: 18px; }
 .products-title {
-  font-size: 12.5px; font-weight: 700; color: #234011;
+  font-size: 12.5px; font-weight: 700; color: #1a2110;
   text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px;
 }
 

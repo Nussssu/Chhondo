@@ -627,7 +627,7 @@ onMounted(() => {
 .cat-seq-keys button:disabled { opacity: .3; cursor: not-allowed; }
 
 tbody tr.is-dragging { opacity: .45; }
-tbody tr.is-over td { box-shadow: inset 0 2px 0 var(--bs-primary, #356019); }
+tbody tr.is-over td { box-shadow: inset 0 2px 0 var(--bs-primary, #252f17); }
 
 .cat-hint {
   display: block;

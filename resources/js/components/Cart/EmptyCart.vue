@@ -11,7 +11,7 @@ const emptyCartIcon = ref('/assets/images/icons/empty-cart.png');
 
 
 <template>
-  <div class=" flex items-center justify-center p-4">
+  <div class="empty-cart flex items-center justify-center p-4">
     <div class="max-w-2xl mx-auto text-center">
       <div class="mb-6 w-[300px] mx-auto">
         <img :src="emptyCartIcon" alt="Empty cart" class="mx-auto" />
@@ -34,3 +34,12 @@ const emptyCartIcon = ref('/assets/images/icons/empty-cart.png');
     </div>
   </div>
 </template>
+
+<style scoped>
+/* The 40px headline wraps to three lines on a phone. */
+@media (max-width: 767px) {
+  .headline-3 { font-size: 28px; line-height: 36px; }
+  /* The page already ends with 48px; no extra gap above the footer. */
+  .empty-cart { padding-bottom: 0; }
+}
+</style>

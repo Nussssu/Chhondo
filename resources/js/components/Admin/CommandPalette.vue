@@ -5,11 +5,19 @@
  * On a panel this size the sidebar stops being the fastest way to get
  * somewhere. Destinations come from the same navigation.js the sidebar
  * uses, so anything reachable in one is reachable in the other.
+ *
+ * It opens in place in the topbar: the Search button widens into the input
+ * and the destinations drop down beneath it.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { Search, CornerDownLeft } from 'lucide-vue-next'
 import { navDestinations } from '@/navigation'
+
+const props = defineProps({
+  /** How this platform writes the shortcut key, e.g. "⌘" or "Ctrl ". */
+  metaKey: { type: String, default: 'Ctrl ' },
+})
 
 const page = usePage()
 const can = (permission) => page.props.adminPermissions?.[permission] === true
@@ -19,6 +27,7 @@ const query = ref('')
 const cursor = ref(0)
 const input = ref(null)
 const listbox = ref(null)
+const root = ref(null)
 
 const destinations = computed(() => navDestinations(can))
 
@@ -105,41 +114,51 @@ function scrollCursorIntoView() {
   })
 }
 
-watch(isOpen, (v) => {
-  document.body.style.overflow = v ? 'hidden' : ''
-})
+/** A click anywhere outside the search closes it. */
+function onPointerDown(e) {
+  if (isOpen.value && root.value && !root.value.contains(e.target)) close()
+}
 
-onMounted(() => document.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  document.addEventListener('mousedown', onPointerDown)
+})
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
-  document.body.style.overflow = ''
+  document.removeEventListener('mousedown', onPointerDown)
 })
 
 defineExpose({ open })
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="cp">
-      <div v-if="isOpen" class="cp-backdrop" @mousedown.self="close">
-        <div class="cp-panel" role="dialog" aria-modal="true" aria-label="Search the admin panel">
-          <div class="cp-search">
-            <Search :size="16" class="cp-search-icon" aria-hidden="true" />
-            <input
-              ref="input"
-              v-model="query"
-              type="text"
-              class="cp-input"
-              placeholder="Go to…"
-              aria-label="Search the admin panel"
-              autocomplete="off"
-              role="combobox"
-              aria-expanded="true"
-              aria-controls="cp-listbox"
-            />
-            <kbd class="cp-kbd">esc</kbd>
-          </div>
+  <div ref="root" class="cp-inline" :class="{ 'is-open': isOpen }">
+    <button v-if="!isOpen" type="button" class="topbar-search" @click="open">
+      <Search :size="14" aria-hidden="true" />
+      <span>Search</span>
+      <kbd>{{ props.metaKey }}K</kbd>
+    </button>
 
+    <div v-else class="cp-panel" role="dialog" aria-label="Search the admin panel">
+      <div class="cp-search">
+        <Search :size="16" class="cp-search-icon" aria-hidden="true" />
+        <input
+          ref="input"
+          v-model="query"
+          type="text"
+          class="cp-input"
+          placeholder="Go to…"
+          aria-label="Search the admin panel"
+          autocomplete="off"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="cp-listbox"
+        />
+        <kbd class="cp-kbd">esc</kbd>
+      </div>
+
+      <Transition name="cp" appear>
+        <div class="cp-drop">
           <ul v-if="results.length" id="cp-listbox" ref="listbox" class="cp-list" role="listbox">
             <li
               v-for="(item, i) in results"
@@ -159,47 +178,60 @@ defineExpose({ open })
 
           <p v-else class="cp-empty">Nothing matches “{{ query }}”.</p>
         </div>
-      </div>
-    </Transition>
-  </Teleport>
+      </Transition>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.cp-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1080;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12vh var(--sp-4) var(--sp-4);
-  background: rgba(21, 27, 17, 0.5);
+.cp-inline { position: relative; }
+
+/* Open: the button's place widens into the search field. */
+.cp-panel {
+  position: relative;
+  width: 360px;
+  animation: cp-widen var(--dur) var(--ease);
 }
 
-.cp-panel {
-  width: 100%;
-  max-width: 560px;
-  background: var(--surface);
-  border-radius: var(--r-md);
-  box-shadow: var(--el-2);
-  overflow: hidden;
+@keyframes cp-widen {
+  from { width: 120px; }
+  to { width: 360px; }
 }
 
 .cp-search {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border-bottom: 1px solid var(--line);
+  height: 34px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--admin-gold, #cc9b25);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(204, 155, 37, 0.15);
+}
+
+/* The destinations drop down under the field. */
+.cp-drop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 1080;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--el-2);
+  overflow: hidden;
 }
 
 .cp-search-icon { color: var(--text-faint); flex-shrink: 0; }
 
 .cp-input {
   flex: 1;
+  min-width: 0;
   border: 0;
   background: none;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--text);
 }
 
@@ -256,7 +288,11 @@ defineExpose({ open })
 }
 
 .cp-enter-active,
-.cp-leave-active { transition: opacity var(--dur) var(--ease); }
+.cp-leave-active { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .cp-enter-from,
-.cp-leave-to { opacity: 0; }
+.cp-leave-to { opacity: 0; transform: translateY(-4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-panel { animation: none; }
+}
 </style>

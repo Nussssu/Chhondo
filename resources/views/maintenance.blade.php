@@ -1,17 +1,11 @@
-@php
-    // Embedded rather than linked, so the page stands on its own whatever else
-    // is unavailable while the shop is down.
-    $logoPath = public_path('assets/images/logo/logo.png');
-    $logo = is_file($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
-@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>Charukothon — Under Maintenance</title>
-  <link rel="icon" type="image/webp" href="data:image/webp;base64,{{ $logo }}">
+  <title>Chhondo — Under Maintenance</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/chhondo/logo-mark-dark.svg">
   <style>
     :root {
       --green: #4a7a1e;
@@ -33,7 +27,9 @@
       text-align: center;
     }
     main { max-width: 560px; width: 100%; }
-    .logo { width: 100%; max-width: 360px; height: auto; margin-bottom: 40px; }
+    .logo { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 40px; }
+    .logo-mark { width: 120px; height: auto; }
+    .logo-word { width: 144px; height: auto; }
     .badge {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--green-soft); color: var(--green);
@@ -52,12 +48,15 @@
 </head>
 <body>
   <main>
-    <img class="logo" src="data:image/webp;base64,{{ $logo }}" alt="Charukothon">
+    <div class="logo" aria-label="Chhondo">
+      <img class="logo-mark" src="/assets/chhondo/logo-mark-dark.svg" alt="">
+      <img class="logo-word" src="/assets/chhondo/logo-word-dark.svg" alt="Chhondo">
+    </div>
     <div class="badge"><span class="dot"></span>Under Maintenance</div>
     <h1>We'll be back shortly</h1>
-    <p>Charukothon is currently undergoing scheduled maintenance to improve your shopping experience. Thank you for your patience — please check back soon.</p>
+    <p>Chhondo is currently undergoing scheduled maintenance to improve your shopping experience. Thank you for your patience — please check back soon.</p>
     <div class="divider"></div>
-    <footer>&copy; {{ date('Y') }} Charukothon. All rights reserved.</footer>
+    <footer>&copy; {{ date('Y') }} Chhondo. All rights reserved.</footer>
   </main>
 </body>
 </html>

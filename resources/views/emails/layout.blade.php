@@ -9,7 +9,7 @@
     and the same image is inlined as a data URI instead.
 --}}
 @php
-    $accent = $brand['colour'] ?? '#2c5015';
+    $accent = $brand['colour'] ?? '#1a2110';
     $logoWidth = $brand['logoWidth'] ?? 150;
     $logoHeight = $brand['logoHeight'] ?? null;
     $logoSrc = null;

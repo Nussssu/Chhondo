@@ -149,7 +149,7 @@ const adminTemplates = computed(() => props.templates.filter((t) => t.audience =
                       type="text"
                       class="form-control"
                       :class="{ 'is-invalid': form.errors.email_from_name }"
-                      placeholder="Charukothon"
+                      placeholder="Chhondo"
                     >
                     <div class="invalid-feedback">{{ form.errors.email_from_name }}</div>
                     <small class="em-hint">The name customers see in their inbox.</small>
@@ -475,7 +475,7 @@ const adminTemplates = computed(() => props.templates.filter((t) => t.audience =
   color: var(--ink-muted, #9ca3af);
 }
 
-.em-ok { color: #2c5015; }
+.em-ok { color: #1a2110; }
 .em-warn { color: #a15c00; }
 
 .em-group {
@@ -533,14 +533,14 @@ const adminTemplates = computed(() => props.templates.filter((t) => t.audience =
   font-weight: 600;
 }
 
-.em-tpl-state.is-on { background: #eef4e6; color: #2c5015; }
+.em-tpl-state.is-on { background: #eef4e6; color: #1a2110; }
 .em-tpl-state.is-off { background: #f1efec; color: #8b847d; }
 
 .em-tpl-locked {
   margin: 0 0 1rem;
   padding: 0.6rem 0.75rem;
   background: #f6f8f2;
-  border-left: 3px solid #2c5015;
+  border-left: 3px solid #1a2110;
   border-radius: 4px;
   font-size: 0.8125rem;
   line-height: 1.45;

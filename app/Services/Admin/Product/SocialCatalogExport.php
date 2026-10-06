@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
  *
  * Every link is absolute and built from the URL the admin panel is being used
  * at — an export taken locally points at localhost, one taken on the live site
- * at charukothon.com.
+ * at the store domain.
  */
 class SocialCatalogExport
 {
@@ -22,7 +22,7 @@ class SocialCatalogExport
         'price', 'link', 'image_link', 'brand',
     ];
 
-    public const BRAND = 'Charukothon';
+    public const BRAND = 'Chhondo';
 
     /**
      * The products to export, in the order their ids were given.

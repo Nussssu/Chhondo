@@ -8,22 +8,43 @@
  * block did.
  */
 
+/* Li Ador Noirrit — the storefront's Bangla face (see resources/css/app.css). */
+@font-face {
+  font-family: 'Li Ador Noirrit';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  size-adjust: 123%;
+  src: url('https://db.onlinewebfonts.com/t/3565357604fee3776c402d09091028bb.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/3565357604fee3776c402d09091028bb.woff') format('woff');
+}
+@font-face {
+  font-family: 'Li Ador Noirrit';
+  font-style: normal;
+  font-weight: 600 800;
+  font-display: swap;
+  src: url('https://db.onlinewebfonts.com/t/88b697da0ff9ad9755215ec90f53d173.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/88b697da0ff9ad9755215ec90f53d173.woff') format('woff');
+}
+
 :root {
-  /* Brand green ramp (storefront DSM) */
-  --admin-forest:       #1c330d; /* Green/900 */
-  --admin-green-800:    #234011; /* Green/800 — Primary */
-  --admin-green-600:    #356019; /* Green/600 — Button */
-  --admin-tan:          #356019; /* legacy alias, now brand green */
-  --admin-cream:        #FFFAF4; /* Warm/50 */
-  --admin-cream-dark:   #FFF0DF; /* Warm/200 */
-  --admin-navy:         #1e2a39;
-  --admin-forest-light: color-mix(in srgb, #1c330d 10%, #FFFAF4);
+  /* Chhondo palette, shared with the storefront. The variable names are the
+     old green ones so every existing rule picks the new colours up. */
+  --admin-forest:       #1a2110; /* Olive/700 — sidebar */
+  --admin-green-800:    #1a2110; /* Olive/700 — hover */
+  --admin-green-600:    #252f17; /* Olive/500 — buttons */
+  --admin-tan:          #252f17; /* legacy alias */
+  --admin-gold:         #cc9b25; /* Gold/500 — accent */
+  --admin-cream:        #FAF5E9; /* Gold/50 */
+  --admin-cream-dark:   #EFE0BB; /* Gold/100 */
+  --admin-navy:         #1a1817;
+  --admin-forest-light: color-mix(in srgb, #1a2110 10%, #FAF5E9);
 
   /* Bootstrap semantic mapping → DSM tokens */
-  --bs-primary:          #356019;
-  --bs-primary-rgb:      53, 96, 25;
-  --bs-link-color:       #1c330d;
-  --bs-link-hover-color: #356019;
+  --bs-primary:          #252f17;
+  --bs-primary-rgb:      37, 47, 23;
+  --bs-link-color:       #1a2110;
+  --bs-link-hover-color: #252f17;
   --bs-success:          #24A148;
   --bs-success-rgb:      36, 161, 72;
   --bs-danger:           #F9461C;
@@ -47,12 +68,12 @@ table,
 input,
 select,
 textarea {
-  font-family: 'Poppins', 'Hind Siliguri', sans-serif !important;
+  font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif !important;
 }
 
 .btn,
 .btn * {
-  font-family: 'Manrope', 'Poppins', sans-serif !important;
+  font-family: 'Poppins', 'Li Ador Noirrit', sans-serif !important;
   font-weight: 600;
 }
 
@@ -205,10 +226,10 @@ textarea {
   gap: 8px;
   height: 34px;
   padding: 0 10px 0 12px;
-  border: 1px solid var(--line-strong, #d3d9cb);
+  border: 1px solid var(--line-strong, #d1cdca);
   border-radius: 999px;
-  background: var(--surface-sunk, #f7f8f5);
-  color: var(--text-muted, #6b7563);
+  background: var(--surface-sunk, #f5f4f2);
+  color: var(--text-muted, #6d6560);
   font-size: 13px;
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease;
@@ -221,12 +242,12 @@ textarea {
 
 .topbar-search kbd {
   padding: 1px 6px;
-  border: 1px solid var(--line-strong, #d3d9cb);
+  border: 1px solid var(--line-strong, #d1cdca);
   border-radius: 4px;
   background: #fff;
   font-size: 11px;
   font-family: inherit;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 
 /* The sidebar is a flex column now, so it must fill the wrapper height. */
@@ -253,4 +274,19 @@ textarea {
 
   /* Modal footers: full-width buttons are easier to hit on a phone. */
   .fm-foot .btn { flex: 1; }
+}
+
+/* ── Chhondo accents ───────────────────────────────────── */
+/* Gold marks the current place, as on the storefront. */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--admin-gold) !important;
+  box-shadow: 0 0 0 0.2rem rgba(204, 155, 37, 0.2) !important;
+}
+.btn-primary {
+  border-radius: 8px;
+}
+.card {
+  border-radius: 16px;
+  border-color: #e4e1e0;
 }

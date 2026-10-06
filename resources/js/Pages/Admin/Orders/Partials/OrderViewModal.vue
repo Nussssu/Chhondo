@@ -175,7 +175,7 @@ onMounted(() => {
 .pay-grid { display: flex; flex-wrap: wrap; gap: 10px 28px; }
 .pay-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .pay-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #7a7a70; }
-.pay-value { font-size: 14px; font-weight: 600; color: #1f2a17; word-break: break-all; }
+.pay-value { font-size: 14px; font-weight: 600; color: #1a1817; word-break: break-all; }
 .modal-footer-custom {
   display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid #e0e0e0;
 }

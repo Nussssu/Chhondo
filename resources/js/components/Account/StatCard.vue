@@ -16,10 +16,11 @@ defineProps({
 .stat-card {
   flex: 1;
   min-width: 0;
-  background: #fefaf3;
-  border: 1px solid #e8d4b0;
+  background: #fff;
+  border: 0;
   border-radius: 16px;
-  padding: 17px;
+  padding: 16px;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,17 +31,17 @@ defineProps({
   font-weight: 600;
   font-size: 28px;
   line-height: 36px;
-  color: #2d4a2d;
+  color: #1a1817;
   text-align: center;
   width: 100%;
 }
 
 .stat-card-label {
-  font-family: "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
-  color: #7a5c3e;
+  color: #cc9b25;
   text-align: center;
   width: 100%;
 }

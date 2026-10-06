@@ -85,7 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Not Found'], 404);
             }
 
-            return Inertia::render('Public/Error/NotFound')
+            return Inertia::render('Public/Error/NotFound', ['texts' => \App\Models\Page::textsFor('not_found')])
                 ->toResponse($request)
                 ->setStatusCode(404);
         });

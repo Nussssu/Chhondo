@@ -110,8 +110,8 @@
                         @foreach ($order['items'] as $index => $item)
                         <div class="product-item {{ $index > 0 ? 'extra-product d-none' : '' }}">
                             <div>
-                                <img src="{{ asset($item['product_info']['featured_image']) }}" width="50"
-                                    height="50" />
+                                <img src="{{ !empty($item['product_info']['featured_image']) ? asset($item['product_info']['featured_image']) : asset('placeholder.svg') }}" width="50"
+                                    height="50" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}'" />
                             </div>
                             <div>
                                 <span title="{{ $item['product_info']['product_name'] }}" style="cursor: pointer;">
@@ -129,7 +129,7 @@
                                 @endif
                                 @if (!empty($item['blouse_choice']))
                                 <span class="badge"
-                                    style="background-color: {{ $item['blouse_choice'] === 'with' ? '#356019' : '#8c7256' }};
+                                    style="background-color: {{ $item['blouse_choice'] === 'with' ? '#252f17' : '#8c7256' }};
                                            color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px;">
                                     {{ $item['blouse_choice'] === 'with' ? 'With Blouse' : 'Without Blouse' }}
                                 </span>

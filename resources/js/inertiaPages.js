@@ -5,7 +5,9 @@
  */
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 
-const appName = import.meta.env.VITE_APP_NAME || 'Charukothon'
+// The storefront brand. APP_NAME is shared with the admin and backend (mail,
+// SMS), which keep their own name, so the customer-facing title is fixed here.
+const appName = 'Chhondo'
 
 export const title = (title) => title ? `${title} - ${appName}` : appName
 

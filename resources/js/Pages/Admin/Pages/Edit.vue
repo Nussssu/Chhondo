@@ -18,6 +18,7 @@ import ProductSequenceModal from './Partials/ProductSequenceModal.vue'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { slugify } from '@/utils/slug'
 import { toast } from '@/utils/toast'
+import { useMediaUploader } from '@/composables/useMediaUploader'
 import {
   ArrowLeft, Heading, Type, Image as ImageIcon, Columns2, Code2,
   Images, Video, Clapperboard, LayoutGrid, Megaphone, X,
@@ -176,7 +177,8 @@ function toggleSection(key) {
   closedSections.value = next
 }
 
-// Which text field the media picker is filling.
+// Which text field the media picker is filling: a field key, or
+// { key, row, sub } for an image inside a repeater row.
 const textPicker = ref(null)
 
 /* ------------------------------------------------------- repeaters -- */
@@ -188,7 +190,8 @@ function addRow(field) {
   if (!Array.isArray(form.texts[field.key])) form.texts[field.key] = []
   // A blank row shaped like the others, so every sub-field binds.
   form.texts[field.key].push(
-    Object.fromEntries(Object.keys(field.fields).map((k) => [k, '']))
+    // An on/off switch starts on, so a new row shows straight away.
+    Object.fromEntries(Object.entries(field.fields).map(([k, sub]) => [k, sub.type === 'toggle' ? '1' : '']))
   )
 }
 
@@ -206,9 +209,63 @@ function dropRow(field, to) {
 }
 
 function onTextImageSelected(item) {
-  if (textPicker.value) form.texts[textPicker.value] = item.url
+  const target = textPicker.value
+  if (target && typeof target === 'object') {
+    form.texts[target.key][target.row][target.sub] = item.url
+  } else if (target) {
+    form.texts[target] = item.url
+  }
   textPicker.value = null
 }
+
+/* ---------------------------------------------------------- banners -- */
+
+// Desktop / Mobile banner: a file picked here goes into the Media Library and
+// straight into the field; Save stores the page as usual.
+const { upload: uploadMedia } = useMediaUploader()
+const bannerUploading = ref(null)
+
+async function uploadBanner(field, event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+
+  bannerUploading.value = field.key
+  try {
+    const { uploaded } = await uploadMedia([file])
+    if (uploaded?.[0]?.url) {
+      form.texts[field.key] = uploaded[0].url
+      toast.success('Banner uploaded — press Save to publish it.')
+    } else {
+      toast.error('The banner could not be uploaded.')
+    }
+  } finally {
+    bannerUploading.value = null
+  }
+}
+
+/* ------------------------------------------------------ widget slots -- */
+
+// A slot shows, in page order, the widgets that render at that point.
+const SLOT_TYPES = ['product_section', 'cta_banner', 'video_strip']
+const slotBlocks = (section) =>
+  form.blocks.filter((block) =>
+    section.widget_types.includes('other')
+      ? !SLOT_TYPES.includes(block.type)
+      : section.widget_types.includes(block.type)
+  )
+const widgetLabel = (block) =>
+  block.title || WIDGETS.find((w) => w.type === block.type)?.label || block.type
+
+function goToWidget(block) {
+  const next = new Set(collapsed.value)
+  next.delete(block.id)
+  collapsed.value = next
+  document.getElementById(`pg-w-${block.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+/** On/off fields are stored as '1' / '0', like every other text value. */
+const isOn = (value) => value !== '0' && value !== 0 && value !== false
 
 function toggleCollapse(id) {
   const next = new Set(collapsed.value)
@@ -618,18 +675,29 @@ function submit() {
                 <ChevronRight :size="14" class="pg-caret" />
                 <span class="pg-block-type">{{ section.title }}</span>
                 <span class="pg-block-summary">
-                  {{ section.fields.length }} field{{ section.fields.length === 1 ? '' : 's' }}
+                  <template v-if="section.widget_types">{{ slotBlocks(section).length }} widget{{ slotBlocks(section).length === 1 ? '' : 's' }}</template>
+                  <template v-else>{{ section.fields.length }} field{{ section.fields.length === 1 ? '' : 's' }}</template>
                 </span>
               </button>
             </div>
 
             <div v-show="!closedSections.has(section.key)" class="card-body">
-              <div class="pg-text-grid">
+              <!-- Widgets that render here on the page -->
+              <div v-if="section.widget_types" class="pg-slot">
+                <p class="pg-text-note mb-2">Shown here on the page. Edit them in Widgets below.</p>
+                <div v-for="block in slotBlocks(section)" :key="block.id" class="pg-slot-row">
+                  <span class="pg-slot-name">{{ widgetLabel(block) }}</span>
+                  <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="goToWidget(block)">Edit</button>
+                </div>
+                <p v-if="!slotBlocks(section).length" class="text-muted small mb-0">None yet.</p>
+              </div>
+
+              <div v-else class="pg-text-grid">
                 <div
                   v-for="field in section.fields"
                   :key="field.key"
                   class="pg-text-field"
-                  :class="{ 'is-wide': field.type === 'textarea' || field.type === 'image' }"
+                  :class="{ 'is-wide': field.type === 'textarea' || field.type === 'image' || field.type === 'banner' }"
                 >
                   <label class="form-label" :for="`pt-${field.key}`">{{ field.label }}</label>
 
@@ -662,6 +730,31 @@ function submit() {
                             class="form-control"
                             rows="2"
                           ></textarea>
+                          <!-- An image in a row, from the Media Library -->
+                          <div v-else-if="sub.type === 'image'" class="pg-image-row">
+                            <div class="pg-image-preview">
+                              <img v-if="row[subKey]" :src="row[subKey]" alt="" />
+                              <span v-else>No image</span>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                              <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="textPicker = { key: field.key, row: i, sub: subKey }">
+                                <Images :size="14" class="me-1" />
+                                {{ row[subKey] ? 'Replace' : 'Choose from library' }}
+                              </button>
+                              <button v-if="row[subKey]" type="button" class="btn btn-fig-secondary btn-fig-sm" @click="row[subKey] = ''">Remove</button>
+                            </div>
+                          </div>
+                          <!-- Show / hide this row -->
+                          <div v-else-if="sub.type === 'toggle'" class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              role="switch"
+                              :checked="isOn(row[subKey])"
+                              @change="row[subKey] = $event.target.checked ? '1' : '0'"
+                            />
+                            <span class="small text-muted">{{ isOn(row[subKey]) ? 'Shown' : 'Hidden' }}</span>
+                          </div>
                           <input v-else v-model="row[subKey]" type="text" class="form-control" />
                         </div>
                       </div>
@@ -679,6 +772,24 @@ function submit() {
                     <button type="button" class="btn btn-fig-secondary btn-fig-sm mt-2" @click="addRow(field)">
                       <Plus :size="14" class="me-1" /> Add
                     </button>
+                  </div>
+
+                  <!-- Desktop / Mobile banner -->
+                  <div v-else-if="field.type === 'banner'" class="pg-banner">
+                    <div class="pg-banner-preview" :class="`is-${field.variant || 'desktop'}`">
+                      <img v-if="form.texts[field.key]" :src="form.texts[field.key]" alt="" />
+                      <span v-else>No banner</span>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                      <label class="btn btn-fig-secondary btn-fig-sm mb-0" :class="{ disabled: bannerUploading === field.key }">
+                        <Images :size="14" class="me-1" />
+                        {{ bannerUploading === field.key ? 'Uploading…' : (form.texts[field.key] ? 'Change' : 'Upload') }}
+                        <input type="file" accept="image/*" hidden @change="uploadBanner(field, $event)" />
+                      </label>
+                      <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="textPicker = field.key">From library</button>
+                      <button v-if="form.texts[field.key]" type="button" class="btn btn-fig-secondary btn-fig-sm" @click="form.texts[field.key] = ''">Reset to original</button>
+                      <button type="button" class="btn btn-fig-primary btn-fig-sm" :disabled="form.processing" @click="submit">Save</button>
+                    </div>
                   </div>
 
                   <!-- Image: picked from the Media Library -->
@@ -706,6 +817,19 @@ function submit() {
                     </div>
                   </div>
 
+                  <!-- Show / hide a section -->
+                  <div v-else-if="field.type === 'toggle'" class="form-check form-switch">
+                    <input
+                      :id="`pt-${field.key}`"
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      :checked="isOn(form.texts[field.key])"
+                      @change="form.texts[field.key] = $event.target.checked ? '1' : '0'"
+                    />
+                    <span class="small text-muted">{{ isOn(form.texts[field.key]) ? 'Shown on the site' : 'Hidden' }}</span>
+                  </div>
+
                   <textarea
                     v-else-if="field.type === 'textarea'"
                     :id="`pt-${field.key}`"
@@ -726,7 +850,7 @@ function submit() {
                 </div>
               </div>
 
-              <p class="pg-text-note">Clear a field to put back the wording this page came with.</p>
+              <p v-if="!section.widget_types" class="pg-text-note">Clear a field to put back the wording this page came with.</p>
             </div>
           </div>
 
@@ -777,7 +901,7 @@ function submit() {
           </div>
 
           <!-- ── Widgets ─────────────────────────────────────────── -->
-          <template v-if="page.editable">
+          <template v-if="page.editable && page.widgets !== false">
             <div class="pg-toolbar">
               <span class="pg-toolbar-count">
                 {{ form.blocks.length }} widget{{ form.blocks.length === 1 ? '' : 's' }}
@@ -842,6 +966,7 @@ function submit() {
               </div>
 
             <div
+              :id="`pg-w-${block.id}`"
               class="card pg-block"
               :class="{ 'is-dragging': dragFrom === index, 'is-collapsed': collapsed.has(block.id) }"
               @dragover.prevent="onDragOver(index)"
@@ -1053,7 +1178,7 @@ function submit() {
                 <!-- Feature cards -->
                 <template v-else-if="block.type === 'feature_cards'">
                   <label class="form-label">Section title</label>
-                  <input v-model="block.title" type="text" class="form-control mb-3" placeholder="e.g. কেন চারুকথন আপনার জন্য?" />
+                  <input v-model="block.title" type="text" class="form-control mb-3" placeholder="e.g. কেন ছন্দ আপনার জন্য?" />
 
                   <div v-for="(card, i) in block.items ?? []" :key="i" class="pg-card-row">
                     <input v-model="card.title" type="text" class="form-control" placeholder="Card title" />
@@ -1177,7 +1302,7 @@ function submit() {
         </div>
 
         <!-- ── Live preview ────────────────────────────────────── -->
-        <aside v-if="showPreview && page.editable" class="pg-preview-pane">
+        <aside v-if="showPreview && page.editable && page.widgets !== false" class="pg-preview-pane">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h6 class="mb-0">Live preview</h6>
@@ -1197,7 +1322,7 @@ function submit() {
 
         <!-- ── Sidebar ─────────────────────────────────────────── -->
         <aside class="pg-side">
-          <div v-if="page.editable" class="card">
+          <div v-if="page.editable && page.widgets !== false" class="card">
             <div class="card-header"><h6 class="mb-0">Add a widget</h6></div>
             <div class="card-body pg-widget-list">
               <button
@@ -1325,8 +1450,8 @@ function submit() {
 
 /* A widget carrying a manual order says so without being opened. */
 .pg-seq-btn.is-set {
-  border-color: var(--bs-primary, #356019);
-  color: var(--bs-primary, #356019);
+  border-color: var(--bs-primary, #252f17);
+  color: var(--bs-primary, #252f17);
 }
 
 .pg-layout {
@@ -1393,7 +1518,7 @@ function submit() {
 .pg-toolbar-count {
   font-size: var(--fs-xs, 12px);
   font-weight: 600;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
   text-transform: uppercase;
   letter-spacing: .04em;
 }
@@ -1403,17 +1528,17 @@ function submit() {
   align-items: center;
   gap: 5px;
   padding: 4px 9px;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-sm, 6px);
   background: var(--surface, #fff);
   font-size: var(--fs-xs, 12px);
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
   cursor: pointer;
 }
 
 .pg-toolbar-btn:hover {
-  border-color: var(--line-strong, #d3d9cb);
-  color: var(--text, #1f2a17);
+  border-color: var(--line-strong, #d1cdca);
+  color: var(--text, #1a1817);
 }
 
 /* ── Block card ──────────────────────────────────────────── */
@@ -1431,7 +1556,7 @@ function submit() {
 .pg-drag {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
   cursor: grab;
 }
 
@@ -1453,7 +1578,7 @@ function submit() {
 
 .pg-caret {
   flex-shrink: 0;
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
   transition: transform .15s ease;
   transform: rotate(90deg);
 }
@@ -1466,7 +1591,7 @@ function submit() {
   white-space: nowrap;
   text-overflow: ellipsis;
   font-size: var(--fs-xs, 12px);
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 
 /* ── Insert-between gap ──────────────────────────────────── */
@@ -1491,8 +1616,8 @@ function submit() {
 }
 
 .pg-gap:hover::before,
-.pg-gap.is-open::before { background: var(--line-strong, #d3d9cb); }
-.pg-gap.is-over::before { background: var(--admin-green-600, #356019); }
+.pg-gap.is-open::before { background: var(--line-strong, #d1cdca); }
+.pg-gap.is-over::before { background: var(--admin-green-600, #252f17); }
 
 .pg-gap-btn {
   position: relative;
@@ -1501,10 +1626,10 @@ function submit() {
   justify-content: center;
   width: 20px;
   height: 20px;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-full, 999px);
   background: var(--surface, #fff);
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
   opacity: 0;
   cursor: pointer;
   transition: opacity .12s ease;
@@ -1514,8 +1639,8 @@ function submit() {
 .pg-gap.is-open .pg-gap-btn { opacity: 1; }
 
 .pg-gap.is-open .pg-gap-btn {
-  border-color: var(--admin-green-600, #356019);
-  color: var(--admin-green-600, #356019);
+  border-color: var(--admin-green-600, #252f17);
+  color: var(--admin-green-600, #252f17);
 }
 
 .pg-inserter {
@@ -1528,10 +1653,10 @@ function submit() {
   gap: 2px;
   width: max-content;
   padding: 6px;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-md, 10px);
   background: var(--surface, #fff);
-  box-shadow: var(--el-2, 0 8px 24px rgba(28, 51, 13, .12));
+  box-shadow: var(--el-2, 0 8px 24px rgba(26, 33, 16, .12));
   transform: translateX(-50%);
 }
 
@@ -1544,12 +1669,12 @@ function submit() {
   border-radius: var(--r-sm, 6px);
   background: none;
   font-size: var(--fs-sm, 13px);
-  color: var(--text, #1f2a17);
+  color: var(--text, #1a1817);
   white-space: nowrap;
   cursor: pointer;
 }
 
-.pg-inserter-btn:hover { background: var(--surface-sunk, #f7f8f5); }
+.pg-inserter-btn:hover { background: var(--surface-sunk, #f5f4f2); }
 
 .pg-empty-grid {
   display: grid;
@@ -1569,10 +1694,10 @@ function submit() {
   gap: var(--sp-2, 8px);
   margin-top: var(--sp-4, 16px);
   padding: var(--sp-3, 12px) var(--sp-4, 16px);
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-md, 10px);
   background: var(--surface, #fff);
-  box-shadow: var(--el-2, 0 8px 24px rgba(28, 51, 13, .12));
+  box-shadow: var(--el-2, 0 8px 24px rgba(26, 33, 16, .12));
 }
 
 .pg-savebar-text {
@@ -1620,9 +1745,9 @@ function submit() {
 }
 
 .pg-widget-btn:hover {
-  border-color: #356019;
+  border-color: #252f17;
   background: #f2f7ec;
-  color: #2c5015;
+  color: #1a2110;
 }
 
 /* ── Page text sections ──────────────────────────────────── */
@@ -1650,12 +1775,12 @@ function submit() {
   gap: var(--sp-2, 8px);
   padding: 10px;
   margin-bottom: 8px;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-sm, 6px);
   background: var(--surface, #fff);
 }
 
-.pg-rep-row.is-over { border-color: var(--admin-green-600, #356019); }
+.pg-rep-row.is-over { border-color: var(--admin-green-600, #252f17); }
 
 .pg-rep-fields {
   display: grid;
@@ -1675,14 +1800,14 @@ function submit() {
   margin-top: 6px;
   font-family: var(--mono, ui-monospace, monospace);
   font-size: 11px;
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
   overflow-wrap: anywhere;
 }
 
 .pg-text-note {
   margin: var(--sp-3, 12px) 0 0;
   font-size: var(--fs-xs, 12px);
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
 }
 
 .pg-card-row {
@@ -1705,10 +1830,10 @@ function submit() {
   width: 46px;
   height: 34px;
   overflow: hidden;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-sm, 6px);
-  background: var(--surface-sunk, #f7f8f5);
-  color: var(--text-faint, #98a08f);
+  background: var(--surface-sunk, #f5f4f2);
+  color: var(--text-faint, #9c9591);
 }
 
 .pg-strip-thumb video {
@@ -1858,4 +1983,32 @@ function submit() {
 .pg-preview :deep(figure) { margin: 0 0 16px; }
 .pg-preview :deep(figcaption) { font-size: 13px; color: #9b8d80; margin-top: 6px; }
 .pg-preview :deep(.page-split) { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; margin-bottom: 18px; }
+
+/* Desktop / Mobile banner preview, at each banner's shape */
+.pg-banner-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+.pg-banner-preview.is-desktop { width: 100%; aspect-ratio: 1920 / 848; }
+.pg-banner-preview.is-mobile { width: 220px; aspect-ratio: 402 / 512; }
+.pg-banner-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Widgets listed where they render */
+.pg-slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.pg-slot-row:last-of-type { border-bottom: 0; }
+.pg-slot-name { font-weight: 500; }
 </style>

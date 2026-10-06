@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Brand;
 use Illuminate\Support\Facades\Cache;
 
 class SiteInfo extends Model
@@ -48,6 +49,12 @@ class SiteInfo extends Model
         'free_shipping_min_amount' => 'decimal:2',
         'maintenance_mode' => 'boolean',
     ];
+
+    /** The store name as shown: an old Charukothon value reads as Chhondo. */
+    public function getAppNameAttribute($value)
+    {
+        return Brand::rebrand($value);
+    }
 
     /** Cache key for the maintenance flag, read on every storefront request. */
     public const MAINTENANCE_CACHE_KEY = 'site_info_maintenance_mode';

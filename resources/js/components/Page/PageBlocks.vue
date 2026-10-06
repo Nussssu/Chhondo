@@ -31,11 +31,21 @@ function isFileVideo(url) {
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url || "")
 }
 
-/** Keeps the line breaks an operator typed into a heading. */
-function lineBreaks(value) {
-  return String(value ?? '')
-    .replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
-    .replace(/\n/g, '<br />')
+/**
+ * Figma section titles end in gold: the last word of a one-line title
+ * ("শারদীয় <gold>কালেকশন</gold>"), or everything after the first word of the
+ * last line of a two-line one ("হোক <gold>উৎসবের আনন্দ</gold>").
+ */
+function accentTitle(value) {
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  const lines = String(value ?? '').trim().split('\n')
+  const last = lines.pop().trim()
+  const words = last.split(/\s+/)
+  const cut = lines.length ? 1 : Math.max(words.length - 1, 0)
+  const plain = words.slice(0, cut).join(' ')
+  const gold = words.slice(cut).join(' ')
+  const tail = (plain ? esc(plain) + ' ' : '') + (gold ? `<span class="pb-accent">${esc(gold)}</span>` : '')
+  return [...lines.map(esc), tail].join('<br />')
 }
 
 /** The strip always fills four columns, repeating if fewer were added. */
@@ -170,15 +180,17 @@ function gridClass(block) {
     <!-- Call to action band -->
     <section v-else-if="block.type === 'cta_banner'" class="pb-block pb-cta-band">
       <div class="container text-center">
-        <h2 v-if="block.title" class="pb-cta-title" v-html="lineBreaks(block.title)"></h2>
-        <p v-if="block.text" class="pb-section-sub">{{ block.text }}</p>
+        <div>
+          <h2 v-if="block.title" class="pb-cta-title" v-html="accentTitle(block.title)"></h2>
+          <p v-if="block.text" class="pb-section-sub">{{ block.text }}</p>
+        </div>
         <Link
           v-if="block.button_label"
           :href="block.button_url || '/shop'"
           class="pb-cta-band-btn"
         >
           {{ block.button_label }}
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </Link>
@@ -200,13 +212,22 @@ function gridClass(block) {
 
     <!-- Product section — repeatable; each one has its own source -->
     <section v-else-if="block.type === 'product_section'" class="pb-block pb-products">
+      <!-- Figma: the outlined logo mark at 10%, bleeding off the page edge -->
+      <span class="pb-watermark pb-watermark--left" aria-hidden="true"></span>
+      <span class="pb-watermark pb-watermark--right" aria-hidden="true"></span>
       <div class="container">
-        <div v-if="block.title || block.subtitle" class="pb-products-head">
-          <h2 v-if="block.title" class="pb-section-title">{{ block.title }}</h2>
-          <p v-if="block.subtitle" class="pb-section-sub">{{ block.subtitle }}</p>
+        <div v-if="block.title || block.subtitle || (block.cta_label && block.cta_url)" class="pb-products-head">
+          <div class="pb-products-copy">
+            <h2 v-if="block.title" class="pb-section-title" v-html="accentTitle(block.title)"></h2>
+            <p v-if="block.subtitle" class="pb-section-sub">{{ block.subtitle }}</p>
+          </div>
+          <Link v-if="block.cta_label && block.cta_url" :href="block.cta_url" class="pb-cta-btn">
+            {{ block.cta_label }}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+          </Link>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 md:gap-6" :class="gridClass(block)">
+        <div class="pb-products-grid grid grid-cols-2" :class="gridClass(block)">
           <CollectionCard
             v-for="product in block.products || []"
             :key="product.id"
@@ -215,9 +236,6 @@ function gridClass(block) {
           />
         </div>
 
-        <div v-if="block.cta_label && block.cta_url" class="pb-cta">
-          <Link :href="block.cta_url" class="pb-cta-btn">{{ block.cta_label }}</Link>
-        </div>
       </div>
     </section>
 
@@ -285,13 +303,13 @@ function gridClass(block) {
 
 /* ===== Headings ===== */
 .pb-heading {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-weight: 600;
   color: #3e3c3a;
 }
 
 .pb-heading--h1 {
-  font-family: "Sora", "Hind Siliguri", sans-serif;
+  font-family: "Sora", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 30px;
   line-height: 42px;
 }
@@ -312,26 +330,26 @@ function gridClass(block) {
 }
 
 .pb-section-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 24px;
   font-weight: 600;
   line-height: 34px;
-  color: #3e3c3a;
+  color: #1a1817;
   text-align: center;
 }
 
 .pb-section-sub {
   margin-top: 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 15px;
   line-height: 26px;
-  color: #6b5f54;
+  color: #6d6560;
   text-align: center;
 }
 
 /* ===== Prose ===== */
 .pb-prose {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   line-height: 30px;
   color: #4a423b;
@@ -354,7 +372,7 @@ function gridClass(block) {
 
 .pb-figure figcaption {
   margin-top: 8px;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 13px;
   color: #9b8d80;
   text-align: center;
@@ -400,7 +418,7 @@ function gridClass(block) {
 .pb-caption {
   margin-top: 10px;
   text-align: center;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 13px;
   color: #9b8d80;
 }
@@ -441,8 +459,9 @@ function gridClass(block) {
   width: calc(100% + 1px);
 }
 
+/* Figma tiles: 480 × 652, four across edge to edge */
 @media (min-width: 768px) {
-  .pb-strip-item { aspect-ratio: 3 / 4; }
+  .pb-strip-item { aspect-ratio: 480 / 652; }
 }
 
 .pb-strip-item video,
@@ -454,84 +473,125 @@ function gridClass(block) {
   border: 0;
 }
 
-/* ===== CTA band ===== */
-.pb-cta-band {
-  background: #fffaf4;
-  padding: 56px 0;
+/* ===== CTA band — Figma "শারদ স্নিগ্ধতায় উদ্‌যাপিত হোক উৎসবের আনন্দ" ===== */
+.pb-block.pb-cta-band {
+  background: #fff;
+  padding: 132px 0 48px;
 }
+
+.pb-cta-band .container { display: flex; align-items: flex-end; justify-content: space-between; gap: 48px; text-align: left; }
 
 .pb-cta-title {
-  font-family: "Sora", "Hind Siliguri", sans-serif;
-  font-size: 26px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 56px;
   font-weight: 600;
-  line-height: 38px;
-  color: #3e3c3a;
-  margin-bottom: 20px;
-}
-
-@media (min-width: 768px) {
-  .pb-cta-title { font-size: 38px; line-height: 52px; }
+  line-height: 68px;
+  color: #1a1817;
+  margin-bottom: 0;
 }
 
 .pb-cta-band-btn {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  border-radius: 4px;
-  background: var(--color-theme, #356019);
+  height: 56px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #1a2110;
   color: #fff;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
-  font-size: 16px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 20px;
   font-weight: 600;
-  transition: filter 0.2s ease;
+  line-height: 28px;
+  transition: background-color 0.2s ease, transform .2s ease;
 }
 
-.pb-cta-band-btn:hover { filter: brightness(0.9); }
+.pb-cta-band-btn:hover { background: #252f17; transform: translateY(-2px); }
 
-/* ===== Products ===== */
-.pb-products {
-  background: #fffaf4;
+/* ===== Products — Figma "শারদীয় কালেকশন" ===== */
+.pb-block.pb-products {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  padding: 132px 0;
 }
+
+.pb-products .container { position: relative; z-index: 1; }
+
+/* Two-tone section titles (see accentTitle) */
+.pb-block :deep(.pb-accent) { color: #cc9b25; }
+
+.pb-watermark {
+  position: absolute;
+  width: 972px;
+  height: 868px;
+  background: url('/assets/chhondo/logo-outline.svg') no-repeat center / contain;
+  opacity: .1;
+  pointer-events: none;
+}
+.pb-watermark--left { left: -274px; top: 338px; }
+.pb-watermark--right { right: -445px; top: 189px; }
 
 .pb-products-head {
-  margin-bottom: 28px;
-  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 48px;
+  margin-bottom: 48px;
+  text-align: left;
 }
+
+.pb-products-copy { display: flex; flex-direction: column; gap: 16px; }
+
+.pb-products-head .pb-section-title,
+.pb-products-head .pb-section-sub { text-align: left; }
 
 .pb-products .pb-section-title {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 68px;
+  color: #1a1817;
 }
 
-@media (min-width: 768px) {
-  .pb-products .pb-section-title { font-size: 44px; }
+.pb-products .pb-section-sub {
+  margin: 0;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+  color: #3c3834;
 }
+
+.pb-products-grid { gap: 48px 20px; }
 
 .pb-cta {
   margin-top: 28px;
   text-align: center;
 }
 
+/* Gold/300 button with Gold/800 label and chevron */
 .pb-cta-btn {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  height: 46px;
-  padding: 0 26px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
   border-radius: 8px;
-  border: 1.5px solid var(--color-theme, #356019);
-  color: var(--color-theme, #356019);
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
-  font-size: 15px;
+  background: #ddbc6d;
+  color: #564110;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+  font-size: 16px;
   font-weight: 600;
-  transition: filter 0.2s ease;
+  line-height: 24px;
+  transition: background-color 0.2s ease, transform .2s ease;
 }
 
 .pb-cta-btn:hover {
-  background: var(--color-theme, #356019);
-  color: #fff;
+  background: #d6af51;
+  transform: translateY(-2px);
 }
 
 /* Feature cards — four across on a desktop, matching the About page design
@@ -559,8 +619,27 @@ function gridClass(block) {
   background: #fffaf4;
 }
 
+@media (max-width: 1279px) {
+  .pb-products .pb-section-title,
+  .pb-cta-title { font-size: 44px; line-height: 56px; }
+}
+
+/* Figma phone: 20px gutters, 32/40 titles, buttons under the copy, 12px grid */
+@media (max-width: 767px) {
+  .pb-block.pb-products { padding: 36px 0 48px; }
+  .pb-products .container { padding-inline: 20px; }
+  .pb-watermark { display: none; }
+  .pb-products-head { align-items: flex-start; flex-direction: column; gap: 32px; margin-bottom: 36px; }
+  .pb-products .pb-section-title { font-size: 32px; line-height: 40px; }
+  .pb-products-grid { gap: 12px; }
+  .pb-block.pb-cta-band { padding: 48px 0 24px; }
+  .pb-cta-band .container { align-items: center; flex-direction: column; gap: 32px; text-align: center; padding-inline: 20px; }
+  .pb-cta-title { font-size: 32px; line-height: 40px; }
+  .pb-cta-band-btn { height: 44px; font-size: 16px; line-height: 24px; }
+}
+
 .pb-card-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #3e3c3a;
@@ -568,7 +647,7 @@ function gridClass(block) {
 
 .pb-card-text {
   margin-top: 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   line-height: 24px;
   color: #6b5f54;

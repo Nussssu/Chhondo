@@ -68,7 +68,7 @@
           >
             <template #cell-product_name="{ row }">
               <div class="d-flex align-items-center gap-2">
-                <img :src="row.featured_image" width="36" height="36" class="rounded flex-shrink-0" alt="" loading="lazy" />
+                <img :src="row.featured_image || '/placeholder.svg'" width="36" height="36" class="rounded flex-shrink-0" alt="" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
                 <div class="min-w-0">
                   <div class="fw-semibold text-truncate" :title="row.product_name">{{ row.product_name }}</div>
                   <div class="text-muted small text-truncate">{{ row.product_code || '—' }}</div>

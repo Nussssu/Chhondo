@@ -6,7 +6,7 @@
     the same arithmetic the invoice uses.
 --}}
 @php
-    $accent = $brand['colour'] ?? '#2c5015';
+    $accent = $brand['colour'] ?? '#1a2110';
     $totals = $order->totals();
 @endphp
 

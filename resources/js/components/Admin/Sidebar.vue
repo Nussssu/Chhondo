@@ -118,7 +118,11 @@ watch(() => page.url, () => {
   <nav class="sb" :class="{ 'is-collapsed': collapsed }" aria-label="Admin navigation">
     <div class="sb-header">
       <a :href="route('dashboard')" class="sb-logo">
-        <img :src="logo" alt="Admin home" />
+        <!-- The Chhondo mark and word, light on the olive sidebar -->
+        <span class="sb-brand" role="img" aria-label="Chhondo — admin home">
+          <img :src="'/assets/chhondo/logo-mark-light.svg'" alt="" class="sb-brand-mark" />
+          <img v-if="!collapsed" :src="'/assets/chhondo/logo-word-light.svg'" alt="" class="sb-brand-word" />
+        </span>
       </a>
       <button
         type="button"
@@ -206,8 +210,10 @@ watch(() => page.url, () => {
   flex-shrink: 0;
 }
 
-.sb-logo img { max-width: 120px; height: auto; }
-.sb.is-collapsed .sb-logo img { max-width: 40px; }
+.sb-brand { display: grid; justify-items: center; align-items: center; gap: 3px; }
+.sb-brand-mark { width: 48px; height: 42px; display: block; }
+.sb-brand-word { width: 57px; height: 7px; display: block; }
+.sb.is-collapsed .sb-brand-mark { width: 32px; height: 28px; }
 
 .sb-collapse {
   display: flex;

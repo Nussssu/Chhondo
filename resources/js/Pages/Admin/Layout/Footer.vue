@@ -28,6 +28,7 @@ const form = useForm({
   settings: {
     columns: [],
     badges: [],
+    legal_links: [],
     ...JSON.parse(JSON.stringify(props.settings)),
   },
   site: { ...props.site },
@@ -65,6 +66,12 @@ function moveLink(column, index, delta) {
 }
 
 /* ---------------------------------------------------------------- badges -- */
+
+/* ------------------------------------------------------- bottom links -- */
+
+function addLegalLink() {
+  form.settings.legal_links.push({ label: '', url: '' })
+}
 
 function addBadge() {
   form.settings.badges.push({ title: '', text: '', icon: 'security' })
@@ -213,12 +220,14 @@ function submit() {
               <label class="form-label">Title</label>
               <input v-model="form.settings.contact_title" type="text" class="form-control mb-3" />
 
-              <label class="form-label">Email</label>
-              <input v-model="form.site.store_email" type="email" class="form-control mb-2" />
-              <label class="form-label">Phone</label>
-              <input v-model="form.site.phone_number" type="text" class="form-control mb-2" />
+              <!-- The footer's own details; the store's contact settings
+                   (used by emails and the contact page) are left alone. -->
               <label class="form-label">Address</label>
-              <input v-model="form.site.address" type="text" class="form-control" />
+              <input v-model="form.settings.contact_address" type="text" class="form-control mb-2" />
+              <label class="form-label">Email</label>
+              <input v-model="form.settings.contact_email" type="text" class="form-control mb-2" />
+              <label class="form-label">Phone</label>
+              <input v-model="form.settings.contact_phone" type="text" class="form-control" />
             </div>
           </div>
 
@@ -229,6 +238,7 @@ function submit() {
               <input v-model="form.site.instagram_url" type="url" class="form-control mb-2" placeholder="Instagram URL" />
               <input v-model="form.site.tiktok_url" type="url" class="form-control mb-2" placeholder="TikTok URL" />
               <input v-model="form.site.youtube_url" type="url" class="form-control mb-2" placeholder="YouTube URL" />
+              <input v-model="form.settings.linkedin_url" type="url" class="form-control mb-2" placeholder="LinkedIn URL" />
               <input v-model="form.site.x_url" type="url" class="form-control" placeholder="X URL" />
             </div>
           </div>
@@ -240,6 +250,15 @@ function submit() {
               <textarea v-model="form.site.footer_text" class="form-control" rows="2"></textarea>
               <label class="form-label mt-3">Copyright line</label>
               <input v-model="form.settings.copyright" type="text" class="form-control" placeholder="Leave empty for the default" />
+              <small class="text-muted d-block mt-1">{year} becomes the current year.</small>
+
+              <label class="form-label mt-3">Links beside the copyright</label>
+              <div v-for="(link, li) in form.settings.legal_links" :key="li" class="d-flex gap-2 mb-2">
+                <input v-model="link.label" type="text" class="form-control" placeholder="Label" />
+                <input v-model="link.url" type="text" class="form-control" placeholder="/link" />
+                <button type="button" class="table-icon-btn is-danger" title="Remove" @click="form.settings.legal_links.splice(li, 1)">×</button>
+              </div>
+              <button type="button" class="btn btn-fig-secondary btn-fig-sm" :disabled="form.settings.legal_links.length >= 4" @click="addLegalLink">+ Add link</button>
             </div>
           </div>
 

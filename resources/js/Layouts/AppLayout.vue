@@ -10,11 +10,17 @@ import { Toaster, toast } from "@steveyuowo/vue-hot-toast";
 import ClientOnly from "@/components/ClientOnly.vue";
 import { useHomeStore } from "@/Store/homeStore";
 
+// Log in and Sign up have no footer in the Figma.
+defineProps({ hideFooter: { type: Boolean, default: false } });
+
 const homeStore = useHomeStore();
 const globalLoadingState = reactive({ isLoading: false });
 provide('globalLoadingState', globalLoadingState);
 
 const page = usePage();
+
+// Landing only — the 76px mobile content pad plus the footer's own top pad
+// stack into ~190px of dead space below the last home section.
 
 // Server-side flash messages, surfaced through the Toaster that was already
 // mounted here but had nothing feeding it. Watching the prop rather than
@@ -132,10 +138,13 @@ watch(
             <a href="/admin/manage" class="underline font-semibold ml-1">Turn it off</a>
         </div>
         <Header />
-        <div class="pb-[68px] md:pb-0">
+        <!-- Phones: the fixed bottom nav is cleared below the footer, so every
+             page keeps the same gap above it. Without a footer the content
+             clears it instead. -->
+        <div :class="hideFooter ? 'pb-[76px] md:pb-0' : null">
             <slot />
         </div>
-        <Footer />
+        <Footer v-if="!hideFooter" />
         <MobileBottomNav />
         <LoginPromptModal />
     </div>

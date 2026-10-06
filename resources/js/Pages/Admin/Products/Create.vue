@@ -666,7 +666,7 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: var(--admin-cream, #FFFAF4);
+  background: var(--admin-cream, #FAF5E9);
 }
 
 .pf-tab {

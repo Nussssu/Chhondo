@@ -280,7 +280,7 @@ function exportExcel() {
 .ph-stat-note { font-size: .72rem; color: #b0bec5; }
 
 /* The figure the page exists for. */
-.ph-stat--owed { border-color: #f3d7c6; background: #fffaf4; }
+.ph-stat--owed { border-color: #f3d7c6; background: #faf5e9; }
 .ph-stat--owed .ph-stat-value { color: #B23113; }
 .ph-stat--owed .ph-stat-note { color: #b0796a; }
 
@@ -322,14 +322,14 @@ function exportExcel() {
 }
 .ph-figure-value { font-size: .92rem; font-weight: 700; color: #455a64; font-variant-numeric: tabular-nums; }
 .ph-figure.is-owed .ph-figure-value { color: #B23113; }
-.ph-figure.is-clear .ph-figure-value { color: #2C5015; }
+.ph-figure.is-clear .ph-figure-value { color: #1A2110; }
 
 .ph-purchases { border-top: 1px solid #eceff1; }
 .ph-due { color: #B23113; font-weight: 600; }
 
 .ph-link {
   border: 0; background: transparent; padding: 0;
-  color: #356019; font-size: .78rem; font-weight: 600; cursor: pointer;
+  color: #252f17; font-size: .78rem; font-weight: 600; cursor: pointer;
 }
 .ph-link:hover { text-decoration: underline; }
 
@@ -340,7 +340,7 @@ function exportExcel() {
   padding: 4px 0; font-size: .8rem;
 }
 .ph-payment-date { color: #90a4ae; min-width: 96px; }
-.ph-payment-amount { font-weight: 700; color: #2C5015; font-variant-numeric: tabular-nums; min-width: 110px; }
+.ph-payment-amount { font-weight: 700; color: #1A2110; font-variant-numeric: tabular-nums; min-width: 110px; }
 .ph-payment-method { color: #607d8b; text-transform: capitalize; }
 
 /* Empty */

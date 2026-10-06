@@ -1,42 +1,20 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
-import PageBlocks from "@/components/Page/PageBlocks.vue"
-import { Head, router, usePage } from "@inertiajs/vue3"
+import { Head, router } from "@inertiajs/vue3"
 import { computed, ref } from "vue"
+import { on, plain } from "@/utils/cms"
 import { toast } from "@steveyuowo/vue-hot-toast"
-import { Phone, Mail, MapPin, Clock, MessageCircle } from "lucide-vue-next"
-import PhoneField from "@/components/Form/PhoneField.vue"
 
-defineProps({
-  // Wording for this page, editable in Content > Pages.
+const props = defineProps({
+  // Content › Pages › Contact us: the heading and the line under it come from
+  // "Page header", the form's wording from "Form".
   texts: { type: Object, default: () => ({}) },
   intro: { type: Object, default: () => ({}) },
   blocks: { type: Array, default: () => [] },
   content: { type: String, default: "" },
 })
 
-// Contact details come from the one place they are edited — Settings › Store,
-// mirrored on Content › Pages › Contact us — never from copy typed into a page.
-const page = usePage()
-const contact = computed(() => page.props.contact ?? {})
-
-const socials = computed(() =>
-  [
-    { key: "facebook", label: "Facebook", url: contact.value.facebook },
-    { key: "instagram", label: "Instagram", url: contact.value.instagram },
-    { key: "tiktok", label: "TikTok", url: contact.value.tiktok },
-    { key: "youtube", label: "YouTube", url: contact.value.youtube },
-    { key: "x", label: "X", url: contact.value.x },
-  ].filter((s) => s.url)
-)
-
-/** A phone number is only dialable once the spaces and dashes come out. */
-const telHref = (value) => `tel:${String(value ?? "").replace(/[^\d+]/g, "")}`
-
-const whatsappHref = computed(() => {
-  const digits = String(contact.value.whatsapp ?? "").replace(/\D/g, "")
-  return digits ? `https://wa.me/${digits}` : null
-})
+const t = computed(() => props.texts || {})
 
 const form = ref({
   name: "",
@@ -47,9 +25,6 @@ const form = ref({
 
 const errors = ref({})
 const isSubmitting = ref(false)
-// Reported by PhoneField, which checks the number against the selected
-// country's numbering plan rather than just its length.
-const phoneValid = ref(false)
 
 const validateForm = () => {
   errors.value = {}
@@ -66,7 +41,7 @@ const validateForm = () => {
 
   if (!form.value.phone.trim()) {
     errors.value.phone = "ফোন নম্বর লিখুন"
-  } else if (!phoneValid.value) {
+  } else if (!/^\+?[0-9]{8,15}$/.test(form.value.phone.replace(/[\s()-]/g, ""))) {
     errors.value.phone = "সঠিক ফোন নম্বর দিন"
   }
 
@@ -99,127 +74,47 @@ const submitForm = async () => {
 
 <template>
   <Head>
-    <title>{{ texts.t1 }}</title>
+    <title>{{ plain(t.tab_title) }}</title>
   </Head>
   <AppLayout>
-    <section class="contact-page py-12 md:py-16">
-      <div class="container max-w-6xl mx-auto px-4">
-        <div class="text-center mb-9 md:mb-10">
-          <h1 class="headline-1 text-[#3E3C3A]">{{ intro?.title || 'যোগাযোগ করুন' }}</h1>
-          <p v-if="intro?.subtitle" class="body-1-r text-[#6E6C69] mt-3 leading-relaxed">
-            {{ intro.subtitle }}
-          </p>
-          <!-- Written in the admin under Content › Pages › Contact us -->
-          <div v-if="content" class="contact-intro mt-4" v-html="content"></div>
-          <p v-else class="body-2-r text-[#696560] mt-4">{{ texts.t2 }}</p>
+    <!-- Figma "Contact Us": title, line, one 900px form card -->
+    <section class="contact-page">
+      <div class="container">
+        <div class="contact-head">
+          <h1 class="contact-title">{{ intro.title || plain(t.tab_title) }}</h1>
+          <p v-if="intro.subtitle" class="contact-sub">{{ intro.subtitle }}</p>
         </div>
 
-        <div class="contact-grid">
-          <!-- ── Left: the details, and where to find us ─────────── -->
-          <aside class="contact-aside">
-            <div class="contact-card rounded-2xl p-6 md:p-7">
-              <h2 class="body-3-sb text-[#3E3C3A] mb-5">{{ texts.t3 }}</h2>
-
-              <ul class="contact-list">
-                <li v-if="contact.phone">
-                  <span class="contact-ico"><Phone class="w-[17px] h-[17px]" /></span>
-                  <div>
-                    <span class="contact-term">{{ texts.t4 }}</span>
-                    <a :href="telHref(contact.phone)" class="contact-value contact-link" dir="ltr">{{ contact.phone }}</a>
-                  </div>
-                </li>
-
-                <li v-if="whatsappHref">
-                  <span class="contact-ico"><MessageCircle class="w-[17px] h-[17px]" /></span>
-                  <div>
-                    <span class="contact-term">{{ texts.t5 }}</span>
-                    <a :href="whatsappHref" target="_blank" rel="noopener" class="contact-value contact-link" dir="ltr">
-                      {{ contact.whatsapp }}
-                    </a>
-                  </div>
-                </li>
-
-                <li v-if="contact.email">
-                  <span class="contact-ico"><Mail class="w-[17px] h-[17px]" /></span>
-                  <div>
-                    <span class="contact-term">{{ texts.t6 }}</span>
-                    <a :href="`mailto:${contact.email}`" class="contact-value contact-link">{{ contact.email }}</a>
-                  </div>
-                </li>
-
-                <li v-if="contact.address">
-                  <span class="contact-ico"><MapPin class="w-[17px] h-[17px]" /></span>
-                  <div>
-                    <span class="contact-term">{{ texts.t7 }}</span>
-                    <span class="contact-value">{{ contact.address }}</span>
-                  </div>
-                </li>
-
-                <li v-if="contact.hours">
-                  <span class="contact-ico"><Clock class="w-[17px] h-[17px]" /></span>
-                  <div>
-                    <span class="contact-term">{{ texts.t8 }}</span>
-                    <span class="contact-value">{{ contact.hours }}</span>
-                  </div>
-                </li>
-              </ul>
-
-              <div v-if="socials.length" class="contact-socials">
-                <span class="contact-term">{{ texts.t9 }}</span>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  <a
-                    v-for="s in socials"
-                    :key="s.key"
-                    :href="s.url"
-                    target="_blank"
-                    rel="noopener"
-                    class="contact-social"
-                  >
-                    {{ s.label }}
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Derived from the store address, so it follows whatever is saved -->
-            <div v-if="contact.map" class="contact-map rounded-2xl">
-              <iframe
-                :src="contact.map"
-                title="Store location"
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                allowfullscreen
-              ></iframe>
-            </div>
-          </aside>
-
-          <!-- ── Right: the enquiry form ─────────────────────────── -->
-          <div class="contact-card rounded-2xl p-6 md:p-8">
-            <h2 class="body-3-sb text-[#3E3C3A] mb-5">{{ texts.t10 }}</h2>
-            <form @submit.prevent="submitForm" class="space-y-5">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="contact-card">
+          <h2 class="contact-card-title">{{ t.card_title }}</h2>
+          <form @submit.prevent="submitForm" class="contact-form">
+            <div class="contact-row">
               <div>
-                <label for="email" class="block body-1-sb text-[#403E3B] mb-2">{{ texts.t11 }}</label>
+                <label for="email" class="contact-label">{{ t.email_label }}</label>
                 <input
                   id="email"
                   v-model="form.email"
                   type="email"
-                  placeholder="example@email.com"
+                  :placeholder="t.email_placeholder"
                   class="contact-input"
                   :class="{ 'border-red-500': errors.email }"
                 />
                 <p v-if="errors.email" class="mt-1 text-sm text-red-500">
                   {{ errors.email }}
                 </p>
+                <p v-else-if="on(t.email_hint_show) && t.email_hint" class="contact-hint">{{ t.email_hint }}</p>
               </div>
 
               <div>
-                <label for="phone" class="block body-1-sb text-[#403E3B] mb-2">{{ texts.t12 }}</label>
-                <PhoneField
+                <label for="phone" class="contact-label">{{ t.phone_label }}</label>
+                <input
                   id="phone"
                   v-model="form.phone"
-                  v-model:valid="phoneValid"
-                  :invalid="!!errors.phone"
+                  type="tel"
+                  inputmode="tel"
+                  :placeholder="t.phone_placeholder"
+                  class="contact-input contact-input--latin"
+                  :class="{ 'border-red-500': errors.phone }"
                 />
                 <p v-if="errors.phone" class="mt-1 text-sm text-red-500">
                   {{ errors.phone }}
@@ -228,12 +123,12 @@ const submitForm = async () => {
             </div>
 
             <div>
-              <label for="name" class="block body-1-sb text-[#403E3B] mb-2">{{ texts.t13 }}</label>
+              <label for="name" class="contact-label">{{ t.name_label }}</label>
               <input
                 id="name"
                 v-model="form.name"
                 type="text"
-                placeholder="আপনার সম্পূর্ণ নাম"
+                :placeholder="t.name_placeholder"
                 class="contact-input"
                 :class="{ 'border-red-500': errors.name }"
               />
@@ -243,13 +138,13 @@ const submitForm = async () => {
             </div>
 
             <div>
-              <label for="message" class="block body-1-sb text-[#403E3B] mb-2">{{ texts.t14 }}</label>
+              <label for="message" class="contact-label">{{ t.message_label }}</label>
               <textarea
                 id="message"
                 v-model="form.message"
-                rows="6"
-                placeholder="আপনার বার্তা এখানে লিখুন"
-                class="contact-input resize-none"
+                rows="5"
+                :placeholder="t.message_placeholder"
+                class="contact-input contact-textarea resize-none"
                 :class="{ 'border-red-500': errors.message }"
               ></textarea>
               <p v-if="errors.message" class="mt-1 text-sm text-red-500">
@@ -257,213 +152,121 @@ const submitForm = async () => {
               </p>
             </div>
 
-            <button
-              type="submit"
-              :disabled="isSubmitting"
-              class="w-full bg-[#1D6E13] hover:bg-[#16580f] text-white body-2-sb py-4 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="!isSubmitting">{{ texts.t15 }}</span>
-              <span v-else class="flex items-center justify-center gap-2">
-                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                    fill="none"
-                  ></circle>
-                  <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>{{ texts.t16 }}</span>
+            <button type="submit" class="contact-submit" :disabled="isSubmitting">
+              {{ isSubmitting ? t.sending_label : t.submit_label }}
             </button>
-            </form>
-          </div>
+          </form>
         </div>
       </div>
     </section>
 
-    <!-- Widgets added in Content › Pages -->
-    <PageBlocks :blocks="blocks" />
   </AppLayout>
 </template>
 
 <style scoped>
-.contact-intro {
-  font-family: 'Hind Siliguri', 'Poppins', sans-serif;
+.contact-page { padding: 64px 0 96px; background: #fff; }
+
+.contact-head { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 40px; text-align: center; }
+.contact-title {
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 68px;
+  color: #1a1817;
+}
+.contact-sub {
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 16px;
-  line-height: 28px;
-  color: #696560;
-}
-
-.contact-intro :deep(h2) {
-  font-size: 20px;
-  font-weight: 600;
-  color: #3E3C3A;
-  margin: 12px 0 8px;
-}
-
-.contact-intro :deep(p) {
-  margin-bottom: 10px;
-}
-
-.contact-page {
-  background-color: #fffaf4;
-}
-
-/* Details and map on the left, the form on the right; one column on mobile,
-   where the form matters more than the address and so comes first. */
-.contact-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-@media (min-width: 1024px) {
-  .contact-grid {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: 28px;
-  }
-}
-
-.contact-aside {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  order: 2;
-}
-
-@media (min-width: 1024px) {
-  .contact-aside { order: 0; position: sticky; top: 24px; }
-}
-
-.contact-list {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.contact-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.contact-ico {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: #f1f6ed;
-  color: #1d6e13;
-}
-
-.contact-term {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .02em;
-  color: #8d8880;
-}
-
-.contact-value {
-  display: block;
-  margin-top: 2px;
-  font-size: 15px;
   line-height: 24px;
-  color: #3f3d39;
-  word-break: break-word;
+  color: #3c3834;
 }
 
-.contact-link:hover {
-  color: #1d6e13;
-  text-decoration: underline;
-}
-
-.contact-socials {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid #eee4d8;
-}
-
-.contact-social {
-  padding: 5px 13px;
-  border: 1px solid #eadfce;
-  border-radius: 999px;
-  background: #fffaf4;
-  font-size: 13px;
-  color: #5f5d59;
-  transition: border-color .2s ease, color .2s ease;
-}
-
-.contact-social:hover {
-  border-color: #1d6e13;
-  color: #1d6e13;
-}
-
-.contact-map {
-  overflow: hidden;
-  border: 1px solid #eee4d8;
-  background: #fff;
-}
-
-.contact-map iframe {
-  display: block;
-  width: 100%;
-  height: 280px;
-  border: 0;
-}
-
+/* 900 wide, r16, 32px padding, the shared soft shadow */
 .contact-card {
-  background-color: #ffffff;
-  border: 1px solid #eee4d8;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, .12), 0 2px 6px -2px rgba(0, 0, 0, .03);
+}
+.contact-card-title {
+  margin-bottom: 20px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  color: #3c3834;
+}
+.contact-form { display: flex; flex-direction: column; gap: 20px; }
+.contact-row { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 768px) { .contact-row { grid-template-columns: 1fr 1fr; } }
+
+.contact-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #1a1817;
 }
 
-/* The phone input lives inside PhoneField, so scoped `.contact-input` cannot
-   reach it — it is styled here by the same rules to stay identical. Its
-   left padding is left alone: intl-tel-input sets it from the flag width. */
+/* Black/50 fill, Black/200 hairline, r8, 56px */
 .contact-input,
-.phone-field :deep(.iti__tel-input) {
+.contact-page :deep(.iti__tel-input) {
   width: 100%;
-  border: 1px solid #eadfce;
-  background-color: #fffaf4;
+  height: 56px;
+  padding: 16px;
+  border: 1px solid #e4e1e0;
   border-radius: 8px;
-  padding: 12px 14px;
-  color: #3f3d39;
+  background: #f3f3f3;
+  font-family: "Poppins", "Li Ador Noirrit", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1a1817;
   outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
 }
-
-.contact-input::placeholder,
-.phone-field :deep(.iti__tel-input)::placeholder {
-  color: #9f9b95;
-}
-
+.contact-input--latin,
+.contact-input--latin::placeholder { font-family: "Poppins", sans-serif; }
 .contact-input:focus,
-.phone-field :deep(.iti__tel-input):focus {
-  border-color: #c9bfae;
-  box-shadow: 0 0 0 3px rgba(201, 191, 174, 0.2);
+.contact-page :deep(.iti__tel-input):focus { border-color: #d6af51; background: #fff; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); }
+.contact-input::placeholder { color: #9c9591; font-family: "Li Ador Noirrit", "Poppins", sans-serif; }
+.contact-textarea { height: 141px; }
+
+/* The site's primary button: Olive/700, r8, 48px, Li Ador 16/24 */
+.contact-submit {
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 8px;
+  background: #1a2110;
+  color: #fff;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+.contact-submit:hover:not(:disabled) { background: #252f17; }
+.contact-submit:disabled { opacity: .7; cursor: progress; }
+.contact-hint {
+  margin-top: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #6d6560;
 }
 
-.phone-field.is-invalid :deep(.iti__tel-input) {
-  border-color: #ef4444;
-}
-
-/* Match the field's own palette rather than the library's grey default. */
-.phone-field :deep(.iti) {
-  --iti-border-color: #eadfce;
-  --iti-country-selector-bg: #fffaf4;
-  --iti-hover-color: rgba(53, 96, 25, 0.06);
-  --iti-icon-color: #6b6660;
+@media (max-width: 767px) {
+  .contact-page { padding: 32px 0 48px; }
+  .contact-page .container { padding-inline: 20px; }
+  .contact-title { font-size: 36px; line-height: 44px; }
+  .contact-card { padding: 20px; }
+  .contact-card-title { font-size: 22px; line-height: 30px; }
 }
 </style>

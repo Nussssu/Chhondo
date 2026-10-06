@@ -17,7 +17,7 @@ import { Head } from '@inertiajs/vue3';
 
 <template>  
   <Head>
-    <title>{{ texts.t1 }}</title>
+    <title>{{ texts.tab_title }}</title>
   </Head>
   <AppLayout>
     <div class="cartPage">

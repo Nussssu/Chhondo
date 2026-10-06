@@ -17,6 +17,9 @@ import {
   ArrowLeft, Eye, Code2, Type, ImagePlus, Trash2, X, UploadCloud, Loader2,
 } from 'lucide-vue-next'
 
+// The preview shows the site's own address rather than a fixed domain.
+const serpHost = typeof window !== 'undefined' ? window.location.host : ''
+
 const props = defineProps({
   // null → create
   blog: { type: Object, default: null },
@@ -302,7 +305,7 @@ function submit() {
           <div class="be-card">
             <h2 class="be-card-title">Search engine listing</h2>
             <div class="be-serp">
-              <span class="be-serp-url">charukothon.com/blog/{{ form.slug || '…' }}</span>
+              <span class="be-serp-url">{{ serpHost }}/blog/{{ form.slug || '…' }}</span>
               <span class="be-serp-title">{{ form.meta_title || form.title || 'Post title' }}</span>
               <span class="be-serp-desc">
                 {{ form.meta_description || form.description.replace(/<[^>]*>/g, ' ').slice(0, 160) || 'Add a description so search results read well.' }}
@@ -516,7 +519,7 @@ function submit() {
 
 .be-title-input:focus {
   outline: none;
-  border-bottom-color: #356019;
+  border-bottom-color: #252f17;
 }
 
 .be-title-input.is-invalid {
@@ -551,7 +554,7 @@ function submit() {
 .be-tab.is-active {
   background: #eef4e7;
   border-color: #d5e5c4;
-  color: #2c5015;
+  color: #1a2110;
 }
 
 .be-wordcount {
@@ -569,7 +572,7 @@ function submit() {
 
 .be-preview {
   padding: 20px;
-  background: #fffaf4;
+  background: #faf5e9;
   border: 1px solid #f0e6d8;
   border-radius: 12px;
   max-height: 620px;
@@ -618,7 +621,7 @@ function submit() {
 .be-preview-body :deep(ul) { list-style: disc; padding-left: 22px; margin-bottom: 18px; }
 .be-preview-body :deep(ol) { list-style: decimal; padding-left: 22px; margin-bottom: 18px; }
 .be-preview-body :deep(li) { margin-bottom: 6px; }
-.be-preview-body :deep(a) { color: #2c5015; text-decoration: underline; }
+.be-preview-body :deep(a) { color: #1a2110; text-decoration: underline; }
 .be-preview-body :deep(blockquote) {
   margin: 20px 0;
   padding: 14px 18px;
@@ -678,9 +681,9 @@ function submit() {
 
 .be-drop:hover,
 .be-drop.is-dragging {
-  border-color: #356019;
+  border-color: #252f17;
   background: #f2f7ec;
-  color: #2c5015;
+  color: #1a2110;
 }
 
 .be-drop small { font-size: 11px; opacity: 0.75; }
@@ -744,7 +747,7 @@ function submit() {
   padding: 3px 8px;
   border-radius: 999px;
   background: #eef4e7;
-  color: #2c5015;
+  color: #1a2110;
   font-size: 12px;
   font-weight: 500;
 }
@@ -780,7 +783,7 @@ function submit() {
   display: inline-block;
   margin-top: 8px;
   font-size: 12px;
-  color: #2c5015;
+  color: #1a2110;
   text-decoration: underline;
 }
 
@@ -795,6 +798,6 @@ function submit() {
   margin-top: 10px;
   text-align: center;
   font-size: 13px;
-  color: #2c5015;
+  color: #1a2110;
 }
 </style>

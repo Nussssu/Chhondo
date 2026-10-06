@@ -40,6 +40,43 @@ class CartController extends Controller
         return $request->session()->get('guest_id');
     }
 
+    /**
+     * The cart as the storefront shares it (see HandleInertiaRequests), for a
+     * request that asked for JSON.
+     */
+    private function cartPayload(string $identifier): array
+    {
+        $items = app(\App\Repositories\Admin\Cart\CartRepository::class)
+            ->getCartItems($identifier)
+            ->values()
+            ->toArray();
+
+        return ['cartItems' => $items, 'cartCount' => array_sum(array_column($items, 'quantity'))];
+    }
+
+    /**
+     * Success: the updated cart as JSON for the storefront's background
+     * requests, otherwise back to the page as before.
+     */
+    private function done(Request $request, string $identifier, ?string $message = null)
+    {
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message] + $this->cartPayload($identifier));
+        }
+
+        return $message ? back()->with('success', $message) : back();
+    }
+
+    /** Failure: a 422 with the reason as JSON, otherwise back with the error. */
+    private function failed(Request $request, string $message, ?string $field = null)
+    {
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message, 'errors' => $field ? [$field => [$message]] : []], 422);
+        }
+
+        return $field ? back()->withErrors([$field => $message]) : back()->with('error', $message);
+    }
+
     public function addToCart(Request $request)
     {
         $identifier = $this->getUserIdentifier($request);
@@ -49,7 +86,7 @@ class CartController extends Controller
         // reaching a cart. A pre-order passes: that status exists so orders
         // can be taken for stock that has not arrived.
         if ($error = $this->unavailableReason($request)) {
-            return back()->withErrors(['product_id' => $error]);
+            return $this->failed($request, $error, 'product_id');
         }
 
         $data = array_merge($request->all(), [
@@ -59,10 +96,12 @@ class CartController extends Controller
         try {
             $this->cartService->addToCart($data);
         } catch (\Exception $e) {
-            return back()->with('error', \App\Helpers\SafeError::message($e, 'Could not add that item to your cart.', 'Cart add failed'))->withInput();
+            $message = \App\Helpers\SafeError::message($e, 'Could not add that item to your cart.', 'Cart add failed');
+
+            return $request->wantsJson() ? $this->failed($request, $message) : back()->with('error', $message)->withInput();
         }
 
-        return back()->with('success', 'Product added to cart.');
+        return $this->done($request, $identifier, 'Product added to cart.');
     }
 
     /**
@@ -107,11 +146,11 @@ class CartController extends Controller
         $cart = Cart::where('user_identifier', $identifier)->where('id', $cartId)->first();
 
         if (! $cart) {
-            return back()->with('error', 'Cart item not found.');
+            return $this->failed($request, 'Cart item not found.');
         }
 
         if ($cart->quantity + $change < 1) {
-            return back()->with('error', 'Quantity cannot be less than 1.');
+            return $this->failed($request, 'Quantity cannot be less than 1.');
         }
 
         try {
@@ -121,13 +160,13 @@ class CartController extends Controller
                 'attribute_values' => $request->input('attribute_values', []),
             ]);
         } catch (\Exception $e) {
-            return back()->with('error', \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
+            return $this->failed($request, \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
         }
 
         // No success flash: this fires on every +/- click and the new quantity
         // and line total are already visible on screen. A toast per click is
         // noise. Failures below and above still report themselves.
-        return back();
+        return $this->done($request, $identifier);
     }
 
     public function removeFromCart(Request $request)
@@ -138,10 +177,10 @@ class CartController extends Controller
         try {
             $this->cartService->deleteCartItem($identifier, $cartId);
         } catch (\Exception $e) {
-            return back()->with('error', \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
+            return $this->failed($request, \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
         }
 
-        return back()->with('success', 'Item removed from cart.');
+        return $this->done($request, $identifier, 'Item removed from cart.');
     }
 
     public function clearCart(Request $request)
@@ -151,9 +190,9 @@ class CartController extends Controller
         try {
             $this->cartService->clearCart($identifier);
         } catch (\Exception $e) {
-            return back()->with('error', \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
+            return $this->failed($request, \App\Helpers\SafeError::message($e, 'Could not update your cart.', 'Cart update failed'));
         }
 
-        return back()->with('success', 'Cart cleared.');
+        return $this->done($request, $identifier, 'Cart cleared.');
     }
 }

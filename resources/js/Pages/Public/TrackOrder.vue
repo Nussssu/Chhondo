@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, router, usePage } from "@inertiajs/vue3";
+import { toast } from "@steveyuowo/vue-hot-toast";
 
 // Props from Inertia (server passes orderData and invoice from trackOrder method)
 const props = defineProps({
@@ -24,7 +25,7 @@ const errorMessage  = ref("");
 watch(() => page.props.orderData, (val) => {
     orderData.value = val;
     if (!val && invoiceNumber.value) {
-        errorMessage.value = "Order not found.";
+        errorMessage.value = props.texts.search_not_found;
     } else {
         errorMessage.value = "";
     }
@@ -32,7 +33,7 @@ watch(() => page.props.orderData, (val) => {
 
 const trackOrder = () => {
     if (!invoiceNumber.value) {
-        errorMessage.value = "Please enter a valid invoice number.";
+        errorMessage.value = props.texts.search_empty;
         return;
     }
     loading.value     = true;
@@ -44,25 +45,28 @@ const trackOrder = () => {
         onFinish: () => { loading.value = false; },
     });
 };
+
+// Copying anything here (the order ID, say) confirms with a small toast.
+const onCopy = () => toast.success("কপি হয়েছে!");
 </script>
 
 <template>
     <Head>
-        <title>{{ texts.t1 }}</title>
+        <title>{{ texts.tab_title }}</title>
     </Head>
 
     <AppLayout>
-        <section class="track-page min-h-screen py-10 md:py-16">
+        <section class="track-page min-h-screen py-10 md:py-16" @copy="onCopy">
             <div class="container max-w-3xl mx-auto px-4">
 
                 <!-- Page Header -->
                 <div class="text-center mb-8">
-                    <h1 class="title-1 text-[#3E3C3A]">{{ intro?.title || 'Track Your Order' }}</h1>
-                    <p class="mt-2 body-1-r text-[#6d6560]">{{ intro?.subtitle || 'Enter your invoice number to see the latest status' }}</p>
+                    <h1 class="track-title">{{ intro?.title }}</h1>
+                    <p v-if="intro?.subtitle" class="track-sub">{{ intro.subtitle }}</p>
                 </div>
 
                 <!-- Search Card -->
-                <div class="track-card p-5 md:p-7 rounded-2xl mb-6">
+                <div class="track-card p-5 md:p-6 mb-6">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-grow">
                             <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
@@ -74,14 +78,14 @@ const trackOrder = () => {
                                 type="text"
                                 v-model="invoiceNumber"
                                 @keyup.enter="trackOrder"
-                                placeholder="Enter invoice number (e.g. INV-0001)"
-                                class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[#f2e3cf] bg-[#fffdf9] focus:outline-none focus:ring-2 focus:ring-theme focus:border-transparent text-sm"
+                                :placeholder="texts.search_placeholder"
+                                class="track-input w-full pl-12 pr-4 focus:outline-none text-sm"
                             />
                         </div>
                         <button
                             @click="trackOrder"
                             :disabled="loading"
-                            class="track-btn flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-white text-nowrap transition-all"
+                            class="track-btn flex items-center justify-center gap-2 px-6 text-white text-nowrap transition-all"
                         >
                             <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
@@ -90,7 +94,7 @@ const trackOrder = () => {
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                             </svg>
-                            {{ loading ? 'Searching...' : 'Track Order' }}
+                            {{ loading ? texts.search_loading : texts.search_button }}
                         </button>
                     </div>
 
@@ -166,7 +170,7 @@ const trackOrder = () => {
                                         <tr v-for="(item, index) in orderData.items" :key="index" class="hover:bg-[#fffdf9] transition-colors">
                                             <td class="px-7 py-4">
                                                 <div class="flex items-center gap-3">
-                                                    <img :src="item.product.featured_image" alt="Product Image" class="w-14 h-14 object-cover rounded-xl border border-[#f2e3cf] flex-shrink-0" />
+                                                    <img :src="item.product.featured_image || '/placeholder.svg'" alt="Product Image" class="w-14 h-14 object-cover rounded-xl border border-[#f2e3cf] flex-shrink-0" loading="lazy" decoding="async" width="56" height="56" @error="$event.target.src = '/placeholder.svg'" />
                                                     <span class="text-sm font-medium text-[#3E3C3A]">{{ item.product.product_name }}</span>
                                                 </div>
                                             </td>
@@ -181,7 +185,7 @@ const trackOrder = () => {
                             <!-- Mobile Cards -->
                             <div class="md:hidden divide-y divide-[#f2e3cf]">
                                 <div v-for="(item, index) in orderData.items" :key="index" class="flex gap-3.5 p-4">
-                                    <img :src="item.product.featured_image" alt="Product Image" class="w-16 h-16 object-cover rounded-xl border border-[#f2e3cf] flex-shrink-0" />
+                                    <img :src="item.product.featured_image || '/placeholder.svg'" alt="Product Image" class="w-16 h-16 object-cover rounded-xl border border-[#f2e3cf] flex-shrink-0" loading="lazy" decoding="async" width="64" height="64" @error="$event.target.src = '/placeholder.svg'" />
                                     <div class="flex-grow min-w-0">
                                         <p class="text-sm font-medium text-[#3E3C3A] leading-snug">{{ item.product.product_name }}</p>
                                         <div class="flex flex-wrap gap-x-4 mt-1.5">
@@ -285,5 +289,38 @@ const trackOrder = () => {
     color: #3E3C3A;
     font-weight: 500;
     margin-top: 2px;
+}
+
+/* ===== Figma "Track Order" card ===== */
+.track-page { background-color: #fff; }
+.track-title { margin: 0; font: 600 28px/36px "Poppins", "Li Ador Noirrit", sans-serif; color: #1a1817; }
+.track-sub { margin-top: 8px; font: 400 16px/24px "Poppins", "Li Ador Noirrit", sans-serif; color: #6d6560; }
+.track-card {
+    border: 0;
+    border-radius: 16px;
+    background-color: #fff;
+    box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+}
+.track-input {
+    height: 56px;
+    border: 1px solid #e4e1e0;
+    border-radius: 8px;
+    background: #f3f3f3;
+    font-family: "Poppins", sans-serif;
+    color: #1a1817;
+}
+.track-input:focus { border-color: #d6af51; background: #fff; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); }
+.track-btn {
+    height: 56px;
+    border-radius: 8px;
+    background-color: #1a2110;
+    font: 500 20px/24px "Poppins", sans-serif;
+}
+.track-btn:hover:not(:disabled) { background-color: #252f17; }
+
+/* Phones: no full-screen minimum — the page ends 48px below the last card
+   (its own 24px margin plus 24px), the gap every phone page keeps. */
+@media (max-width: 767px) {
+  .track-page { min-height: 0; padding-bottom: 24px; }
 }
 </style>

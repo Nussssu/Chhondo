@@ -6,7 +6,7 @@
         >
             <!-- Backdrop -->
             <div
-                class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                class="preview-backdrop absolute inset-0"
                 @click="closeModal"
             ></div>
 
@@ -18,7 +18,7 @@
                     class="preview-close"
                     aria-label="Close preview"
                 >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 6L6 18" />
                         <path d="M6 6l12 12" />
                     </svg>
@@ -35,7 +35,7 @@
                 <div
                     ref="scrollArea"
                     @scroll="updateScrollbar"
-                    class="preview-scroll flex flex-col md:flex-row md:items-center gap-4 md:gap-6 p-4 md:p-6"
+                    class="preview-scroll flex flex-col md:flex-row md:items-start gap-4 md:gap-6 p-4 md:p-6"
                 >
                     <!-- Left: Image Carousel -->
                     <div class="preview-image-area w-full md:w-[339px] shrink-0 flex flex-col items-center">
@@ -86,9 +86,10 @@
                                 <transition v-else :name="slideDirection">
                                     <img
                                         :key="activeIndex"
-                                        :src="currentImage"
+                                        :src="currentImage || '/placeholder.svg'"
                                         :alt="product?.product_name"
                                         class="w-full h-full object-cover absolute inset-0"
+                                        @error="$event.target.src = '/placeholder.svg'"
                                     />
                                 </transition>
                             </div>
@@ -126,10 +127,10 @@
                             </button>
                         </div>
 
-                        <!-- Below image: Dot Indicators — Figma: active 24x8 #D4A276, rest 8x8 #F7E2CB -->
+                        <!-- Below image: Dot Indicators — Figma: active 24x8 Gold/300, rest 8x8 Gold/100 -->
                         <div
                             v-if="productItems.length > 1"
-                            class="flex items-center gap-2 mt-3.5"
+                            class="flex items-center gap-2 mt-3"
                         >
                             <button
                                 v-for="(item, index) in productItems"
@@ -138,8 +139,8 @@
                                 :class="[
                                     'h-2 rounded-full transition-all duration-300',
                                     index === activeIndex
-                                        ? 'bg-[#D4A276] w-6'
-                                        : 'bg-[#F7E2CB] hover:bg-[#eed3b3] w-2',
+                                        ? 'bg-[#ddbc6d] w-6'
+                                        : 'bg-[#efe0bb] hover:bg-[#ddbc6d] w-2',
                                 ]"
                             ></button>
                         </div>
@@ -148,16 +149,16 @@
                     <!-- Right: Product Info -->
                     <div
                         v-if="product"
-                        class="preview-info w-full md:flex-1 flex flex-col gap-5 md:gap-6 md:max-h-[512px] md:overflow-y-auto md:pr-1"
+                        class="preview-info w-full md:flex-1 flex flex-col gap-6 md:max-h-[520px] md:overflow-y-auto md:pr-1"
                     >
                         <!-- Name + Price + Description -->
                         <div>
                             <h2 class="preview-product-name">
                                 {{ product.product_name }}
                             </h2>
-                            <div class="flex items-center gap-3 mt-1 flex-wrap">
+                            <div class="flex items-center gap-3 mt-2 flex-wrap">
                                 <span class="preview-price" :class="{ 'price-flash': priceFlash }">
-                                    {{ displayPrice }} <span class="bangla-font">৳</span>
+                                    {{ displayPrice }} <span class="preview-price-sign">৳</span>
                                 </span>
                                 <span
                                     v-if="wasPrice"
@@ -166,28 +167,62 @@
                                     {{ wasPrice }}<span class="bangla-font">৳</span>
                                 </span>
                                 <span v-if="isPreOrderProduct" class="preview-stock preview-stock--preorder">
-                                    Pre Order
+                                    প্রি-অর্ডার
                                 </span>
                                 <span v-else-if="isSoldOut" class="preview-stock preview-stock--soldout">
-                                    Out of Stock
+                                    স্টকে নেই
                                 </span>
                                 <span v-else class="preview-stock">
-                                    In stock
+                                    স্টকে আছে
                                 </span>
                             </div>
 
                             <!-- Short Description -->
                             <div
                                 v-if="mergedProduct?.short_description"
-                                class="preview-description mt-4 md:mt-5"
-                                v-html="firstLineDescription"
+                                class="preview-description mt-6"
+                                v-html="rebrand(firstLineDescription)"
                             ></div>
                         </div>
 
+                        <!-- Quantity — Figma puts it straight under the description.
+                             Hidden entirely when nothing can be bought: a
+                             quantity to choose implies an order to place. -->
+                            <div v-if="!cannotBuy" class="preview-qty-col">
+                                <label class="preview-option-label">পরিমাণ:</label>
+                                <div class="preview-qty-stepper mt-2">
+                                    <button
+                                        @click="decrementQuantity"
+                                        :disabled="quantity <= 1 || cannotBuy"
+                                        class="preview-qty-btn"
+                                        aria-label="Decrease quantity"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <path d="M5 12h14" />
+                                        </svg>
+                                    </button>
+                                    <span class="preview-qty-value">
+                                        {{ quantity }}
+                                    </span>
+                                    <button
+                                        @click="incrementQuantity"
+                                        :disabled="cannotBuy"
+                                        class="preview-qty-btn"
+                                        aria-label="Increase quantity"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <path d="M12 5v14" />
+                                            <path d="M5 12h14" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+
                         <!-- Blouse Option (only when product has it) -->
                         <div v-if="hasBlouseOption">
-                            <label class="preview-option-label">ব্লাউজ:</label>
-                            <div class="preview-blouse-row mt-2">
+                            <label class="preview-option-label preview-option-label--blouse">ব্লাউজ:</label>
+                            <div class="preview-blouse-row mt-6">
                                 <label
                                     v-for="opt in blouseChoices"
                                     :key="opt.value"
@@ -204,7 +239,7 @@
                                         class="sr-only"
                                     />
                                     <span>{{ opt.label }}</span>
-                                    <span v-if="opt.value === 'with' && blouseExtra" class="whitespace-nowrap">+ {{ blouseExtra }}৳</span>
+                                    <span v-if="opt.value === 'with' && blouseExtra" class="preview-pill-extra">(+ {{ blouseExtra }}৳)</span>
                                     <!-- Selected check badge -->
                                     <span v-if="blouseChoice === opt.value" class="preview-pill-check">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -267,36 +302,6 @@
                             <!-- Quantity -->
                             <!-- Hidden entirely when nothing can be bought: a
                                  quantity to choose implies an order to place. -->
-                            <div v-if="!cannotBuy" class="preview-qty-col">
-                                <label class="preview-option-label">পরিমাণ:</label>
-                                <div class="preview-qty-stepper mt-2">
-                                    <button
-                                        @click="decrementQuantity"
-                                        :disabled="quantity <= 1 || cannotBuy"
-                                        class="preview-qty-btn"
-                                        aria-label="Decrease quantity"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                            <path d="M5 12h14" />
-                                        </svg>
-                                    </button>
-                                    <span class="preview-qty-value">
-                                        {{ quantity }}
-                                    </span>
-                                    <button
-                                        @click="incrementQuantity"
-                                        :disabled="cannotBuy"
-                                        class="preview-qty-btn"
-                                        aria-label="Increase quantity"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                            <path d="M12 5v14" />
-                                            <path d="M5 12h14" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
                             <!-- Add to cart — the other half of the row -->
                             <button
                                 @click="addToCart"
@@ -309,9 +314,12 @@
                                     (!allAttributesSelected && !cannotBuy) ? 'opacity-50 cursor-not-allowed' : '',
                                 ]"
                             >
-                                <template v-if="isSoldOut">Out of Stock</template>
-                                <template v-else-if="selectedVariantSoldOut">Option out of stock</template>
-                                <template v-else>{{ isPreOrderProduct ? 'Pre-Order' : 'Add to cart' }}</template>
+                                <template v-if="isSoldOut">স্টকে নেই</template>
+                                <template v-else-if="selectedVariantSoldOut">এই অপশনটি স্টকে নেই</template>
+                                <template v-else>
+                                    <img v-if="!isPreOrderProduct" :src="'/assets/chhondo/cart-light.svg'" alt="" width="24" height="24" />
+                                    {{ isPreOrderProduct ? 'প্রি-অর্ডার করুন' : 'কার্টে যুক্ত করুন' }}
+                                </template>
                             </button>
 
                             <!-- View Details — full width on its own row -->
@@ -320,7 +328,7 @@
                                 class="preview-view-details"
                                 @click="closeModal"
                             >
-                                View Details
+                                বিস্তারিত দেখুন
                             </Link>
                         </div>
                     </div>
@@ -335,6 +343,7 @@
 </template>
 
 <script setup>
+import { rebrand } from "@/utils/rebrand"
 import {
     defineProps,
     defineEmits,
@@ -392,7 +401,7 @@ const productItems = computed(() => {
     if (!props.product) return [];
 
     const images = [
-        props.product.featured_image,
+        props.product.featured_image || '/placeholder.svg',
         ...parseGalleryImages(props.product.gallery_images),
     ].filter(Boolean).map((img) => ({
         type: "image",
@@ -463,8 +472,8 @@ const hasBlouseOption = computed(() => {
 });
 const blouseChoice = ref("without");
 const blouseChoices = [
-    { value: "without", label: "Without blouse" },
-    { value: "with", label: "With blouse" },
+    { value: "without", label: "ব্লাউজ পিস ছাড়া" },
+    { value: "with", label: "ব্লাউজ পিস সহ" },
 ];
 
 // Extra cost of the with-blouse option, shown as "+ N৳" on the pill.
@@ -827,12 +836,12 @@ const cannotBuy = computed(() => isSoldOut.value || selectedVariantSoldOut.value
  */
 const guardUnavailable = () => {
     if (isSoldOut.value) {
-        toast.error("This product is currently out of stock.");
+        toast.error("এই পণ্যটি বর্তমানে স্টকে নেই।");
         return true;
     }
 
     if (selectedVariantSoldOut.value) {
-        toast.error("The option you selected is currently out of stock.");
+        toast.error("নির্বাচিত অপশনটি বর্তমানে স্টকে নেই।");
         return true;
     }
 
@@ -904,7 +913,7 @@ const buyNow = () => {
             router.get("/checkout");
         }, 100);
     } else {
-        toast.error("Please select all required attributes.");
+        toast.error("প্রয়োজনীয় সব অপশন নির্বাচন করুন।");
     }
 };
 </script>
@@ -1029,7 +1038,7 @@ const buyNow = () => {
 
 /* Product name — bangla/Heading/Headline 3-40-SB-52, Black/700 */
 .preview-product-name {
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 40px;
     font-weight: 600;
     line-height: 52px;
@@ -1038,7 +1047,7 @@ const buyNow = () => {
 
 /* Price — Figma: 28/32 Medium, Warm/700 */
 .preview-price {
-    font-family: "Poppins", "Hind Siliguri", sans-serif;
+    font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
     font-size: 28px;
     font-weight: 500;
     line-height: 32px;
@@ -1086,7 +1095,7 @@ const buyNow = () => {
 
 /* Description — Figma: Hind Siliguri 16/24, Black/600 */
 .preview-description {
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 16px;
     line-height: 24px;
     color: #4D4944;
@@ -1095,7 +1104,7 @@ const buyNow = () => {
 /* Option labels (পরিমাণ:, ব্লাউজ:, attributes) — 16/24 Black/900, on their own line */
 .preview-option-label {
     display: block;
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
@@ -1226,7 +1235,7 @@ const buyNow = () => {
     border: 1px solid #D1CDCA;
     border-radius: 8px;
     background: white;
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 15px;
     font-weight: 600;
     line-height: 24px;
@@ -1496,5 +1505,161 @@ const buyNow = () => {
     .preview-modal {
         height: 560px;
     }
+}
+
+/* ===== Figma "Quick Preview" (💫 Final design) ===== */
+.preview-backdrop {
+    background: rgba(0, 0, 0, 0.36);
+    -webkit-backdrop-filter: blur(4.1px);
+    backdrop-filter: blur(4.1px);
+}
+
+.preview-modal { border-radius: 8px; max-width: 862px; }
+
+/* Close — 31px Gold/50 square with a Gold/100 hairline */
+.preview-close {
+    top: 16px;
+    right: 16px;
+    width: 31px;
+    height: 31px;
+    padding: 8px;
+    border: 1px solid #efe0bb;
+    border-radius: 2px;
+    background: #faf5e9;
+    color: #1a1817;
+    box-shadow: none;
+}
+.preview-close:hover { background: #efe0bb; }
+
+.preview-image-container { border-radius: 8px; }
+
+/* Name — Hind Siliguri SB 40/52 */
+.preview-product-name {
+    padding-right: 36px;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 52px;
+    color: #1a1817;
+}
+
+/* Price — Gold/500 Poppins 500 24/32, ৳ in Hind 28 */
+.preview-price {
+    font-family: "Poppins", sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 32px;
+    color: #cc9b25;
+}
+.preview-price-sign { font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif; font-size: 28px; }
+
+/* Stock — plain green text, no chip */
+.preview-stock {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 28px;
+    color: #24a148;
+}
+.preview-stock--soldout { background: none; color: #c0392b; }
+.preview-stock--preorder { background: none; color: #ea580c; }
+
+.preview-description,
+.preview-description :deep(*) {
+    font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+    color: #3c3834;
+}
+
+.preview-option-label {
+    font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #3c3834;
+}
+.preview-option-label--blouse { font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif; color: #1a1817; }
+
+/* Quantity — 172 × 56, Black/300 border, r8, 32px between parts */
+.preview-qty-col { align-self: flex-start; }
+.preview-qty-stepper {
+    width: 172px;
+    height: 56px;
+    padding: 8px 16px;
+    gap: 32px;
+    border: 1px solid #d1cdca;
+    border-radius: 8px;
+    background: #fff;
+}
+.preview-qty-btn { width: 32px; height: 32px; color: #1a1817; background: transparent; }
+.preview-qty-btn:hover:not(:disabled) { background: #faf5e9; }
+.preview-qty-value { font-family: "Poppins", sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; color: #1a1817; }
+
+/* Blouse pills — 40px tall, r8; chosen one gets a 2px green ring + check */
+.preview-blouse-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.preview-pill {
+    position: relative;
+    min-width: 191px;
+    height: 40px;
+    padding: 0 24px;
+    border: 1px solid #d1cdca;
+    border-radius: 8px;
+    background: #fff;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    color: #2c5015;
+}
+.preview-pill--active { border: 2px solid #3e711d; background: #fff; color: #2c5015; }
+.preview-pill-extra { font-family: "Poppins", sans-serif; white-space: nowrap; }
+.preview-pill-check {
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    background: #3e711d;
+    color: #fff;
+}
+.preview-pill-check svg { width: 12px; height: 12px; }
+
+/* Actions stacked full width — 48px, 12px apart */
+.preview-buy-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.preview-buy-row .preview-add-to-cart,
+.preview-buy-row .preview-view-details {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+}
+.preview-buy-row .preview-add-to-cart { background-color: #1a2110; color: #fff; }
+.preview-add-to-cart:hover:not(:disabled) { background-color: #252f17; }
+.preview-buy-row .preview-view-details { border: 1px solid #1a2110; background: #fff; color: #1a2110; }
+.preview-buy-row .preview-view-details:hover { background: #1a2110; color: #fff; }
+
+@media (min-width: 768px) {
+    .preview-buy-row .preview-add-to-cart,
+    .preview-buy-row .preview-view-details { height: 48px; }
+}
+
+@media (max-width: 767px) {
+    .preview-product-name { font-size: 26px; line-height: 34px; }
+    .preview-pill { min-width: 0; flex: 1 1 auto; padding: 0 14px; font-size: 14px; }
 }
 </style>

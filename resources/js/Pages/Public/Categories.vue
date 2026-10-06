@@ -27,7 +27,7 @@ const categories = computed(() => {
 
 <template>
   <Head>
-    <title>{{ texts.t1 }}</title>
+    <title>{{ texts.tab_title }}</title>
   </Head>
   <AppLayout>
     <div class="categories-page">
@@ -77,7 +77,7 @@ const categories = computed(() => {
 }
 
 .categories-title {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
@@ -151,7 +151,7 @@ const categories = computed(() => {
 
 /* Name */
 .category-name {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
@@ -164,5 +164,10 @@ const categories = computed(() => {
   .category-name {
     font-size: 18px;
   }
+}
+
+/* Phones: the 48px gap every page keeps above the footer. */
+@media (max-width: 767px) {
+  .category-grid { padding-bottom: 48px; }
 }
 </style>

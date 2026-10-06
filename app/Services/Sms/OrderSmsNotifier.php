@@ -76,7 +76,7 @@ class OrderSmsNotifier
             '{invoice}' => $order->invoice_number,
             '{total}'   => number_format($total, 0),
             '{items}'   => (string) $order->orderItems()->count(),
-            '{store}'   => SiteInfo::first()?->app_name ?: 'charukothon',
+            '{store}'   => SiteInfo::first()?->app_name ?: 'Chhondo',
             '{phone}'   => (string) $order->phone_number,
         ]);
     }

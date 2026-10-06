@@ -115,7 +115,7 @@ async function send() {
   border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: .84rem;
 }
 .sc-warn { background: #fff4e0; color: #8a5a00; }
-.sc-result.is-ok { background: #e4f2e4; color: #2C5015; }
+.sc-result.is-ok { background: #e4f2e4; color: #1A2110; }
 .sc-result.is-error { background: #fdecea; color: #b71c1c; }
 .sc-result-meta { font-size: .78rem; opacity: .85; }
 .sc-result-meta a { margin-left: 8px; color: inherit; }
@@ -130,8 +130,8 @@ async function send() {
 .sc-facts dd { margin: 0; color: #37474f; font-weight: 600; text-align: right; }
 .sc-facts dd.is-missing { color: #c62828; }
 .sc-cod dt, .sc-cod dd { font-size: .95rem; }
-.sc-cod dd { color: #356019; font-weight: 800; }
-.sc-prepaid { font-weight: 600; font-size: .8rem; color: #6b7563; }
+.sc-cod dd { color: #252f17; font-weight: 800; }
+.sc-prepaid { font-weight: 600; font-size: .8rem; color: #6d6560; }
 
 .sc-blocked {
   background: #fdecea; color: #b71c1c; border-radius: 8px;

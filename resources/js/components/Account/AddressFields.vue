@@ -21,7 +21,7 @@ defineEmits(['update:modelValue'])
 <template>
   <div class="af-grid">
     <div class="af-field af-field--full">
-      <label class="af-label">Street address</label>
+      <label class="af-label">বিস্তারিত ঠিকানা</label>
       <textarea
         v-model="modelValue.address"
         class="af-input"
@@ -33,16 +33,16 @@ defineEmits(['update:modelValue'])
     </div>
 
     <div class="af-field">
-      <label class="af-label">City</label>
+      <label class="af-label">শহর</label>
       <select v-model="modelValue.city" class="af-input" :class="{ 'is-invalid': errors.city }">
-        <option value="" disabled>Select</option>
+        <option value="" disabled>নির্বাচন করুন</option>
         <option v-for="(label, key) in CITIES" :key="key" :value="key">{{ label }}</option>
       </select>
       <p v-if="errors.city" class="af-error">{{ errors.city }}</p>
     </div>
 
     <div class="af-field">
-      <label class="af-label">Address type</label>
+      <label class="af-label">ঠিকানার ধরন</label>
       <select v-model="modelValue.type" class="af-input" :class="{ 'is-invalid': errors.type }">
         <option v-for="(label, key) in TYPES" :key="key" :value="key">{{ label }}</option>
       </select>

@@ -77,8 +77,8 @@ const summary = computed(() => {
 .mq-row:last-child { border-bottom: 0; }
 .mq-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #37474f; }
 .mq-bar { height: 5px; border-radius: 999px; background: #e9ecef; overflow: hidden; }
-.mq-bar-fill { display: block; height: 100%; background: #356019; transition: width .2s ease; }
-.mq-ok { color: #2C5015; font-weight: 600; }
+.mq-bar-fill { display: block; height: 100%; background: #252f17; transition: width .2s ease; }
+.mq-ok { color: #1A2110; font-weight: 600; }
 .mq-error { color: #C0392B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mq-row.is-failed .mq-name { color: #C0392B; }
 </style>

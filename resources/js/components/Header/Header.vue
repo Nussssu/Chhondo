@@ -1,5 +1,4 @@
 <script setup>
-import ClientOnly from "@/components/ClientOnly.vue";
 import {
     ref,
     nextTick,
@@ -12,14 +11,12 @@ import { Link, usePage, router } from "@inertiajs/vue3";
 import axios from "axios";
 import {
     PhMagnifyingGlass,
-    PhList,
 } from "@phosphor-icons/vue";
 import { SearchIcon, XIcon } from "lucide-vue-next";
 import NavigationMenu from "@/components/Header/NavigationMenu.vue";
 import MobileMenu from "@/components/Header/MobileMenu.vue";
 import CartSidebar from "@/components/Header/CartSidebar.vue";
-import UserIcon from "@/components/Icons/UserIcon.vue";
-import HeartIcon from "@/components/Icons/HeartIcon.vue";
+import HeaderSearch from "@/components/Header/HeaderSearch.vue";
 import { useAuthStore } from "@/Store/authStore";
 import { useCartStore } from "@/Store/cartStore";
 import { useHomeStore } from "@/Store/homeStore";
@@ -32,12 +29,6 @@ const homeStore = useHomeStore();
 const wishlistStore = useWishlistStore();
 const authPrompt = useAuthPromptStore();
 
-// First letter of the logged-in user's name, shown in the header avatar.
-const userInitial = computed(() => {
-    const name = authStore.user?.name || "";
-    return name ? name.charAt(0).toUpperCase() : "U";
-});
-
 // User icon → account when logged in, otherwise the login page.
 const goToAccount = () => {
     router.visit(authStore.isAuthenticated ? "/account" : "/login");
@@ -48,7 +39,7 @@ const goToWishlist = () => {
     if (authStore.isAuthenticated) {
         router.visit("/account/wishlist");
     } else {
-        authPrompt.open("Log in to view the items saved to your wishlist.");
+        authPrompt.open("পছন্দের তালিকায় রাখা পণ্যগুলো দেখতে লগ ইন করুন।");
     }
 };
 
@@ -63,33 +54,47 @@ const colors = computed(() => globalCategories.value.colors || []);
 const layout = computed(() => usePage().props.layout ?? {});
 const headerSettings = computed(() => layout.value.header ?? {});
 
-const menuItems = computed(() => {
-    const items = layout.value.menu ?? [];
+/*
+ * The menu is managed in the admin (Settings › Header & footer › Menu):
+ * labels, links, order, on/off and categories dropdowns all come from there.
+ */
+const toSubmenu = (list) =>
+    (list ?? []).map((entry) => ({
+        id: entry.id,
+        // Carried through so the menu can hold a categories dropdown.
+        type: entry.type,
+        // Which categories a dropdown lists; empty means all of them.
+        categoryIds: entry.category_ids ?? [],
+        title: entry.label,
+        url: entry.url,
+        target: entry.target,
+        submenu: toSubmenu(entry.children),
+    }));
 
-    if (!items.length) {
-        return [
-            { id: 1, title: "Our Story", url: "/about-us", submenu: [] },
-            { id: 2, title: "Contact Us", url: "/contact-us", submenu: [] },
-        ];
-    }
+const menuItems = computed(() => toSubmenu(layout.value.menu));
 
-    // Recursive, so a sub item's own sub items reach the dropdown instead of
-    // being dropped one level down.
-    const toSubmenu = (list) =>
-        (list ?? []).map((entry) => ({
-            id: entry.id,
-            // Carried through so the menu can hold a categories dropdown.
-            type: entry.type,
-            // Which categories a dropdown item lists; empty means all of them.
-            categoryIds: entry.category_ids ?? [],
-            title: entry.label,
-            url: entry.url,
-            target: entry.target,
-            submenu: toSubmenu(entry.children),
-        }));
+// The categories a dropdown item lists: its chosen ones, or all of them.
+const categoriesFor = (item) => {
+    const ids = (item.categoryIds || []).map(String);
+    return ids.length ? categories.value.filter((c) => ids.includes(String(c.id))) : categories.value;
+};
 
-    return toSubmenu(items);
-});
+// The drawer expands sub items only, so a categories item carries them there.
+const mobileMenuItems = computed(() =>
+    menuItems.value.map((item) =>
+        item.type === "categories"
+            ? {
+                  ...item,
+                  submenu: categoriesFor(item).map((c) => ({
+                      id: `cat-${c.id}`,
+                      title: c.name,
+                      url: `/product-category/${c.slug}`,
+                      submenu: [],
+                  })),
+              }
+            : item
+    )
+);
 
 // Mobile Menu
 const isMobileMenuOpen = ref(false);
@@ -210,6 +215,8 @@ const openSearch = () => {
     });
 };
 
+const toggleSearch = () => (isOpen.value ? closeSearch() : openSearch());
+
 const closeSearch = () => {
     isOpen.value = false;
     searchQuery.value = "";
@@ -250,26 +257,22 @@ watch(
         >
             <div class="container">
                 <div class="flex items-center justify-between">
-                    <!-- Logo -->
-                    <div class="logo_area shrink-0">
-                        <Link href="/" class="logo w-[180px] block">
-                            <img
-                                :src="homeStore.logo"
-                                alt="Site Logo"
-                                class="site-logo"
-                            />
-                        </Link>
-                    </div>
+                    <!-- Logo, with the menu beside it (Figma: 51px apart) -->
+                    <div class="flex items-center gap-[51px] min-w-0">
+                        <div class="logo_area shrink-0">
+                            <Link href="/" class="chhondo-logo" aria-label="Chhondo home">
+                                <img :src="'/assets/chhondo/logo-mark-dark.svg'" alt="" class="chhondo-logo-mark" />
+                                <img :src="'/assets/chhondo/logo-word-dark.svg'" alt="Chhondo" class="chhondo-logo-word" />
+                            </Link>
+                        </div>
 
-                    <!-- Center Nav -->
-                    <div class="flex-grow flex justify-center">
                         <NavigationMenu :menuItems="menuItems" :categories="categories" />
                     </div>
 
-                    <!-- Right: Search + Cart -->
-                    <div class="flex items-center gap-3 shrink-0">
+                    <!-- Right: Search, account, wishlist, cart -->
+                    <div class="header-actions flex items-center shrink-0">
                         <!-- Search -->
-                        <div v-if="headerSettings.show_search !== false" class="desktop-search-area relative" ref="searchInput">
+                        <div v-if="false && headerSettings.show_search !== false" class="desktop-search-area relative" ref="searchInput">
                             <div class="desktop-search-box">
                                 <span class="desktop-search-icon">
                                     <PhMagnifyingGlass :size="15" weight="bold" />
@@ -313,6 +316,9 @@ watch(
                             </div>
                         </div>
 
+                        <!-- Opens inside the navbar, beside the icons -->
+                        <HeaderSearch v-if="headerSettings.show_search !== false" />
+
                         <!-- User Icon -->
                         <button
                             v-if="headerSettings.show_account !== false"
@@ -322,8 +328,8 @@ watch(
                             :title="authStore.isAuthenticated ? 'My Account' : 'Login'"
                             :aria-label="authStore.isAuthenticated ? 'My Account' : 'Login'"
                         >
-                            <span v-if="authStore.isAuthenticated" class="user-avatar">{{ userInitial }}</span>
-                            <UserIcon v-else :size="34" />
+                            <!-- Figma: the same outline icon signed in or out -->
+                            <img :src="'/assets/chhondo/profile.svg'" alt="" class="header-figma-icon-img" />
                         </button>
 
                         <!-- Wishlist Icon -->
@@ -332,24 +338,18 @@ watch(
                             @click="goToWishlist"
                             type="button"
                             class="header-icon-btn"
-                            :class="{ 'has-items': wishlistStore.count > 0 }"
                             title="Wishlist"
-                            aria-label="Wishlist"
+                            :aria-label="`Wishlist (${wishlistStore.count})`"
                         >
-                            <HeartIcon :size="26" :filled="wishlistStore.count > 0" />
-                            <span
-                                v-if="wishlistStore.count > 0"
-                                class="header-badge"
-                            >{{ wishlistStore.count }}</span>
+                            <img :src="'/assets/chhondo/heart.svg'" alt="" class="header-figma-icon-img" />
+                            <span v-if="wishlistStore.count > 0" class="header-count-badge">{{ wishlistStore.count > 99 ? '99+' : wishlistStore.count }}</span>
                         </button>
 
                         <!-- Cart Icon -->
                         <div class="cart-icon-wrapper">
-                            <button @click="cartStore.toggleCart" type="button" class="cart-icon-btn">
-                                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10.6668 9.33329V7.99996C10.6668 6.58547 11.2287 5.22892 12.2289 4.22872C13.2291 3.22853 14.5857 2.66663 16.0002 2.66663C17.4147 2.66663 18.7712 3.22853 19.7714 4.22872C20.7716 5.22892 21.3335 6.58547 21.3335 7.99996V9.33329H25.3335C26.0695 9.33329 26.6668 9.93196 26.6668 10.676V26.6773C26.6668 28.144 25.4735 29.3333 24.0082 29.3333H7.99216C7.2875 29.3333 6.61166 29.0535 6.11314 28.5555C5.61462 28.0575 5.3342 27.382 5.3335 26.6773V10.6773C5.3335 9.93329 5.92683 9.33329 6.66683 9.33329H10.6668ZM12.2668 9.33329H19.7335V7.99996C19.7335 7.00982 19.3402 6.06023 18.64 5.36009C17.9399 4.65996 16.9903 4.26663 16.0002 4.26663C15.01 4.26663 14.0604 4.65996 13.3603 5.36009C12.6602 6.06023 12.2668 7.00982 12.2668 7.99996V9.33329ZM10.6668 10.9333H6.9335V26.6773C6.9335 27.2586 7.40816 27.7333 7.99216 27.7333H24.0082C24.2885 27.7333 24.5574 27.6221 24.7558 27.4242C24.9543 27.2262 25.0661 26.9576 25.0668 26.6773V10.9333H21.3335V14.6666H19.7335V10.9333H12.2668V14.6666H10.6668V10.9333Z" fill="#252120"/>
-                                </svg>
-                                <span class="cart_count" :class="{ 'cart_count--active': cartStore.cartCount > 0 }">{{ cartStore.cartCount }}</span>
+                                                        <button @click="cartStore.toggleCart" type="button" class="cart-icon-btn" :aria-label="`Cart (${cartStore.cartCount})`">
+                                <img :src="'/assets/chhondo/cart.svg'" alt="" class="header-figma-icon-img" />
+                                <span v-if="cartStore.cartCount > 0" class="header-count-badge">{{ cartStore.cartCount > 99 ? '99+' : cartStore.cartCount }}</span>
                             </button>
                         </div>
                     </div>
@@ -358,24 +358,20 @@ watch(
         </div>
 
         <!-- Mobile Header -->
-        <div class="container xl:hidden py-4 border-b border-gray-200">
+        <div class="mobile-header xl:hidden">
             <div class="flex items-center justify-between">
                 <!-- Left: Logo -->
                 <div class="logo_area">
-                    <Link href="/" class="logo w-[120px] block">
-                        <img :src="homeStore.logo" alt="logo" />
+                    <Link href="/" class="chhondo-logo" aria-label="Chhondo home">
+                        <img :src="'/assets/chhondo/logo-mark-dark.svg'" alt="" class="chhondo-logo-mark" />
+                        <img :src="'/assets/chhondo/logo-word-dark.svg'" alt="Chhondo" class="chhondo-logo-word" />
                     </Link>
                 </div>
 
-                <!-- Right: Search + User + Wishlist + Burger -->
-                <div class="flex items-center gap-4">
-                    <button
-                        v-if="headerSettings.show_search !== false"
-                        @click="openSearch"
-                        class="text-gray-600 hover:text-theme focus:outline-none"
-                    >
-                        <PhMagnifyingGlass :size="24" />
-                    </button>
+                <!-- Right: Search + Burger on phones (Figma); tablets also keep
+                     account and wishlist, as they have no bottom nav. -->
+                <div class="flex items-center gap-5">
+                    <HeaderSearch v-if="headerSettings.show_search !== false" compact />
                     <!-- Account lives in the bottom nav on phones; kept here for
                          tablets (768px+), where the bottom nav is hidden. -->
                     <button
@@ -383,143 +379,99 @@ watch(
                         class="hidden md:inline-flex text-gray-600 hover:text-theme focus:outline-none"
                         :aria-label="authStore.isAuthenticated ? 'My Account' : 'Login'"
                     >
-                        <span v-if="authStore.isAuthenticated" class="user-avatar user-avatar--sm">{{ userInitial }}</span>
-                        <UserIcon v-else :size="30" />
+                        <img :src="'/assets/chhondo/profile.svg'" alt="" class="w-6 h-6" />
                     </button>
                     <button
                         v-if="headerSettings.show_wishlist !== false"
                         @click="goToWishlist"
-                        class="relative text-gray-600 hover:text-theme focus:outline-none"
-                        :style="wishlistStore.count > 0 ? { color: 'var(--color-theme)' } : {}"
+                        class="relative hidden md:inline-flex text-gray-600 hover:text-theme focus:outline-none"
                         aria-label="Wishlist"
                     >
-                        <HeartIcon :size="23" :filled="wishlistStore.count > 0" />
-                        <span
-                            v-if="wishlistStore.count > 0"
-                            class="header-badge"
-                        >{{ wishlistStore.count }}</span>
+                        <img :src="'/assets/chhondo/heart.svg'" alt="" class="w-6 h-6" />
                     </button>
                     <button
                         @click="toggleMobileMenu"
-                        class="text-gray-600 hover:text-theme focus:outline-none"
+                        class="mobile-header-icon"
+                        aria-label="Open menu"
                     >
-                        <PhList :size="28" v-if="!isMobileMenuOpen" />
+                        <img :src="'/assets/chhondo/menu.svg'" alt="" />
                     </button>
                 </div>
             </div>
         </div>
 
         <MobileMenu
-            :menuItems="menuItems"
+            :menuItems="mobileMenuItems"
             :isMobileMenuOpen="isMobileMenuOpen"
             :toggleMobileMenu="toggleMobileMenu"
         />
     </header>
 
-    <div class="search">
-        <ClientOnly><Teleport to="body">
-            <Transition name="slide-up">
-                <div
-                    v-if="isOpen"
-                    class="fixed inset-0 z-50 flex items-start sm:items-center justify-center"
-                >
-                    <div
-                        class="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                        @click="closeSearch"
-                    ></div>
-                    <div
-                        class="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:w-[90vw] rounded-md max-w-3xl py-12 bg-white shadow-xl overflow-hidden flex flex-col"
-                    >
-                        <!-- Input and close on one row, so the sheet does not
-                             waste a whole band of height on a Close button. -->
-                        <div class="sr-bar">
-                            <div class="sr-field">
-                                <SearchIcon :size="18" class="sr-field-icon" />
-                                <input
-                                    ref="searchInput"
-                                    v-model="searchQuery"
-                                    type="search"
-                                    inputmode="search"
-                                    enterkeyhint="search"
-                                    placeholder="পণ্য খুঁজুন…"
-                                    class="sr-input"
-                                    @input="onSearchInputChange"
-                                    @keydown.enter="submitSearch"
-                                    @keydown.esc="closeSearch"
-                                />
-                                <button
-                                    v-if="searchQuery"
-                                    type="button"
-                                    class="sr-clear"
-                                    aria-label="Clear"
-                                    @click="searchQuery = ''; onSearchInputChange()"
-                                >
-                                    <XIcon :size="15" />
-                                </button>
-                            </div>
-                            <button type="button" class="sr-close" aria-label="Close search" @click="closeSearch">
-                                <XIcon :size="20" />
-                            </button>
-                        </div>
-
-                        <div class="sr-body">
-                            <p v-if="isLoading" class="sr-state">খুঁজছি…</p>
-
-                            <p v-else-if="searchError" class="sr-state">
-                                খুঁজতে সমস্যা হয়েছে। আবার চেষ্টা করুন।
-                            </p>
-
-                            <template v-else-if="filteredProducts.length">
-                                <Link
-                                    v-for="product in filteredProducts"
-                                    :key="product.id"
-                                    :href="`/product/${product.slug}`"
-                                    class="sr-item"
-                                    @click="closeSearch"
-                                >
-                                    <img
-                                        :src="product.featured_image || '/placeholder.svg'"
-                                        :alt="product.product_name"
-                                        class="sr-thumb"
-                                        loading="lazy"
-                                    />
-                                    <span class="sr-meta">
-                                        <span class="sr-name">{{ product.product_name }}</span>
-                                        <span v-if="product.category" class="sr-cat">{{ product.category }}</span>
-                                        <span class="sr-price">
-                                            <span class="sr-now">৳{{ product.price }}</span>
-                                            <span
-                                                v-if="product.previous_price && Number(product.previous_price) > Number(product.price)"
-                                                class="sr-was"
-                                            >৳{{ product.previous_price }}</span>
-                                            <span v-if="!product.in_stock" class="sr-oos">স্টকে নেই</span>
-                                        </span>
-                                    </span>
-                                </Link>
-
-                                <button v-if="moreResults" type="button" class="sr-more" @click="submitSearch">
-                                    আরও {{ moreResults }}টি ফলাফল দেখুন
-                                </button>
-                            </template>
-
-                            <div v-else-if="showNoResults" class="sr-empty">
-                                <SearchIcon :size="26" class="sr-empty-icon" />
-                                <p class="sr-empty-title">“{{ searchQuery }}” এর কোনো ফলাফল নেই</p>
-                                <p class="sr-empty-note">বানান দেখে নিন, বা অন্য শব্দ দিয়ে খুঁজুন।</p>
-                            </div>
-
-                            <p v-else class="sr-state">পণ্যের নাম বা কোড লিখে খুঁজুন।</p>
-                        </div>
-                    </div>
-                </div>
-            </Transition>
-        </Teleport></ClientOnly>
-    </div>
 
     <CartSidebar />
 </template>
 
 <style scoped>
+.header-top-area {
+    height: 76px;
+    padding-block: 12px !important;
+    background: #fff !important;
+    border-bottom: 0 !important;
+}
+
+.chhondo-logo {
+    display: grid;
+    grid-template-rows: 42px 7px;
+    align-items: center;
+    justify-items: center;
+    width: 57px;
+    height: 52px;
+    overflow: hidden;
+}
+
+.chhondo-logo-mark { width: 48px; height: 42px; display: block; }
+.chhondo-logo-word { width: 57px; height: 7px; display: block; }
+/* Figma phone header: 92px tall, 20px padding, 24px icons 20px apart. */
+.mobile-header { padding: 20px; background: #fff; }
+@media (min-width: 768px) { .mobile-header { padding-inline: 32px; } }
+.mobile-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: opacity .2s ease;
+}
+.mobile-header-icon:hover { opacity: .68; }
+.mobile-header-icon > img { width: 24px; height: 24px; display: block; }
+
+.header-figma-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: opacity .2s ease, transform .2s ease;
+}
+.header-figma-icon:hover { opacity: .68; transform: translateY(-1px); }
+.header-figma-icon > img,
+.header-figma-icon-img { width: 28px; height: 28px; display: block; }
+.header-area { background: #fff; }
+
+/* Figma: 28px icons, 28px apart. The buttons are 28px wide, so the gap is
+   the spacing itself. */
+.header-actions { gap: 28px; }
+.header-actions .header-figma-icon,
+.header-actions .header-icon-btn,
+.header-actions .cart-icon-btn { width: 28px; height: 28px; }
+.header-actions .desktop-search-area { display: none; }
+
 /* ── Mobile search sheet ─────────────────────────────────── */
 .sr-bar {
     display: flex;
@@ -798,6 +750,27 @@ watch(
     justify-content: center;
     width: 38px;
     height: 36px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Cart and wishlist counts */
+.header-count-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9999px;
+    background: #cc9b25;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 600 11px/1 "Poppins", sans-serif;
+    pointer-events: none;
 }
 
 .cart_count {
@@ -852,7 +825,7 @@ watch(
     background-color: var(--color-theme, #356019);
     color: #fff;
     padding: 8px 0;
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 13px;
     line-height: 20px;
 }
@@ -867,7 +840,7 @@ watch(
         position: sticky;
         top: 0;
         z-index: 50;
-        background-color: #FFFAF4;
+        background-color: #fff;
     }
 }
 </style>

@@ -277,7 +277,7 @@ const smsParts = computed(() => {
 <style scoped>
 .sms-hint {
   font-size: var(--fs-xs, 12px);
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
 }
 
 .sms-saved {
@@ -295,33 +295,33 @@ const smsParts = computed(() => {
 
 .sms-token {
   padding: 2px 9px;
-  border: 1px solid var(--line, #e5e8df);
+  border: 1px solid var(--line, #e4e1e0);
   border-radius: var(--r-full, 999px);
   background: var(--surface, #fff);
   font-family: var(--mono, ui-monospace, monospace);
   font-size: 11px;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
   cursor: pointer;
 }
 
 .sms-token:hover {
-  border-color: var(--admin-green-600, #356019);
-  color: var(--admin-green-600, #356019);
+  border-color: var(--admin-green-600, #252f17);
+  color: var(--admin-green-600, #252f17);
 }
 
 .sms-count {
   margin: 0;
   font-size: var(--fs-xs, 12px);
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 
 .sms-balance {
   margin: 0;
   padding: 8px 12px;
   border-radius: var(--r-sm, 6px);
-  background: var(--surface-sunk, #f7f8f5);
+  background: var(--surface-sunk, #f5f4f2);
   font-size: var(--fs-sm, 13px);
   font-weight: 600;
-  color: var(--text, #1f2a17);
+  color: var(--text, #1a1817);
 }
 </style>

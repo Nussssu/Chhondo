@@ -193,7 +193,7 @@ const callbackRows = [
   margin-top: 4px;
   font-size: var(--fs-xs, 12px);
   line-height: 1.5;
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
 }
 
 .pg-saved {
@@ -228,7 +228,7 @@ const callbackRows = [
   align-items: center;
   gap: 8px;
   padding: 7px 0;
-  border-bottom: 1px solid var(--line, #e5e8df);
+  border-bottom: 1px solid var(--line, #e4e1e0);
 }
 
 .pg-url-row:last-child { border-bottom: 0; }
@@ -236,16 +236,16 @@ const callbackRows = [
 .pg-url-label {
   font-size: var(--fs-xs, 12px);
   font-weight: 600;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 
 .pg-url {
   overflow-x: auto;
   padding: 4px 8px;
   border-radius: var(--r-sm, 6px);
-  background: var(--surface-sunk, #f7f8f5);
+  background: var(--surface-sunk, #f5f4f2);
   font-size: 12px;
-  color: var(--text, #1f2a17);
+  color: var(--text, #1a1817);
   white-space: nowrap;
 }
 
@@ -254,6 +254,6 @@ const callbackRows = [
   padding-left: 18px;
   font-size: var(--fs-sm, 13px);
   line-height: 1.7;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 </style>

@@ -20,11 +20,8 @@
               </li>
 
               <li class="nav-item d-none d-md-flex">
-                <button type="button" class="topbar-search" @click="palette?.open()">
-                  <i class="admin-icon" data-lucide="search"></i>
-                  <span>Search</span>
-                  <kbd>{{ metaKey }}K</kbd>
-                </button>
+                <!-- Opens in place: the button widens into the search field -->
+                <CommandPalette ref="palette" :meta-key="metaKey" />
               </li>
 
               <li class="nav-item dropdown dropdown-user-setting">
@@ -83,7 +80,6 @@
     <ConfirmDialog />
 
     <!-- ⌘K navigation -->
-    <CommandPalette ref="palette" />
 
     <!-- Toasts, driven by utils/toast -->
     <ToastHost />
@@ -115,9 +111,9 @@ const metaKey = computed(() =>
 const frontendUrl = computed(() => window.location.origin)
 
 const userAvatar = computed(() => {
-  if (!authUser.value) return 'https://ui-avatars.com/api/?name=Admin&background=1c330d&color=fff&size=64'
+  if (!authUser.value) return 'https://ui-avatars.com/api/?name=Admin&background=1a2110&color=fff&size=64'
   const initials = encodeURIComponent((authUser.value.name ?? 'A').substring(0, 2))
-  return `https://ui-avatars.com/api/?name=${initials}&background=1c330d&color=fff&size=64`
+  return `https://ui-avatars.com/api/?name=${initials}&background=1a2110&color=fff&size=64`
 })
 
 

@@ -112,10 +112,10 @@ const updateQuantity = (item, change) => {
           <!-- Desktop Table View -->
           <thead class="border-b">
             <tr>
-              <th class="text-left py-4">PRODUCT</th>
-              <th class="text-left py-4">PRICE</th>
-              <th class="text-left py-4">QUANTITY</th>
-              <th class="text-right py-4">SUBTOTAL</th>
+              <th class="text-left py-4">পণ্য</th>
+              <th class="text-left py-4">মূল্য</th>
+              <th class="text-left py-4">পরিমাণ</th>
+              <th class="text-right py-4">সাবটোটাল</th>
             </tr>
           </thead>
           <tbody>
@@ -125,20 +125,20 @@ const updateQuantity = (item, change) => {
                   <button @click="cartStore.removeItem(item.id)" class="text-gray-400 hover:text-gray-600">
                     <XIcon class="h-4 w-4" />
                   </button>
-                  <img :src="item.product.featured_image" :alt="item.product.product_name" class="w-20 h-20 object-cover" />
+                  <img :src="item.product.featured_image || '/placeholder.svg'" :alt="item.product.product_name" class="w-20 h-20 object-cover" loading="lazy" decoding="async" width="80" height="80" @error="$event.target.src = '/placeholder.svg'" />
                   <div class="flex flex-col gap-1">
                     <span>{{ item.product.product_name }}</span>
                     <span
                       v-if="isOutOfStock(item.product)"
                       class="soldout-badge self-start"
-                      >Out of Stock</span
+                      >স্টকে নেই</span
                     >
                     <span
                       v-if="item.blouse_choice"
                       class="blouse-badge"
                       :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                     >
-                      {{ item.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
+                      {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                     </span>
                   </div>
                 </div>
@@ -169,7 +169,7 @@ const updateQuantity = (item, change) => {
 
         <div class="md:hidden">
           <div v-for="item in cartItems" :key="item.id" class="flex gap-4 p-4 border-b">
-            <img :src="item.product.featured_image" :alt="item.product.product_name" class="w-24 h-24 object-cover rounded" />
+            <img :src="item.product.featured_image || '/placeholder.svg'" :alt="item.product.product_name" class="w-24 h-24 object-cover rounded" loading="lazy" decoding="async" width="96" height="96" @error="$event.target.src = '/placeholder.svg'" />
             <div class="flex-1">
               <div class="flex items-start justify-between">
                 <div class="flex flex-col gap-1">
@@ -177,14 +177,14 @@ const updateQuantity = (item, change) => {
                   <span
                     v-if="isOutOfStock(item.product)"
                     class="soldout-badge self-start"
-                    >Out of Stock</span
+                    >স্টকে নেই</span
                   >
                   <span
                     v-if="item.blouse_choice"
                     class="blouse-badge self-start"
                     :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                   >
-                    {{ item.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
+                    {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                   </span>
                 </div>
                 <button @click="cartStore.removeItem(item.id)" class="text-gray-400 hover:text-gray-600">
@@ -194,7 +194,7 @@ const updateQuantity = (item, change) => {
 
               <div class="mt-1 space-y-2">
                 <div class="flex items-center justify-between">
-                  <span class="text-gray-500">Price</span>
+                  <span class="text-gray-500">মূল্য</span>
                   <span class="font-medium">
                     <span
                       v-if="item.regular_individual_price"
@@ -205,7 +205,7 @@ const updateQuantity = (item, change) => {
                 </div>
 
                 <div class="flex items-center justify-between">
-                  <span class="text-gray-500">Quantity</span>
+                  <span class="text-gray-500">পরিমাণ</span>
                   <div class="flex items-center border rounded">
                     <button @click="updateQuantity(item, -1)"
                       class="px-3 py-1 border-r hover:bg-gray-50" :disabled="item.quantity <= 1">-</button>
@@ -217,7 +217,7 @@ const updateQuantity = (item, change) => {
                 </div>
 
                 <div class="flex items-center justify-between pt-2 border-t">
-                  <span class="text-gray-500">Subtotal</span>
+                  <span class="text-gray-500">সাবটোটাল</span>
                   <span class="font-medium text-theme">
                     {{ formatPrice(item.individual_price * item.quantity) }}<span class="bangla-font">৳</span>
                   </span>
@@ -232,15 +232,15 @@ const updateQuantity = (item, change) => {
       <!-- Cart Totals -->
       <div class="lg:w-1/3">
         <div class="border rounded p-6">
-          <h2 class="title-2 mb-6">CART TOTALS</h2>
+          <h2 class="title-2 mb-6">কার্টের মোট</h2>
 
           <div class="flex justify-between py-4 border-b">
-            <span>Subtotal</span>
+            <span>সাবটোটাল</span>
             <span>{{ formatPrice(subtotal) }}<span class="bangla-font">৳</span></span>
           </div>
 
           <div class="flex justify-between py-4 font-bold">
-            <span>Total</span>
+            <span>মোট মূল্য</span>
             <span class="text-theme">{{ formatPrice(total) }}<span class="bangla-font">৳</span></span>
           </div>
 

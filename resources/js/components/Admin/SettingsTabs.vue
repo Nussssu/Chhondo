@@ -72,7 +72,7 @@ const isActive = (tab) => {
 }
 
 .settings-tab.is-active {
-  color: #2c5015;
+  color: #1a2110;
   font-weight: 600;
 }
 
@@ -84,6 +84,6 @@ const isActive = (tab) => {
   bottom: -3px;
   height: 2px;
   border-radius: 2px;
-  background: #356019;
+  background: #252f17;
 }
 </style>

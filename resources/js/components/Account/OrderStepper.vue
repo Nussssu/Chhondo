@@ -1,5 +1,29 @@
 <template>
-  <div class="stepper">
+  <div v-if="variant === 'vertical'" class="vertical-stepper">
+    <div
+      v-for="(step, index) in verticalSteps"
+      :key="step.key"
+      class="vertical-step"
+      :class="{
+        'is-done': index <= currentStepIndex,
+        'is-current': index === currentStepIndex,
+      }"
+    >
+      <div class="vertical-marker">
+        <span class="vertical-circle"><img :src="step.icon" alt="" /></span>
+        <span v-if="index < verticalSteps.length - 1" class="vertical-line" />
+      </div>
+      <div class="vertical-copy">
+        <p class="vertical-title">{{ step.label }}</p>
+        <p class="vertical-date">{{ index <= currentStepIndex ? stepDate(index) : 'Pending' }}</p>
+        <span v-if="index === currentStepIndex" class="current-status">
+          <span class="current-status-dot" />Current status
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="stepper">
     <div
       v-for="(step, index) in steps"
       :key="step.key"
@@ -55,14 +79,139 @@
 <script setup>
 import { TRACKER_STEPS } from '@/utils/orderStatus';
 
-defineProps({
+const props = defineProps({
   currentStepIndex: { type: Number, required: true },
+  variant: { type: String, default: 'horizontal' },
+  placedAt: { type: String, default: '' },
+  updatedAt: { type: String, default: '' },
 });
 
 const steps = TRACKER_STEPS;
+const icons = [
+  '/assets/images/account/track-step-placed.svg',
+  '/assets/images/account/track-step-processing.svg',
+  '/assets/images/account/track-step-shipped.svg',
+  '/assets/images/account/track-step-transit.svg',
+  '/assets/images/account/track-step-delivered.svg',
+];
+const verticalSteps = TRACKER_STEPS.map((step, index) => ({ ...step, icon: icons[index] }));
+
+const formatStepDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  const datePart = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date);
+  const timePart = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+  return `${datePart} · ${timePart}`;
+};
+
+const stepDate = (index) => formatStepDate(index === 0 ? props.placedAt : (props.updatedAt || props.placedAt));
 </script>
 
 <style scoped>
+.vertical-stepper {
+  display: flex;
+  flex-direction: column;
+}
+
+.vertical-step {
+  display: flex;
+  gap: 16px;
+  min-height: 76px;
+}
+
+.vertical-step.is-current {
+  min-height: 96px;
+}
+
+.vertical-step:last-child {
+  min-height: 40px;
+}
+
+.vertical-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  flex: 0 0 40px;
+}
+
+.vertical-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: #efe0bb;
+  flex: 0 0 40px;
+}
+
+.vertical-circle img {
+  display: block;
+}
+
+.vertical-step.is-done .vertical-circle {
+  background: #252f17;
+}
+
+.vertical-line {
+  width: 2px;
+  min-height: 36px;
+  background: #cc9b25;
+  flex: 1 1 auto;
+}
+
+.vertical-step.is-done:not(.is-current) .vertical-line {
+  background: #596548;
+}
+
+.vertical-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+.vertical-title,
+.vertical-date {
+  margin: 0;
+}
+
+.vertical-title {
+  font: 600 12px/20px "Li Ador Noirrit", sans-serif;
+  color: #705514;
+}
+
+.vertical-step.is-done .vertical-title {
+  color: #1a1817;
+}
+
+.vertical-date {
+  font: 400 12px/20px "Poppins", sans-serif;
+  color: #cc9b25;
+}
+
+.current-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #4c5441;
+  font: 500 10px/20px "Poppins", sans-serif;
+  color: #fff;
+}
+
+.current-status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+}
+
 .stepper {
   display: flex;
   align-items: flex-start;

@@ -210,7 +210,7 @@ const save = async () => {
   display: flex; align-items: center; gap: 6px;
 }
 .md-usage-count {
-  background: #e4f2e4; color: #2C5015; border-radius: 999px;
+  background: #e4f2e4; color: #1A2110; border-radius: 999px;
   padding: 1px 8px; font-size: 11px;
 }
 .md-usage-count.is-none { background: #fff0d3; color: #B9770E; }

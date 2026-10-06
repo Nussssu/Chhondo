@@ -43,6 +43,6 @@ const isBkash = computed(() => props.order.payment_type === 'online' && props.or
 .pm-text {
   font-size: var(--fs-sm, 13px);
   font-weight: 600;
-  color: var(--text, #1f2a17);
+  color: var(--text, #1a1817);
 }
 </style>

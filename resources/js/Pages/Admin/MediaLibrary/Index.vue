@@ -465,8 +465,8 @@ onMounted(() => {
   transition: outline-color .15s, transform .15s;
 }
 .ml-cell:hover { outline-color: #b0bec5; transform: translateY(-2px); }
-.ml-cell.is-active { border-color: #356019; outline-color: #356019; }
-.ml-cell.is-picked { border-color: #356019; }
+.ml-cell.is-active { border-color: #252f17; outline-color: #252f17; }
+.ml-cell.is-picked { border-color: #252f17; }
 .ml-cell img, .ml-cell video {
   width: 100%; height: 120px; object-fit: cover; display: block; background: #000;
 }
@@ -518,14 +518,14 @@ onMounted(() => {
 /* Drop overlay */
 .ml-dropzone {
   position: fixed; inset: 0; z-index: 2000;
-  background: rgba(53, 96, 25, .12);
+  background: rgba(37, 47, 23, .12);
   backdrop-filter: blur(2px);
   display: flex; align-items: center; justify-content: center;
   pointer-events: none;
 }
 .ml-dropzone-inner {
-  background: #fff; border: 2px dashed #356019; border-radius: 16px;
-  padding: 40px 56px; text-align: center; color: #356019; font-weight: 600;
+  background: #fff; border: 2px dashed #252f17; border-radius: 16px;
+  padding: 40px 56px; text-align: center; color: #252f17; font-weight: 600;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .16);
 }
 </style>

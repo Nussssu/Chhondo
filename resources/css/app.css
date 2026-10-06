@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Li Ador Noirrit (Lipighor Font Foundry) — the Bangla face of the Chhondo
+   Figma. Free to use but not to redistribute, so it is embedded from a public
+   webfont host rather than committed here. The family ships Regular and
+   SemiBold only: Figma's 300 maps to Regular and 700 to SemiBold.
+   The hosted Regular is drawn about a fifth smaller than the rest of the
+   family; scaled by 123% it sets the Figma's text at the Figma's width. */
+@font-face {
+    font-family: 'Li Ador Noirrit';
+    font-style: normal;
+    font-weight: 300 500;
+    font-display: swap;
+    size-adjust: 123%;
+    src: url('https://db.onlinewebfonts.com/t/3565357604fee3776c402d09091028bb.woff2') format('woff2'),
+         url('https://db.onlinewebfonts.com/t/3565357604fee3776c402d09091028bb.woff') format('woff');
+}
+@font-face {
+    font-family: 'Li Ador Noirrit';
+    font-style: normal;
+    font-weight: 600 800;
+    font-display: swap;
+    src: url('https://db.onlinewebfonts.com/t/88b697da0ff9ad9755215ec90f53d173.woff2') format('woff2'),
+         url('https://db.onlinewebfonts.com/t/88b697da0ff9ad9755215ec90f53d173.woff') format('woff');
+}
+
 @source "../../resources/**/*.vue";
 @source "../../resources/**/*.js";
 @source "../../resources/**/*.blade.php";
@@ -27,13 +51,45 @@ body {
     background: var(--Warm-Color-50, #FFFAF4);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+.storefront-area {
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
+    color: #1A1817;
+    background: #FFFFFF;
+    --chhondo-olive-900: #11170a;
+    --chhondo-olive-700: #1a2110;
+    --chhondo-olive-500: #252f17;
+    --chhondo-olive-400: #4c5441;
+    --chhondo-gold: #cc9b25;
+    --chhondo-black-900: #1a1817;
+    --chhondo-black-700: #3c3834;
+    --chhondo-black-500: #6d6560;
+    --chhondo-black-200: #e4e1e0;
+    --chhondo-shadow: 0 4px 16px -4px rgba(0,0,0,.12), 0 2px 6px -2px rgba(0,0,0,.03);
+    /* Figma DSM extras */
+    --chhondo-gold-400: #d6af51;
+    --chhondo-gold-100: #efe0bb;
+    --chhondo-gold-700: #705514;
+    --chhondo-black-400: #9c9591;
+    --chhondo-black-300: #d1cdca;
+    --chhondo-field: #f3f3f3;
+    --chhondo-wine: #60141d;
+    --font-bn: 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
+    --font-en: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
+}
+
+.storefront-area .container { padding-inline: 0; max-width: 1360px; }
+@media (max-width: 1391px) {
+    .storefront-area .container { padding-inline: 1rem; }
+}
+.app-layout { min-height: 100vh; background: #fff; }
+
+.storefront-area h1,
+.storefront-area h2,
+.storefront-area h3,
+.storefront-area h4,
+.storefront-area h5,
+.storefront-area h6 {
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-weight: 600;
     line-height: 1.2;
 }
@@ -41,49 +97,49 @@ h6 {
 /* ===== TYPOGRAPHY TOKENS ===== */
 /* Body - Poppins (Hind Siliguri fallback for Bangla) */
 .body-1-r {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 14px;
     font-weight: 400;
     line-height: 20px;
 }
 
 .body-1-sb {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 14px;
     font-weight: 600;
     line-height: 20px;
 }
 
 .body-2-r {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
 }
 
 .body-2-m {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
 }
 
 .body-2-sb {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 16px;
     font-weight: 600;
     line-height: 24px;
 }
 
 .body-3-r {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 20px;
     font-weight: 400;
     line-height: 28px;
 }
 
 .body-3-sb {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 20px;
     font-weight: 600;
     line-height: 28px;
@@ -91,14 +147,14 @@ h6 {
 
 /* Title - Poppins */
 .title-2 {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 24px;
     font-weight: 600;
     line-height: 32px;
 }
 
 .title-1 {
-    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    font-family: 'Poppins', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 28px;
     font-weight: 600;
     line-height: 36px;
@@ -106,21 +162,21 @@ h6 {
 
 /* Headline - Sora */
 .headline-3 {
-    font-family: 'Sora', 'Hind Siliguri', sans-serif;
+    font-family: 'Sora', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 40px;
     font-weight: 600;
     line-height: 52px;
 }
 
 .headline-2 {
-    font-family: 'Sora', 'Hind Siliguri', sans-serif;
+    font-family: 'Sora', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 48px;
     font-weight: 600;
     line-height: 58px;
 }
 
 .headline-1 {
-    font-family: 'Sora', 'Hind Siliguri', sans-serif;
+    font-family: 'Sora', 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
     font-size: 56px;
     font-weight: 600;
     line-height: 68px;
@@ -128,7 +184,7 @@ h6 {
 
 /* ===== UTILITY CLASSES ===== */
 .bangla-font {
-    font-family: 'Hind Siliguri', sans-serif;
+    font-family: 'Li Ador Noirrit', 'Hind Siliguri', sans-serif;
 }
 
 .section-title {
@@ -161,3 +217,6 @@ h6 {
 .btn__secondary:hover {
     background-color: rgb(229 231 235);
 }
+
+/* Gold words in CMS headings (*word* — see resources/js/utils/cms.js) */
+.cms-accent { color: #cc9b25; }

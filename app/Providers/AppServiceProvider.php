@@ -221,6 +221,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        // Server-side rendering only when the SSR server is actually up; an
+        // unreachable one used to hold every page for seconds (see SsrProbe).
+        $this->app->resolving(\Inertia\Ssr\HttpGateway::class, function ($gateway) {
+            $gateway->disable(fn () => ! \App\Support\SsrProbe::reachable());
+        });
+
         // Register the avatar directive
         Blade::directive('avatar', function ($expression) {
             // Extract the parameters from the expression

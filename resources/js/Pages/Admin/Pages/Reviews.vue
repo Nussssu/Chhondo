@@ -378,12 +378,12 @@ const resetForm = () => {
 <style scoped>
 /* Palette matched to the storefront (Figma) review components */
 .reviews-page {
-  --rv-cream: #FFFAF4;
-  --rv-cream-2: #FFF0DF;
-  --rv-border: #F7E2CB;
+  --rv-cream: #FAF5E9;
+  --rv-cream-2: #EFE0BB;
+  --rv-border: #EFE0BB;
   --rv-border-strong: #E9C39C;
-  --rv-green: #356019;
-  --rv-green-dark: #2A4D14;
+  --rv-green: #252f17;
+  --rv-green-dark: #1A2110;
   --rv-ink: #2C1A0E;
   --rv-body: #4B4033;
   --rv-muted: #7A5C3E;
@@ -447,7 +447,7 @@ const resetForm = () => {
   font-size: .88rem;
 }
 .rv-input:focus {
-  border-color: var(--rv-green); box-shadow: 0 0 0 3px rgba(53, 96, 25, 0.12); background: #fff;
+  border-color: var(--rv-green); box-shadow: 0 0 0 3px rgba(37, 47, 23, 0.12); background: #fff;
 }
 .rv-hint { color: var(--rv-muted); font-size: .72rem; display: block; margin-top: 4px; }
 
@@ -511,7 +511,7 @@ const resetForm = () => {
 .rv-review-name { font-weight: 700; color: var(--rv-ink); font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rv-review-city { font-size: .76rem; color: var(--rv-muted); }
 .rv-badge { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 3px 8px; border-radius: 999px; }
-.rv-badge.is-active { background: #E4F2E4; color: #2C5015; }
+.rv-badge.is-active { background: #E4F2E4; color: #1A2110; }
 .rv-badge.is-hidden { background: #EDE6DC; color: #8A7660; }
 .rv-badge.is-pending { background: #FFF0D3; color: #B9770E; }
 .rv-review-card.is-pending { border-left: 3px solid var(--rv-star); }

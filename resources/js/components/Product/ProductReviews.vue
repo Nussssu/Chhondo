@@ -48,11 +48,11 @@ const openLightbox = (images, index) => {
        offer the "Write a review" button. -->
   <section class="reviews-section">
     <div class="container">
-      <div class="max-w-[1080px] mx-auto">
+      <div class="max-w-[1130px] mx-auto">
         <!-- Header -->
-        <div class="flex items-end justify-between gap-4 flex-wrap mb-8 md:mb-10">
+        <div class="flex items-end justify-between gap-4 flex-wrap mb-8 md:mb-12">
           <div>
-            <h2 class="reviews-heading">Customer Reviews</h2>
+            <h2 class="reviews-heading">ছন্দময়ীদের গল্প</h2>
             <div v-if="reviews.length > 0" class="flex items-center gap-2 mt-2" aria-label="Average rating">
               <div class="flex gap-1">
                 <svg
@@ -61,8 +61,8 @@ const openLightbox = (images, index) => {
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
-                  :fill="n <= Math.round(averageRating) ? '#b47f54' : 'none'"
-                  stroke="#b47f54"
+                  :fill="n <= Math.round(averageRating) ? '#d6af51' : 'none'"
+                  stroke="#d6af51"
                   stroke-width="1.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -75,7 +75,7 @@ const openLightbox = (images, index) => {
             </div>
           </div>
           <button type="button" class="reviews-write-btn" @click="isReviewModalOpen = true">
-            Write a review
+            আপনার অভিজ্ঞতা জানান
           </button>
         </div>
 
@@ -110,8 +110,8 @@ const openLightbox = (images, index) => {
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
-                    :fill="n <= (review.rating || 5) ? '#b47f54' : 'none'"
-                    stroke="#b47f54"
+                    :fill="n <= (review.rating || 5) ? '#d6af51' : 'none'"
+                    stroke="#d6af51"
                     stroke-width="1.5"
                     stroke-linecap="round"
                     stroke-linejoin="round"
@@ -192,7 +192,7 @@ const openLightbox = (images, index) => {
 }
 
 .reviews-heading {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 28px;
   font-weight: 600;
   line-height: 1.3;
@@ -269,7 +269,7 @@ const openLightbox = (images, index) => {
 }
 
 .review-row-name {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
@@ -277,7 +277,7 @@ const openLightbox = (images, index) => {
 }
 
 .review-row-city {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 14px;
   line-height: 20px;
   color: #7a5c3e;
@@ -293,7 +293,7 @@ const openLightbox = (images, index) => {
 
 /* Divider above the review text */
 .review-row-text {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   line-height: 24px;
   color: #5a3a1e;
@@ -339,7 +339,7 @@ const openLightbox = (images, index) => {
 }
 
 .reviews-empty {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   line-height: 26px;
   color: #7a5c3e;
@@ -382,5 +382,67 @@ const openLightbox = (images, index) => {
 
 .reviews-see-more-icon.is-expanded {
   transform: rotate(180deg);
+}
+
+/* ===== Figma "ছন্দময়ীদের গল্প" (product page) ===== */
+.reviews-section { background: #fff; padding: 132px 0 0; }
+.reviews-heading {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #1a1817;
+}
+.reviews-avg,
+.reviews-count { font-family: "Poppins", sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; color: #3c3834; }
+.reviews-write-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 24px;
+  color: #252f17;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+}
+.reviews-write-btn:hover { color: #cc9b25; background: none; }
+
+.review-row {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+}
+.review-row > div:first-child { padding-bottom: 16px; border-bottom: 1px solid #efe0bb; align-items: center; }
+.review-row-avatar { width: 44px; height: 44px; }
+.review-row-avatar--initial { background: #cbcdc7; color: #1a1817; }
+.review-row-name { font-family: "Poppins", "Li Ador Noirrit", sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; color: #1a1817; }
+.review-row-city { font-family: "Poppins", "Li Ador Noirrit", sans-serif; font-size: 12px; line-height: 20px; color: #6d6560; }
+.review-row-rating { font-family: "Poppins", sans-serif; font-size: 12px; font-weight: 600; color: #1a1817; }
+.review-row-text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.review-row-photos { display: flex; flex-wrap: wrap; gap: 16px; }
+.review-row-photo { width: 100px; height: 100px; border-radius: 6px; overflow: hidden; }
+.reviews-see-more { font-family: "Poppins", sans-serif; font-size: 16px; color: #1a1817; }
+
+@media (max-width: 767px) {
+  .reviews-section { padding-top: 48px; }
+  .reviews-section .container { padding-inline: 20px; }
+  .reviews-heading { font-size: 28px; line-height: 36px; }
+  .review-row-photo { width: 72px; height: 72px; }
 }
 </style>

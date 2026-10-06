@@ -99,11 +99,15 @@ const toggleWishlist = () => {
         >
                 <!-- Featured Image (Thumbnail) -->
                 <img
-                    :src="product?.featured_image"
+                    :src="product?.featured_image || '/placeholder.svg'"
                     :alt="product.product_name"
                     class="w-full h-full object-cover duration-300 transition-opacity group-hover:opacity-0"
                     loading="lazy"
                     fetchpriority="high"
+                    decoding="async"
+                    width="400"
+                    height="500"
+                    @error="$event.target.src = '/placeholder.svg'"
                 />
 
                 <!-- Gallery Image (Appears on Hover) -->
@@ -114,16 +118,24 @@ const toggleWishlist = () => {
                     class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     fetchpriority="high"
                     loading="eager"
+                    decoding="async"
+                    width="400"
+                    height="500"
+                    @error="$event.target.src = '/placeholder.svg'"
                 />
 
                 <!-- Fallback Hover Image: Featured Image if no gallery image -->
                 <img
                     v-else
-                    :src="product.featured_image"
+                    :src="product.featured_image || '/placeholder.svg'"
                     :alt="product.product_name"
                     class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     fetchpriority="high"
                     loading="eager"
+                    decoding="async"
+                    width="400"
+                    height="500"
+                    @error="$event.target.src = '/placeholder.svg'"
                 />
 
             <!-- Wishlist Heart -->

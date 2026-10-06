@@ -1,6 +1,6 @@
 <template>
   <Head>
-    <title>My Wishlist</title>
+    <title>পছন্দের তালিকা</title>
   </Head>
 
   <AccountLayout>
@@ -24,16 +24,17 @@
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </div>
-        <p class="wishlist-empty-text">Your wishlist is empty.</p>
-        <Link href="/shop" class="wishlist-shop-btn">Continue shopping</Link>
+        <p class="wishlist-empty-text">আপনার পছন্দের তালিকা খালি।</p>
+        <Link href="/shop" class="wishlist-shop-btn">কেনাকাটা চালিয়ে যান</Link>
       </div>
 
       <!-- Wishlist grid -->
-      <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
         <CollectionCard
           v-for="item in items"
           :key="item.id"
           :product="item.product"
+          button-label="Add to cart"
           :openPreview="openPreview"
         />
       </div>
@@ -106,7 +107,7 @@ const openPreview = (product) => {
 }
 
 .section-header-subtitle {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 12px;
   color: #7a5c3e;
 }

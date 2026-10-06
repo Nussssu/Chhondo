@@ -1,22 +1,21 @@
 <template>
   <Head>
-    <title>Create account</title>
+    <title>{{ texts.register_tab_title }}</title>
   </Head>
 
-  <AuthShowcaseLayout :reviews="reviews">
+  <AuthShowcaseLayout :reviews="reviews" :photos="photos" hide-footer>
     <div class="auth-form">
-      <h1 class="auth-title">Create account</h1>
-      <p class="auth-subtitle">Create an account to continue shopping</p>
+      <h1 class="auth-title">{{ texts.register_title }}</h1>
+      <p class="auth-subtitle">{{ texts.register_subtitle }}</p>
 
       <form @submit.prevent="handleSubmit" class="auth-fields">
         <div class="auth-field">
-          <label for="name" class="auth-label">Full Name</label>
+          <label for="name" class="auth-label">{{ texts.register_name_label }}</label>
           <input
             id="name"
             v-model="form.name"
             type="text"
             autocomplete="name"
-            placeholder="Your full name"
             class="auth-input"
             :class="{ 'has-error': errors.name }"
           />
@@ -24,13 +23,12 @@
         </div>
 
         <div class="auth-field">
-          <label for="email" class="auth-label">Email Address</label>
+          <label for="email" class="auth-label">{{ texts.register_email_label }}</label>
           <input
             id="email"
             v-model="form.email"
             type="email"
             autocomplete="email"
-            placeholder="you@example.com"
             class="auth-input"
             :class="{ 'has-error': errors.email }"
           />
@@ -38,7 +36,7 @@
         </div>
 
         <div class="auth-field">
-          <label for="phone" class="auth-label">Phone number</label>
+          <label for="phone" class="auth-label">{{ texts.register_phone_label }}</label>
           <PhoneField
             id="phone"
             v-model="form.phone"
@@ -50,14 +48,13 @@
 
         <div class="auth-grid">
           <div class="auth-field">
-            <label for="password" class="auth-label">Password</label>
+            <label for="password" class="auth-label">{{ texts.register_password_label }}</label>
             <div class="auth-input-wrap">
               <input
                 id="password"
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="new-password"
-                placeholder="At least 8 characters"
                 class="auth-input"
                 :class="{ 'has-error': errors.password }"
               />
@@ -70,14 +67,13 @@
           </div>
 
           <div class="auth-field">
-            <label for="password_confirmation" class="auth-label">Confirm Password</label>
+            <label for="password_confirmation" class="auth-label">{{ texts.register_confirm_label }}</label>
             <div class="auth-input-wrap">
               <input
                 id="password_confirmation"
                 v-model="form.password_confirmation"
                 :type="showConfirm ? 'text' : 'password'"
                 autocomplete="new-password"
-                placeholder="Re-enter your password"
                 class="auth-input"
               />
               <button type="button" class="auth-eye" @click="showConfirm = !showConfirm" :aria-label="showConfirm ? 'Hide password' : 'Show password'">
@@ -89,12 +85,12 @@
         </div>
 
         <button type="submit" class="auth-submit" :disabled="form.processing">
-          {{ form.processing ? 'Creating account...' : 'Create account' }}
+          {{ form.processing ? texts.register_loading : texts.register_button }}
         </button>
 
-        <p class="auth-switch">
-          Already have an account?
-          <Link href="/login" class="auth-link">Log in</Link>
+        <p v-if="on(texts.register_switch_show)" class="auth-switch">
+          {{ texts.register_switch_text }}
+          <Link href="/login" class="auth-link">{{ texts.register_switch_link }}</Link>
         </p>
       </form>
     </div>
@@ -107,9 +103,12 @@ import PhoneField from '@/components/Form/PhoneField.vue'
 import { computed, ref } from 'vue'
 import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import { Link, useForm, Head } from '@inertiajs/vue3'
+import { on } from '@/utils/cms'
 
-defineProps({
+const props = defineProps({
   reviews: { type: Array, default: () => [] },
+  // Content › Pages › Log in & Sign up.
+  texts: { type: Object, default: () => ({}) },
 })
 
 const showPassword = ref(false)
@@ -119,6 +118,8 @@ const showConfirm = ref(false)
 // country's numbering plan rather than just its length. The server applies the
 // same rule; this only saves a round trip.
 const phoneValid = ref(false)
+
+const photos = computed(() => [1, 2, 3, 4].map((n) => props.texts[`collage_photo_${n}`]))
 
 const form = useForm({
   name: '',
@@ -294,4 +295,99 @@ const handleSubmit = () => {
   color: #4b5563;
   margin-top: 8px;
 }
+
+/* ===== Figma "Log in" / "Sign up" ===== */
+.auth-form { display: flex; flex-direction: column; gap: 32px; }
+.auth-title {
+  margin: 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40px;
+  color: #1a1817;
+}
+.auth-subtitle {
+  margin: -24px 0 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.auth-fields { display: flex; flex-direction: column; gap: 16px; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.auth-label {
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #3c3834;
+}
+/* White 56px fields with a Black/200 hairline */
+.auth-input,
+.auth-form :deep(.iti__tel-input) {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #fff;
+  font-family: "Poppins", "Li Ador Noirrit", sans-serif;
+  font-size: 15px;
+  color: #1a1817;
+  box-shadow: none;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.auth-input-wrap .auth-input { padding-right: 48px; }
+.auth-input:focus,
+.auth-form :deep(.iti__tel-input):focus { border-color: #d6af51; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); }
+.auth-eye { color: #3c3834; }
+.auth-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.auth-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.auth-checkbox { width: 16px; height: 16px; accent-color: #252f17; }
+.auth-forgot {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+  transition: color .2s ease;
+}
+.auth-forgot:hover { color: #cc9b25; }
+.auth-submit {
+  width: 100%;
+  height: 48px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: #1a2110;
+  color: #fff;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  transition: background-color .2s ease;
+}
+.auth-submit:hover:not(:disabled) { background: #252f17; }
+.auth-switch {
+  margin: -4px 0 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #121619;
+}
+.auth-link { margin-left: 8px; color: #cc9b25; font-weight: 600; }
+.auth-link:hover { color: #705514; }
+.auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 479px) { .auth-grid { grid-template-columns: 1fr; gap: 16px; } }
 </style>

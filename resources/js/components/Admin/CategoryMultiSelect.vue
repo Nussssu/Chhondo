@@ -150,14 +150,14 @@ function makePrimary(id) {
 }
 
 .cms-chip.is-primary {
-  border-color: var(--bs-primary, #356019);
-  background: color-mix(in srgb, var(--bs-primary, #356019) 8%, #fff);
+  border-color: var(--bs-primary, #252f17);
+  background: color-mix(in srgb, var(--bs-primary, #252f17) 8%, #fff);
 }
 
 .cms-chip-badge {
   padding: 1px 6px;
   border-radius: var(--r-full);
-  background: var(--bs-primary, #356019);
+  background: var(--bs-primary, #252f17);
   color: #fff;
   font-size: 10px;
   text-transform: uppercase;
@@ -179,7 +179,7 @@ function makePrimary(id) {
   cursor: pointer;
 }
 
-.cms-chip-star:hover { color: var(--bs-primary, #356019); }
+.cms-chip-star:hover { color: var(--bs-primary, #252f17); }
 .cms-chip-x:hover { color: var(--st-danger); background: var(--st-danger-soft); }
 
 .cms-empty {
@@ -242,8 +242,8 @@ function makePrimary(id) {
 }
 
 .cms-option.is-on .cms-box {
-  border-color: var(--bs-primary, #356019);
-  background: var(--bs-primary, #356019);
+  border-color: var(--bs-primary, #252f17);
+  background: var(--bs-primary, #252f17);
 }
 
 .cms-name { min-width: 0; }

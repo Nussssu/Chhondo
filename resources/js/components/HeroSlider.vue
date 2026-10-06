@@ -5,7 +5,9 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import { ref } from "vue";
+import { Link } from "@inertiajs/vue3";
 import { variantSrcset } from "@/utils/responsiveImage";
+import { rich } from "@/utils/cms";
 
 const modules = [Navigation, Pagination, Autoplay];
 
@@ -13,6 +15,19 @@ defineProps({
     sliders: {
         type: Array,
         required: true,
+    },
+    desktopImage: {
+        type: String,
+        default: "",
+    },
+    mobileImage: {
+        type: String,
+        default: "",
+    },
+    // Figma hero copy laid over the slides: { eyebrow, title, ctaLabel, ctaUrl }.
+    overlay: {
+        type: Object,
+        default: null,
     },
 });
 
@@ -54,7 +69,28 @@ const mobileSrcset = (slide) => {
 
 <template>
     <div class="swiper-container w-full min-h-auto mx-auto relative">
+        <div v-if="desktopImage" class="hero-slide">
+            <picture>
+                <source
+                    v-if="mobileImage"
+                    media="(max-width: 767px)"
+                    :srcset="mobileImage"
+                    sizes="100vw"
+                />
+                <img
+                    :src="desktopImage"
+                    alt="উৎসবের আমেজে বাঙালিয়ানা সাজ"
+                    class="hero-slide-img"
+                    width="1920"
+                    height="848"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                />
+            </picture>
+        </div>
         <swiper
+            v-else
             :modules="modules"
             :slides-per-view="1"
             :space-between="30"
@@ -89,12 +125,117 @@ const mobileSrcset = (slide) => {
                 </div>
             </swiper-slide>
         </swiper>
+
+        <!-- Figma: a blurred dark fade along the bottom, the copy on the left
+             and the button on the right, both on the container edge. -->
+        <div v-if="overlay" class="hero-overlay">
+            <div class="hero-fade" aria-hidden="true"></div>
+            <div class="container hero-copy-row">
+                <div class="hero-copy">
+                    <p v-if="overlay.eyebrow" class="hero-eyebrow">{{ overlay.eyebrow }}</p>
+                    <h1 class="hero-title" v-html="rich(overlay.title)"></h1>
+                </div>
+                <Link v-if="overlay.ctaLabel" :href="overlay.ctaUrl || '/shop'" class="hero-cta">
+                    <span>{{ overlay.ctaLabel }}</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </Link>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
 .swiper-container {
     padding: 0rem 0;
+}
+
+/* ── Figma hero overlay ─────────────────────────────────── */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+/* 216 of 848px: transparent → 71% black, with a blur ramping 0 → 20px. */
+.hero-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 25.5%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .71) 100%);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 100%);
+}
+
+.hero-copy-row {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    padding-bottom: clamp(32px, 4.6vw, 88px);
+}
+
+.hero-copy { display: flex; flex-direction: column; gap: 8px; color: #fff; }
+
+.hero-eyebrow {
+    margin: 0;
+    font: 300 16px/24px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+}
+
+.hero-title {
+    margin: 0;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    font-weight: 600;
+    font-size: 56px;
+    line-height: 68px;
+    color: #fff;
+    animation: hero-rise .9s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+.hero-cta {
+    pointer-events: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 56px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: #fff;
+    color: #1a1817;
+    font: 600 20px/28px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+    transition: background-color .2s ease, transform .2s ease;
+}
+.hero-cta:hover { background: #cc9b25; transform: translateY(-2px); }
+
+@keyframes hero-rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* The fade sits over the bullets, so they ride above it. */
+:deep(.swiper-pagination) { z-index: 3; }
+
+/* Figma phone hero: copy and button stacked bottom-left, 20px in. */
+@media (max-width: 767px) {
+    .hero-fade { height: 40%; }
+    .hero-copy-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 0 20px 24px;
+    }
+    .hero-eyebrow { font-size: 14px; line-height: 20px; }
+    .hero-title { font-size: 32px; line-height: 40px; }
+    .hero-cta { height: 44px; font-size: 16px; line-height: 24px; }
 }
 
 /*
@@ -105,10 +246,10 @@ const mobileSrcset = (slide) => {
 .hero-slide {
     position: relative;
     width: 100%;
-    /* 1900x560, the size the banners are authored at. */
-    aspect-ratio: 1900 / 560;
+    /* The approved Chhondo hero is intentionally tall and editorial. */
+    aspect-ratio: 1920 / 848;
     overflow: hidden;
-    background-color: #f5efe7;
+    background-color: #e4e1e0;
 }
 
 .hero-slide picture,
@@ -124,8 +265,9 @@ const mobileSrcset = (slide) => {
 }
 
 @media (max-width: 767px) {
+    /* Figma phone hero: 402 × 514. */
     .hero-slide {
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 402 / 514;
     }
 }
 

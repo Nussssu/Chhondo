@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = () => {
     router.post('/auth/logout', {}, {
       onSuccess: () => {
-        toast.success('Logged out successfully');
+        toast.success('সফলভাবে লগ আউট হয়েছে');
       },
     });
   };

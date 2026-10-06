@@ -147,7 +147,7 @@
 
                 <div class="pf-media-row">
                   <div class="pf-thumb pf-thumb--featured">
-                    <img v-if="product.featured_image" :src="product.featured_image" alt="Current featured image" />
+                    <img v-if="product.featured_image" :src="product.featured_image" alt="Current featured image" @error="$event.target.src = '/placeholder.svg'" />
                     <span v-else class="pf-thumb-empty">None</span>
                   </div>
 
@@ -733,7 +733,7 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: var(--admin-cream, #FFFAF4);
+  background: var(--admin-cream, #FAF5E9);
 }
 
 .pf-tab {

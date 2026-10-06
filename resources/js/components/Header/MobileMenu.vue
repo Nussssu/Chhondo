@@ -25,8 +25,6 @@ const props = defineProps({
     toggleMobileMenu: Function,
 });
 
-const logo = ref("/assets/images/logo/logo.png");
-
 const openSubmenuIds = ref(new Set());
 
 const toggleSubmenu = (id) => {
@@ -66,6 +64,7 @@ const ICONS = {
 
 const quickLinks = computed(() =>
     (usePage().props.layout?.header?.mobile_links ?? []).map((link) => ({
+        // Labels and links: Settings › Header & footer › Header.
         label: link.label,
         href: link.url,
         icon: ICONS[link.icon] ?? PhHeadset,
@@ -88,7 +87,10 @@ const quickLinks = computed(() =>
         <div class="mm-drawer" :class="{ 'mm-drawer--open': isMobileMenuOpen }">
             <!-- Header -->
             <div class="mm-header">
-                <img :src="logo" alt="Logo" class="w-[116px]" loading="lazy" />
+                <Link href="/" class="mm-brand" aria-label="Chhondo home" @click="toggleMobileMenu">
+                    <img :src="'/assets/chhondo/logo-mark-dark.svg'" alt="" class="mm-brand-mark" />
+                    <img :src="'/assets/chhondo/logo-word-dark.svg'" alt="Chhondo" class="mm-brand-word" />
+                </Link>
                 <button
                     @click="toggleMobileMenu"
                     class="mm-close"
@@ -111,7 +113,7 @@ const quickLinks = computed(() =>
                             <span class="mm-avatar">{{ userInitial }}</span>
                             <span class="min-w-0">
                                 <span class="mm-account-name">{{ userName }}</span>
-                                <span class="mm-account-sub">View my account</span>
+                                <span class="mm-account-sub">আমার অ্যাকাউন্ট দেখুন</span>
                             </span>
                         </Link>
                         <button
@@ -125,9 +127,9 @@ const quickLinks = computed(() =>
 
                     <template v-else>
                         <div class="mm-account-greeting">
-                            <span class="mm-account-name">Welcome</span>
+                            <span class="mm-account-name">স্বাগতম</span>
                             <span class="mm-account-sub">
-                                Log in for faster checkout
+                                দ্রুত চেকআউটের জন্য লগ ইন করুন
                             </span>
                         </div>
                         <div class="mm-auth-actions">
@@ -136,21 +138,21 @@ const quickLinks = computed(() =>
                                 class="mm-btn mm-btn--solid"
                                 @click="toggleMobileMenu"
                             >
-                                Log in
+                                লগ ইন করুন
                             </Link>
                             <Link
                                 href="/register"
                                 class="mm-btn mm-btn--ghost"
                                 @click="toggleMobileMenu"
                             >
-                                Sign up
+                                অ্যাকাউন্ট খুলুন
                             </Link>
                         </div>
                     </template>
                 </div>
 
                 <!-- Main navigation -->
-                <p class="mm-section-label">Shop</p>
+                <p class="mm-section-label">শপ</p>
                 <ul class="mm-list">
                     <li v-for="item in props.menuItems" :key="item.id">
                         <div
@@ -280,7 +282,7 @@ const quickLinks = computed(() =>
                 </ul>
 
                 <!-- Quick links -->
-                <p class="mm-section-label">Help &amp; Support</p>
+                <p class="mm-section-label">সহায়তা</p>
                 <div class="mm-card">
                     <Link
                         v-for="link in quickLinks"
@@ -305,12 +307,12 @@ const quickLinks = computed(() =>
                         <span class="mm-quick-icon">
                             <PhHeart :size="17" />
                         </span>
-                        <span class="mm-quick-label">My Wishlist</span>
+                        <span class="mm-quick-label">পছন্দের তালিকা</span>
                         <PhCaretRight :size="13" class="mm-quick-caret" />
                     </Link>
                 </div>
 
-                <p class="mm-footnote">চারুকথন — ঐতিহ্যের গল্প</p>
+                <p class="mm-footnote">ছন্দ — ঐতিহ্যের গল্প</p>
             </div>
         </div>
     </nav>
@@ -346,15 +348,21 @@ const quickLinks = computed(() =>
     width: 87%;
     max-width: 350px;
     height: 100%;
-    background: #fffaf4;
+    background: #fff;
     border-radius: 0 20px 20px 0;
-    box-shadow: 6px 0 40px rgba(26, 24, 23, 0.18);
+    /* No shadow while parked off-screen: its 40px blur reached back into the
+       page as a grey haze down the left edge. */
+    box-shadow: none;
+    visibility: hidden;
     transform: translateX(-102%);
-    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.24, 1);
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.24, 1), box-shadow 0.34s ease, visibility 0s linear 0.34s;
 }
 
 .mm-drawer--open {
+    visibility: visible;
+    box-shadow: 6px 0 40px rgba(26, 24, 23, 0.18);
     transform: translateX(0);
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.24, 1), box-shadow 0.34s ease, visibility 0s;
 }
 
 /* ===== Header ===== */
@@ -363,10 +371,14 @@ const quickLinks = computed(() =>
     align-items: center;
     justify-content: space-between;
     padding: 16px 18px 14px;
-    border-bottom: 1px solid #f0e6d8;
+    border-bottom: 1px solid #e4e1e0;
     background: #fff;
     border-radius: 0 20px 0 0;
 }
+
+.mm-brand { display: flex; width: 64px; flex-direction: column; align-items: center; gap: 2px; }
+.mm-brand-mark { display: block; width: 52px; height: 45px; }
+.mm-brand-word { display: block; width: 62px; height: 8px; }
 
 .mm-close {
     display: flex;
@@ -413,9 +425,9 @@ const quickLinks = computed(() =>
     gap: 10px;
     padding: 14px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #3f6b1f 0%, #2c5015 100%);
+    background: #252f17;
     color: #fff;
-    box-shadow: 0 6px 18px rgba(44, 80, 21, 0.22);
+    box-shadow: 0 6px 18px rgba(37, 47, 23, 0.22);
 }
 
 .mm-account-main {
@@ -498,7 +510,7 @@ const quickLinks = computed(() =>
 
 .mm-btn--solid {
     background: #fff;
-    color: #2c5015;
+    color: #252f17;
 }
 
 .mm-btn--ghost {
@@ -542,14 +554,14 @@ const quickLinks = computed(() =>
 
 .mm-row--open {
     background: #fff;
-    color: #2c5015;
+    color: #252f17;
     box-shadow: 0 2px 10px rgba(128, 83, 46, 0.08);
 }
 
 .mm-row-link {
     flex: 1;
     min-width: 0;
-    font-family: "Poppins", "Hind Siliguri", sans-serif;
+    font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
     font-size: 15px;
     font-weight: 500;
     line-height: 22px;
@@ -648,7 +660,7 @@ const quickLinks = computed(() =>
 
 .mm-quick-label {
     flex: 1;
-    font-family: "Poppins", "Hind Siliguri", sans-serif;
+    font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
@@ -662,7 +674,7 @@ const quickLinks = computed(() =>
 .mm-footnote {
     margin-top: 24px;
     text-align: center;
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 12px;
     line-height: 20px;
     color: #b3a191;

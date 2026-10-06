@@ -30,46 +30,52 @@ class LayoutSetting extends Model
                 'show_categories_menu' => true,
                 // The "Help & Support" card in the mobile drawer.
                 'mobile_links'         => [
-                    ['label' => 'Blog', 'url' => '/blog', 'icon' => 'blog'],
-                    ['label' => 'Track Order', 'url' => '/track-order', 'icon' => 'track'],
-                    ['label' => 'Refund Policy', 'url' => '/refund-policy', 'icon' => 'refund'],
-                    ['label' => 'Privacy Policy', 'url' => '/privacy-policy', 'icon' => 'privacy'],
-                    ['label' => 'Contact Us', 'url' => '/contact-us', 'icon' => 'contact'],
+                    ['label' => 'ব্লগ', 'url' => '/blog', 'icon' => 'blog'],
+                    ['label' => 'অর্ডার ট্র্যাকিং', 'url' => '/track-order', 'icon' => 'track'],
+                    ['label' => 'রিটার্ন ও রিফান্ড', 'url' => '/refund-policy', 'icon' => 'refund'],
+                    ['label' => 'প্রাইভেসি পলিসি', 'url' => '/privacy-policy', 'icon' => 'privacy'],
+                    ['label' => 'যোগাযোগ', 'url' => '/contact-us', 'icon' => 'contact'],
                 ],
             ],
+            // The Chhondo footer, word for word.
             'footer' => [
-                'about_text'  => 'ঐতিহ্যবাহী বাংলাদেশী শাড়ির প্রিমিয়াম কালেকশন। হস্তনির্মিত এবং সাংস্কৃতিক ঐতিহ্যের সমন্বয়ে তৈরি প্রতিটি শাড়ি।',
+                'about_text'  => "রুচিশীল বুনন আর আরামদায়ক অনুভূতির ছোঁয়ায় 'ছন্দ' হয়ে উঠুক আপনার প্রতিদিনের সাবলীল সাজের সঙ্গী।",
                 'follow_label' => 'Follow Us',
                 'show_logo'   => true,
                 'columns'     => [
                     [
-                        'title' => 'Quick Links',
+                        'title' => '',
                         'links' => [
-                            ['label' => 'Home', 'url' => '/'],
-                            ['label' => 'Our Story', 'url' => '/about-us'],
-                            ['label' => 'Get in touch', 'url' => '/contact-us'],
-                            ['label' => 'Tracking', 'url' => '/track-order'],
+                            ['label' => 'আমাদের সম্পর্কে', 'url' => '/about-us'],
+                            ['label' => 'শপ', 'url' => '/shop'],
+                            ['label' => 'পছন্দের তালিকা', 'url' => '/account/wishlist'],
+                            ['label' => 'আমাদের গল্প', 'url' => '/about-us'],
+                            ['label' => 'যোগাযোগ', 'url' => '/contact-us'],
                         ],
                     ],
                     [
-                        'title' => 'Policies',
+                        'title' => '',
                         'links' => [
-                            ['label' => 'Privacy Policy', 'url' => '/privacy-policy'],
-                            ['label' => 'Returns & Refund', 'url' => '/refund-policy'],
-                            ['label' => 'Terms & Condition', 'url' => '/terms-and-conditions'],
-                            ['label' => 'Shipping Delivery', 'url' => '/shipping-and-delivery'],
+                            ['label' => 'রিটার্ন ও রিফান্ড', 'url' => '/refund-policy'],
+                            ['label' => 'ডেলিভারি তথ্য', 'url' => '/shipping-and-delivery'],
+                            ['label' => 'অর্ডার ট্র্যাকিং', 'url' => '/track-order'],
                         ],
                     ],
                 ],
-                'contact_title'   => 'Contact Us',
+                'contact_title'   => '',
                 'show_contact'    => true,
-                'show_badges'     => true,
-                'badges'          => [
-                    ['title' => 'নিরাপদ পেমেন্ট', 'text' => 'আপনার পেমেন্ট সম্পূর্ণ নিরাপদ ও সুরক্ষিত।', 'icon' => 'security'],
-                    ['title' => 'কাস্টমার সাপোর্ট', 'text' => 'যেকোনো প্রয়োজনে আমাদের টিম আপনার পাশে আছে।', 'icon' => 'support'],
-                    ['title' => 'দেশব্যাপী ডেলিভারি', 'text' => 'আমরা আমাদের অর্ডারকৃত পণ্য সারাদেশে দ্রুততার সাথে ডেলিভারি দিয়ে থাকি', 'icon' => 'delivery'],
+                // The footer's own contact details, separate from the store's.
+                'contact_address' => 'দ্বীন মোহাম্মদ কলোনি, ঢাকা, বাংলাদেশ',
+                'contact_email'   => 'limu.sir@gmail.com',
+                'contact_phone'   => '01335-358032',
+                'show_badges'     => false,
+                'badges'          => [],
+                // {year} becomes the current year, in Bangla digits.
+                'copyright'   => '{year} ছন্দ। সর্বস্বত্ব সংরক্ষিত।',
+                'legal_links' => [
+                    ['label' => 'প্রাইভেসি পলিসি', 'url' => '/privacy-policy'],
+                    ['label' => 'শর্তাবলি', 'url' => '/terms-and-conditions'],
                 ],
-                'copyright'  => '',
             ],
             default => [],
         };

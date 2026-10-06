@@ -2,7 +2,10 @@
   <Head><title>Admin Login</title></Head>
   <div class="login-page">
     <div class="login-card">
-      <img :src="'/assets/images/logo/logo.png'" alt="logo" class="login-logo" />
+      <div class="login-logo" role="img" aria-label="Chhondo">
+        <img :src="'/assets/chhondo/logo-mark-dark.svg'" alt="" class="login-logo-mark" />
+        <img :src="'/assets/chhondo/logo-word-dark.svg'" alt="" class="login-logo-word" />
+      </div>
       <div class="login-title">Welcome back</div>
       <div class="login-subtitle">Sign in to manage your store</div>
 
@@ -81,10 +84,10 @@ function submit() {
 
 <style scoped>
 .login-page {
-  --brand-green: #356019;
-  --brand-green-dark: #234011;
-  --brand-forest: #1c330d;
-  --brand-cream: #FFFAF4;
+  --brand-green: #252f17;
+  --brand-green-dark: #1a2110;
+  --brand-forest: #1a2110;
+  --brand-cream: #FAF5E9;
   --brand-danger: #F9461C;
 
   font-family: 'Poppins', 'Hind Siliguri', sans-serif;
@@ -101,16 +104,22 @@ function submit() {
   max-width: 400px;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(28, 51, 13, 0.08);
+  box-shadow: 0 10px 40px rgba(26, 33, 16, 0.08);
   padding: 40px 36px;
   margin: 24px;
 }
 
+/* The storefront logo, a third larger: mark over word */
 .login-logo {
-  display: block;
+  display: grid;
+  grid-template-rows: 56px 9px;
+  justify-items: center;
+  align-items: center;
+  gap: 3px;
   margin: 0 auto 24px;
-  max-height: 48px;
 }
+.login-logo-mark { width: 64px; height: 56px; display: block; }
+.login-logo-word { width: 76px; height: 9px; display: block; }
 
 .login-title {
   font-weight: 700;
@@ -152,7 +161,7 @@ function submit() {
 
 .form-control:focus {
   border-color: var(--brand-green);
-  box-shadow: 0 0 0 0.2rem rgba(53, 96, 25, 0.15);
+  box-shadow: 0 0 0 0.2rem rgba(37, 47, 23, 0.15);
 }
 
 .invalid-feedback {
@@ -179,7 +188,7 @@ function submit() {
 }
 
 .btn-login {
-  font-family: 'Manrope', 'Poppins', sans-serif;
+  font-family: 'Poppins', 'Li Ador Noirrit', sans-serif;
   font-weight: 700;
   height: 48px;
   border-radius: 10px;

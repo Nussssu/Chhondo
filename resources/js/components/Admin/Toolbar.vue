@@ -153,7 +153,7 @@ function clearSearch() {
 .tb-left :deep(.form-select:focus),
 .tb-left :deep(.form-control:focus) {
   border-color: var(--admin-green-600);
-  box-shadow: 0 0 0 3px rgba(53, 96, 25, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 47, 23, 0.12);
 }
 
 .tb-right :deep(.btn) {
@@ -213,7 +213,7 @@ function clearSearch() {
 .tb-search-input:focus {
   outline: none;
   border-color: var(--admin-green-600);
-  box-shadow: 0 0 0 3px rgba(53, 96, 25, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 47, 23, 0.12);
 }
 
 .tb-search-clear {
@@ -248,7 +248,7 @@ function clearSearch() {
 .tb-select:focus {
   outline: none;
   border-color: var(--admin-green-600);
-  box-shadow: 0 0 0 3px rgba(53, 96, 25, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 47, 23, 0.12);
 }
 
 /* Below tablet the single row stops fitting, so it wraps rather than

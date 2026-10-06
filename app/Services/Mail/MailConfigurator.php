@@ -59,7 +59,7 @@ class MailConfigurator
 
         if (filled($settings->email_from)) {
             Config::set('mail.from.address', $settings->email_from);
-            Config::set('mail.from.name', $settings->email_from_name ?: config('app.name'));
+            Config::set('mail.from.name', \App\Support\Brand::rebrand($settings->email_from_name ?: config('app.name')));
         }
 
         if ($settings->use_smtp && filled($settings->smtp_host)) {

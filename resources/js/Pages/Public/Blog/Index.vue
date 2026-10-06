@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
+import { rebrand } from "@/utils/rebrand"
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, Link, router } from "@inertiajs/vue3"
 import { computed } from "vue"
@@ -41,10 +42,10 @@ function filterBy(slug) {
 
 <template>
   <Head>
-    <title>{{ texts.t1 }}</title>
+    <title>{{ texts.tab_title }}</title>
     <meta
       name="description"
-      content="শাড়ির যত্ন, স্টাইল গাইড আর তাঁতের গল্প — চারুকথনের ব্লগ।"
+      :content="texts.meta_description"
     />
   </Head>
 
@@ -54,7 +55,7 @@ function filterBy(slug) {
         <!-- Header -->
         <header class="blog-hero">
           <span v-if="intro?.label !== ''" class="blog-eyebrow">
-            {{ intro?.label || 'চারুকথন ব্লগ' }}
+            {{ intro?.label || 'ছন্দ ব্লগ' }}
           </span>
           <h1 class="blog-hero-title">{{ intro?.title || 'গল্প, যত্ন আর ঐতিহ্যের কথা' }}</h1>
           <p class="blog-hero-sub">
@@ -122,8 +123,8 @@ function filterBy(slug) {
               </span>
             </div>
             <div class="blog-card-body">
-              <h3 class="blog-card-title">{{ post.title }}</h3>
-              <p class="blog-card-excerpt">{{ post.excerpt }}</p>
+              <h3 class="blog-card-title">{{ rebrand(post.title) }}</h3>
+              <p class="blog-card-excerpt">{{ rebrand(post.excerpt) }}</p>
               <div class="blog-meta">
                 <span>{{ formatDate(post.published_at) }}</span>
                 <span class="blog-meta-dot"></span>
@@ -157,7 +158,8 @@ function filterBy(slug) {
 
 <style scoped>
 .blog-page {
-  padding: 40px 0 64px;
+  /* 48px at the foot: the gap every phone page keeps above the footer. */
+  padding: 40px 0 48px;
   background: #fffaf4;
 }
 
@@ -180,7 +182,7 @@ function filterBy(slug) {
   border-radius: 999px;
   background: #f3e9dd;
   color: #80532e;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -188,7 +190,7 @@ function filterBy(slug) {
 
 .blog-hero-title {
   margin-top: 14px;
-  font-family: "Sora", "Hind Siliguri", sans-serif;
+  font-family: "Sora", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 30px;
   font-weight: 600;
   line-height: 42px;
@@ -197,7 +199,7 @@ function filterBy(slug) {
 
 .blog-hero-sub {
   margin-top: 12px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
   line-height: 28px;
   color: #6b5f54;
@@ -226,7 +228,7 @@ function filterBy(slug) {
   border-radius: 999px;
   background: #fff;
   color: #6b5f54;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -246,7 +248,7 @@ function filterBy(slug) {
 .blog-empty {
   padding: 48px 0;
   text-align: center;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   color: #8b7f74;
 }
 
@@ -259,7 +261,7 @@ function filterBy(slug) {
   border-radius: 999px;
   background: #eef4e7;
   color: #2c5015;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 12px;
   font-weight: 600;
 }
@@ -276,7 +278,7 @@ function filterBy(slug) {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 13px;
   color: #9b8d80;
 }
@@ -331,7 +333,7 @@ function filterBy(slug) {
 }
 
 .blog-featured-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 22px;
   font-weight: 600;
   line-height: 32px;
@@ -344,7 +346,7 @@ function filterBy(slug) {
 }
 
 .blog-featured-excerpt {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 15px;
   line-height: 26px;
   color: #6b5f54;
@@ -356,7 +358,7 @@ function filterBy(slug) {
 }
 
 .blog-readmore {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #2c5015;
@@ -451,7 +453,7 @@ function filterBy(slug) {
 }
 
 .blog-card-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 17px;
   font-weight: 600;
   line-height: 27px;
@@ -464,7 +466,7 @@ function filterBy(slug) {
 }
 
 .blog-card-excerpt {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   line-height: 24px;
   color: #6b5f54;

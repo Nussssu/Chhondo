@@ -4,14 +4,14 @@
       <div class="account-titlebar">
         <div class="account-titlebar-inner">
           <div>
-            <p class="account-eyebrow">My Account</p>
-            <h1 class="account-heading">Welcome back, {{ firstName }} 👋</h1>
+            <p class="account-eyebrow">আমার অ্যাকাউন্ট</p>
+            <h1 class="account-heading">ফিরে আসায় স্বাগতম, {{ firstName }} 👋</h1>
           </div>
 
           <div class="account-titlebar-actions">
             <Link href="/shop" class="account-back-btn">
               <img :src="'/assets/images/account/back-to-shop.svg'" alt="" class="account-back-icon" />
-              Back to Shop
+              শপে ফিরে যান
             </Link>
 
             <!-- Desktop keeps this in the sidebar; on mobile the nav is a tab
@@ -23,7 +23,7 @@
               @click="authStore.logout"
             >
               <img :src="'/assets/images/account/sign-out.svg'" alt="" class="account-signout-icon" />
-              Sign Out
+              সাইন আউট
             </button>
           </div>
         </div>
@@ -218,5 +218,88 @@ const firstName = computed(() => authStore.user?.name?.split(' ')[0] || 'there')
     width: 14px;
     height: 14px;
   }
+}
+
+/* ===== Figma "My Profile" shell ===== */
+.account-shell { background: #fff; }
+.account-titlebar { background: #fff; border-bottom: 1px solid #e4e1e0; padding-top: 36px; }
+.account-titlebar-inner { max-width: 1360px; padding: 0 0 28px; align-items: flex-end; }
+.account-eyebrow {
+  margin-bottom: 2px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #4c5441;
+}
+.account-heading {
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+  color: #2c1a0e;
+}
+.account-back-btn {
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #1a2110;
+  border-radius: 8px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #1a2110;
+}
+.account-back-btn:hover { background: #faf5e9; }
+.account-back-icon { width: 24px; height: 24px; }
+.account-body { max-width: 1360px; padding: 40px 0; gap: 20px; }
+.account-sidebar { width: 325px; }
+
+@media (max-width: 1391px) {
+  .account-titlebar-inner,
+  .account-body { padding-left: 16px; padding-right: 16px; }
+}
+@media (max-width: 1024px) {
+  .account-titlebar { padding-top: 16px; }
+  .account-titlebar-inner { padding: 0 16px 14px; }
+  .account-body { padding: 0 12px 28px; }
+  .account-sidebar { width: 100%; background: #fff; }
+  .account-heading { font-size: 19px; line-height: 26px; }
+  .account-eyebrow { font-size: 13px; line-height: 20px; }
+}
+
+/* Account sidebar: sticky left nav on desktop (all subpages). The parent
+   uses align-items: flex-start, so both columns start at the same top;
+   sticky holds the sidebar while the right content scrolls, and it is
+   bounded by .account-body — once both reach the same bottom alignment
+   the sidebar scrolls upward naturally with the section. Mobile keeps its
+   existing tab-strip behavior. */
+@media (min-width: 1025px) {
+  .account-body {
+    align-items: flex-start;
+  }
+
+  .account-body .account-sidebar {
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* Site header is sticky (76px) at this width — hold the sidebar below it
+     so the two columns stay top-aligned while scrolling. */
+  .account-body .account-sidebar {
+    top: 100px;
+  }
+}
+
+/* Phones: every account page ends the same 48px above the footer — no
+   screen-height minimum stretching short pages, no tighter gap on long ones. */
+@media (max-width: 767px) {
+  .account-shell { min-height: 0; }
+  .account-body { padding-bottom: 48px; }
 }
 </style>

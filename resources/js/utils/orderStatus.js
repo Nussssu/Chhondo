@@ -1,9 +1,9 @@
 export const TRACKER_STEPS = [
-  { key: 'placed', label: 'Order Placed' },
-  { key: 'processing', label: 'Processing' },
-  { key: 'shipped', label: 'Shipped' },
-  { key: 'out_for_delivery', label: 'Out for Delivery' },
-  { key: 'delivered', label: 'Delivered' },
+  { key: 'placed', label: 'অর্ডার প্লেসড' },
+  { key: 'processing', label: 'প্রক্রিয়াধীন' },
+  { key: 'shipped', label: 'পাঠানো হয়েছে' },
+  { key: 'out_for_delivery', label: 'ট্রানজিটে আছে' },
+  { key: 'delivered', label: 'ডেলিভারি সম্পন্ন' },
 ];
 
 // order_status enum (database/migrations/2024_11_19_053934_create_orders_table.php):

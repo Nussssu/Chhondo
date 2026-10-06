@@ -1,6 +1,6 @@
 <template>
   <Head>
-    <title>My Orders</title>
+    <title>অর্ডার ইতিহাস</title>
   </Head>
 
   <AccountLayout>
@@ -15,13 +15,13 @@
         </div>
       </div>
 
-      <p v-if="orders.length === 0" class="orders-empty">You haven't placed any orders yet.</p>
+      <p v-if="orders.length === 0" class="orders-empty">আপনি এখনো কোনো অর্ডার করেননি।</p>
 
       <div v-else class="orders-list">
         <div v-for="order in orders" :key="order.id" class="order-card">
           <button type="button" class="order-card-header" @click="toggle(order.id)">
             <span class="order-thumb">
-              <img :src="order.items?.[0]?.product_info?.featured_image || '/placeholder.svg'" alt="" />
+              <img :src="order.items?.[0]?.product_info?.featured_image || '/placeholder.svg'" alt="" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
             </span>
 
             <span class="order-main">
@@ -65,7 +65,7 @@
 
             <div class="order-items">
               <div v-for="(item, idx) in order.items" :key="idx" class="order-item-row">
-                <img :src="item.product_info?.featured_image || '/placeholder.svg'" alt="" class="order-item-thumb" />
+                <img :src="item.product_info?.featured_image || '/placeholder.svg'" alt="" class="order-item-thumb" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
                 <div class="order-item-info">
                   <p class="order-item-name">{{ item.product_info?.product_name }}</p>
                   <p class="order-item-qty">Qty: {{ item.quantity }}</p>
@@ -77,9 +77,9 @@
             <div class="order-footer">
               <span class="order-address">
                 <img :src="'/assets/images/account/location-pin.svg'" alt="" />
-                {{ order.address || 'No address on file' }}
+                {{ order.address || 'কোনো ঠিকানা নেই' }}
               </span>
-              <Link :href="`/account/track-order?invoice=${order.invoice_number}`" class="order-track-btn">Track</Link>
+              <Link :href="`/account/track-order?invoice=${order.invoice_number}`" class="order-track-btn">ট্র্যাক করুন</Link>
             </div>
           </div>
         </div>
@@ -121,9 +121,9 @@ const badgeStyle = (status) => {
 const copyId = async (invoice) => {
   try {
     await navigator.clipboard.writeText(invoice);
-    toast.success('Order ID copied!');
+    toast.success('অর্ডার আইডি কপি হয়েছে!');
   } catch {
-    toast.error('Could not copy order ID.');
+    toast.error('অর্ডার আইডি কপি করা যায়নি।');
   }
 };
 </script>
@@ -165,7 +165,7 @@ const copyId = async (invoice) => {
 }
 
 .section-header-subtitle {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 12px;
   color: #7a5c3e;
 }
@@ -328,7 +328,7 @@ const copyId = async (invoice) => {
 }
 
 .order-item-name {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-weight: 600;
   font-size: 14px;
   color: #2c1a0e;

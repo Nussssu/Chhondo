@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useAuthStore } from "@/Store/authStore";
 import { toast } from "@steveyuowo/vue-hot-toast";
 import { usePage, router } from "@inertiajs/vue3";
+import axios from "axios";
 import { isOutOfStock, isPreOrder } from '@/utils/stock'
 
 export const useCartStore = defineStore("cartStore", () => {
@@ -15,9 +16,32 @@ export const useCartStore = defineStore("cartStore", () => {
     is_direct_order.value = localStorage.getItem("is_direct_order") === "true";
   }
 
-  // Cart items and count come from Inertia shared props
-  const cartItems = computed(() => page.props.cartItems || []);
-  const cartCount = computed(() => page.props.cartCount || 0);
+  /*
+   * The cart lives here, seeded from the shared props on every page load.
+   * Changes are made through background JSON requests (the cart routes answer
+   * JSON when asked), so a click updates the cart without re-fetching the
+   * whole page. Quantity and remove update on screen at once and are rolled
+   * back if the server refuses.
+   */
+  const items = ref(page.props.cartItems || []);
+  watch(() => page.props.cartItems, (next) => { items.value = next || []; });
+
+  const cartItems = computed(() => items.value);
+  const cartCount = computed(() => items.value.reduce((n, item) => n + (Number(item.quantity) || 0), 0));
+
+  /** POST a cart route for JSON and take the cart it sends back. */
+  const send = async (url, data) => {
+    const { data: res } = await axios.post(url, withGuestId(data), { headers: { Accept: "application/json" } });
+    if (Array.isArray(res?.cartItems)) items.value = res.cartItems;
+    return res;
+  };
+
+  /** The server's reason, or a fallback. */
+  const reason = (error, fallback) => {
+    const errors = error?.response?.data?.errors;
+    const first = errors && Object.values(errors)[0];
+    return (Array.isArray(first) ? first[0] : first) || error?.response?.data?.message || fallback;
+  };
 
   // Ensure guest_id exists in localStorage and return it
   const getGuestId = () => {
@@ -112,37 +136,38 @@ export const useCartStore = defineStore("cartStore", () => {
    */
   const addToCart = (cartData, product = null) => {
     if (product && isOutOfStock(product)) {
-      toast.error("This product is currently out of stock.");
+      toast.error("এই পণ্যটি বর্তমানে স্টকে নেই।");
       return false;
     }
 
-    router.post("/cart/add", withGuestId(cartData), {
-      preserveScroll: true,
-      onSuccess: () => {
+    send("/cart/add", cartData)
+      .then(() => {
         if (typeof window !== "undefined" && window.innerWidth > 768) {
           isCartOpen.value = true;
         }
         cartOrder();
-      },
-      onError: (errors) => {
-        toast.error(Object.values(errors)[0] || "Failed to add to cart.");
-      },
-    });
+      })
+      .catch((error) => toast.error(reason(error, "কার্টে যোগ করা যায়নি।")));
 
     return true;
   };
 
   const removeItem = (cartId) => {
-    router.post("/cart/remove", withGuestId({ cart_id: cartId }), {
-      preserveScroll: true,
-      onError: () => toast.error("Failed to remove item"),
+    const before = items.value;
+    // Gone from the list at once; back if the server refuses.
+    items.value = before.filter((item) => item.id !== cartId);
+    send("/cart/remove", { cart_id: cartId }).catch(() => {
+      items.value = before;
+      toast.error("পণ্যটি মুছে ফেলা যায়নি");
     });
   };
 
   const clearCart = () => {
-    router.post("/cart/clear", withGuestId(), {
-      preserveScroll: true,
-      onError: () => toast.error("Failed to clear cart"),
+    const before = items.value;
+    items.value = [];
+    send("/cart/clear").catch(() => {
+      items.value = before;
+      toast.error("কার্ট খালি করা যায়নি");
     });
   };
 
@@ -153,17 +178,21 @@ export const useCartStore = defineStore("cartStore", () => {
   // `quantityArg` is the absolute new quantity written to localStorage.
   const updateCartItemQuantity = (cartId, quantityArg, attributeValues = [], isRealCartItem = true) => {
     if (isRealCartItem) {
-      router.post("/cart/update", withGuestId({
-        cart_id: cartId,
-        quantity: quantityArg,
-        attribute_values: attributeValues,
-      }), {
-        preserveScroll: true,
-        preserveState: true,
-        onError: (errors) => {
-          toast.error(Object.values(errors)[0] || "Failed to update quantity.");
-        },
-      });
+      const line = items.value.find((item) => item.id === cartId);
+      if (!line) return;
+
+      const next = (Number(line.quantity) || 0) + quantityArg;
+      if (next < 1) return;
+
+      // The new quantity shows at once; rapid clicks are sent as one change.
+      line.quantity = next;
+      items.value = [...items.value];
+
+      const pending = (queued[cartId] ||= { delta: 0, timer: null, attributeValues });
+      pending.delta += quantityArg;
+      pending.attributeValues = attributeValues;
+      clearTimeout(pending.timer);
+      pending.timer = setTimeout(() => flushQuantity(cartId), 250);
       return;
     }
 
@@ -174,6 +203,25 @@ export const useCartStore = defineStore("cartStore", () => {
         localStorage.setItem("directOrderProductData", JSON.stringify(data));
       }
     }
+  };
+
+  // Quantity changes waiting to be sent, per cart line.
+  const queued = {};
+
+  const flushQuantity = (cartId) => {
+    const pending = queued[cartId];
+    delete queued[cartId];
+    if (!pending || !pending.delta) return;
+
+    send("/cart/update", {
+      cart_id: cartId,
+      quantity: pending.delta,
+      attribute_values: pending.attributeValues,
+    }).catch((error) => {
+      toast.error(reason(error, "পরিমাণ আপডেট করা যায়নি।"));
+      // Put back what the server holds.
+      router.reload({ only: ["cartItems", "cartCount"] });
+    });
   };
 
   watch(() => page.url, () => { isCartOpen.value = false; });

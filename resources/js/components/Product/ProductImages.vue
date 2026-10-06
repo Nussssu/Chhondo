@@ -90,7 +90,7 @@ watch(
 
         const parsedImages = parseGalleryImages(newProduct.gallery_images);
 
-        const images = [newProduct.featured_image, ...parsedImages].filter(Boolean).map((img) => ({
+        const images = [newProduct.featured_image || '/placeholder.svg', ...parsedImages].filter(Boolean).map((img) => ({
             type: "image",
             src: img,
         }));
@@ -128,7 +128,7 @@ const discountPercentage = computed(() => {
 <template>
     <div class="flex flex-col gap-6 product-images-area">
         <!-- Main Swiper -->
-        <div class="relative rounded-lg overflow-hidden w-full bg-[#f5f0eb]">
+        <div class="pdp-main-frame relative w-full">
             <swiper
                 :modules="[Navigation, Thumbs]"
                 :thumbs="{ swiper: thumbsSwiper }"
@@ -144,11 +144,13 @@ const discountPercentage = computed(() => {
                     <!-- Image Slide -->
                     <div v-if="item.type === 'image'" class="relative overflow-hidden">
                         <img
-                            :src="item.src"
+                            :src="item.src || '/placeholder.svg'"
                             :alt="`Product image ${index + 1}`"
                             class="w-full h-auto"
                             fetchpriority="high"
                             loading="lazy"
+                            decoding="async"
+                            @error="$event.target.src = '/placeholder.svg'"
                         />
                     </div>
 
@@ -200,19 +202,19 @@ const discountPercentage = computed(() => {
 
             <!-- Navigation Arrows -->
             <button class="product-button-prev nav-arrow nav-arrow--left">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
             <button class="product-button-next nav-arrow nav-arrow--right">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </button>
 
             <!-- Discount Badge -->
             <div v-if="discountPercentage > 0" class="absolute top-4 right-4 z-10">
-                <span class="bg-[#356019] text-white rounded-full py-1 px-3 text-[13px] font-semibold">
+                <span class="bg-[#252f17] text-white rounded-full py-1 px-3 text-[13px] font-semibold">
                     -{{ discountPercentage }}%
                 </span>
             </div>
@@ -226,7 +228,7 @@ const discountPercentage = computed(() => {
             :direction="'horizontal'"
             :slides-per-view="4"
             :space-between="12"
-            :breakpoints="{ 768: { slidesPerView: 4, spaceBetween: 24 } }"
+            :breakpoints="{ 768: { slidesPerView: 4, spaceBetween: 33 } }"
             :free-mode="true"
             :watch-slides-progress="true"
             @swiper="setThumbsSwiper"
@@ -241,17 +243,19 @@ const discountPercentage = computed(() => {
                 <div :class="[
                     'aspect-square relative cursor-pointer rounded-lg overflow-hidden border-[1.5px] transition-all',
                     {
-                        'border-[#618B46]': index === activeIndex,
-                        'border-transparent hover:opacity-90': index !== activeIndex,
+                        'border-[#ddbc6d]': index === activeIndex,
+                        'border-transparent opacity-50 hover:opacity-90': index !== activeIndex,
                     },
                 ]">
                     <img
                         v-if="item.type === 'image'"
-                        :src="item.src"
+                        :src="item.src || '/placeholder.svg'"
                         :alt="`Thumbnail ${index + 1}`"
                         class="w-full h-full object-cover"
                         loading="lazy"
                         fetchpriority="low"
+                        decoding="async"
+                        @error="$event.target.src = '/placeholder.svg'"
                     />
                     <!-- A frame from the video itself reads far better than a
                          black tile. #t=0.1 makes browsers paint the first frame
@@ -465,5 +469,30 @@ const discountPercentage = computed(() => {
 
 .thumbs-swiper .swiper-slide {
     cursor: pointer;
+}
+
+/* ===== Figma gallery: 555 × 712 r8 image, 56px arrows straddling its edges ===== */
+.pdp-main-frame { overflow: visible; }
+.pdp-main-frame .product-swiper { border-radius: 8px; overflow: hidden; background: #f3f3f3; }
+.product-swiper :deep(.swiper-slide) > div:first-child:not(.video-container) { aspect-ratio: 555 / 712; }
+.product-swiper img { height: 100%; object-fit: cover; }
+
+.nav-arrow {
+    width: 56px;
+    height: 56px;
+    border-radius: 88px;
+    box-shadow: none;
+    transition: background-color .2s ease, color .2s ease, opacity .2s ease;
+}
+.nav-arrow--left { left: -28px; background-color: #252f17; color: #fff; }
+.nav-arrow--left:hover { background-color: #1a2110; }
+.nav-arrow--right { right: -28px; background-color: #fff; color: #1a1817; border: .9px solid #e4e1e0; }
+.nav-arrow--right:hover { background-color: #faf5e9; }
+
+@media (max-width: 767px) {
+    .nav-arrow { width: 40px; height: 40px; }
+    .nav-arrow svg { width: 24px; height: 24px; }
+    .nav-arrow--left { left: 8px; }
+    .nav-arrow--right { right: 8px; }
 }
 </style>

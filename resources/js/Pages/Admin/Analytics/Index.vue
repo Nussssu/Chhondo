@@ -105,7 +105,7 @@
                   <td>
                     <div class="progress" style="height:8px;">
                       <div class="progress-bar" role="progressbar"
-                        :style="{ width: pageSharePercent(page.visits) + '%', backgroundColor: '#356019' }"></div>
+                        :style="{ width: pageSharePercent(page.visits) + '%', backgroundColor: '#252f17' }"></div>
                     </div>
                   </td>
                 </tr>
@@ -187,8 +187,8 @@ function buildCharts() {
       data: {
         labels: props.visitor_trends.labels || [],
         datasets: [
-          { label: 'Total Visitors', data: props.visitor_trends.total || [], borderColor: '#1c330d', backgroundColor: 'rgba(28,51,13,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
-          { label: 'Unique Visitors', data: props.visitor_trends.unique || [], borderColor: '#c69e7e', backgroundColor: 'rgba(198,158,126,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+          { label: 'Total Visitors', data: props.visitor_trends.total || [], borderColor: '#1a2110', backgroundColor: 'rgba(26, 33, 16,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+          { label: 'Unique Visitors', data: props.visitor_trends.unique || [], borderColor: '#cc9b25', backgroundColor: 'rgba(204, 155, 37,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
         ],
       },
       options: { ...commonOptions, scales: { y: { beginAtZero: true } } },
@@ -200,7 +200,7 @@ function buildCharts() {
       type: 'bar',
       data: {
         labels: props.user_engagement.map(i => i.duration_range),
-        datasets: [{ label: 'Session Duration', data: props.user_engagement.map(i => i.count), backgroundColor: '#1c330d' }],
+        datasets: [{ label: 'Session Duration', data: props.user_engagement.map(i => i.count), backgroundColor: '#1a2110' }],
       },
       options: { ...commonOptions, scales: { y: { beginAtZero: true } } },
     })

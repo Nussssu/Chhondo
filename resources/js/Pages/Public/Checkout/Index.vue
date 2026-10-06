@@ -11,22 +11,26 @@ defineProps({
 })
 import CheckoutForm from '@/components/Checkout/CheckoutForm.vue';
 import { Head } from '@inertiajs/vue3';
+import { on, shown } from '@/utils/cms';
 
 </script>
 
 
 <template>
   <Head>
-    <title>{{ texts.t1 }}</title>
+    <title>{{ texts.tab_title }}</title>
   </Head>
   <AppLayout>
     <!-- Breadcrumb -->
-    <div class="bg-[#FFFAF4] py-4">
-      <div class="container max-w-6xl mx-auto">
-        <nav class="flex items-center gap-2 text-sm text-gray-400">
-          <a href="/" class="hover:text-gray-600 transition-colors">{{ texts.t2 }}</a>
-          <span>></span>
-          <span class="text-gray-800 font-medium">{{ texts.t1 }}</span>
+    <div class="checkout-breadcrumb-wrap">
+      <div class="container">
+        <!-- Figma: Li Ador 20/28, Black/400 links, chevrons, Black/900 current -->
+        <nav v-if="on(texts.breadcrumb_show)" class="checkout-breadcrumb" aria-label="Breadcrumb">
+          <template v-for="(crumb, i) in shown(texts.crumbs)" :key="i">
+            <a :href="crumb.url || '/shop'" class="checkout-breadcrumb-link">{{ crumb.label }}</a>
+            <img :src="'/assets/chhondo/chevron.svg'" alt="" />
+          </template>
+          <span class="checkout-breadcrumb-current">{{ texts.crumb_current }}</span>
         </nav>
       </div>
     </div>
@@ -41,7 +45,22 @@ import { Head } from '@inertiajs/vue3';
 
 <style scoped>
 .checkout-page-wrap {
-  background-color: #FFFAF4;
+  background-color: #fff;
   min-height: 60vh;
+}
+
+.checkout-breadcrumb-wrap { padding-top: 64px; }
+.checkout-breadcrumb { display: flex; align-items: center; gap: 8px; color: #9c9591; }
+.checkout-breadcrumb-link,
+.checkout-breadcrumb-current { font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif; font-size: 20px; line-height: 28px; }
+.checkout-breadcrumb-link { color: #9c9591; transition: color .2s ease; }
+.checkout-breadcrumb-link:hover { color: #cc9b25; }
+.checkout-breadcrumb-current { color: #1a1817; }
+
+@media (max-width: 767px) {
+  .checkout-breadcrumb-wrap { padding-top: 24px; }
+  .checkout-breadcrumb-wrap .container { padding-inline: 20px; }
+  .checkout-breadcrumb-link,
+  .checkout-breadcrumb-current { font-size: 16px; line-height: 24px; }
 }
 </style>

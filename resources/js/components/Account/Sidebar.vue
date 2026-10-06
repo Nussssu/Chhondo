@@ -35,7 +35,7 @@
         @click="authStore.logout"
       >
         <img :src="'/assets/images/account/sign-out.svg'" alt="" class="account-signout-icon" />
-        Sign Out
+        সাইন আউট
       </button>
     </div>
   </nav>
@@ -174,7 +174,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateScrollHints));
 }
 
 .account-sidenav-sublabel {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-weight: 500;
   font-size: 12px;
   line-height: 16px;
@@ -314,5 +314,43 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateScrollHints));
 
   /* Sign out moves to the foot of the page, so it is not in the way of the tabs. */
   .account-sidenav-divider { display: none; }
+}
+
+/* ===== Figma account side nav ===== */
+@media (min-width: 1025px) {
+  .account-sidenav {
+    padding: 12px;
+    border: 0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+  }
+  .account-sidenav-items { gap: 4px; }
+  .account-sidenav-item {
+    min-height: 64px;
+    padding: 12px 16px;
+    gap: 12px;
+    border-radius: 14px;
+    background: transparent;
+  }
+  .account-sidenav-item:hover:not(.is-active) { background: #faf5e9; }
+  .account-sidenav-item.is-active { background: #4c5441; }
+  .account-sidenav-icon img { width: 18px; height: 18px; }
+  .account-sidenav-item.is-active .account-sidenav-icon img { filter: brightness(0) invert(1); }
+  .account-sidenav-accent { width: 4px; height: 20px; border-radius: 9999px; background: #fff; }
+  .account-sidenav-divider { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e4e1e0; }
+}
+.account-sidenav-label { font-family: "Poppins", sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; color: #705514; }
+.account-sidenav-sublabel { font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif; font-size: 12px; font-weight: 600; line-height: 20px; color: #705514; opacity: .7; }
+.account-sidenav-item.is-active .account-sidenav-label { color: #fff; }
+.account-sidenav-item.is-active .account-sidenav-sublabel { color: #f9f9f8; }
+.account-signout-btn { font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; color: #60141d; }
+
+/* Phone tabs: the active one as on desktop — Olive/400 with white label,
+   icon and accent — so its white text stays readable. */
+@media (max-width: 1024px) {
+  .account-sidenav-item.is-active { background: #4c5441; }
+  .account-sidenav-item.is-active .account-sidenav-icon img { filter: brightness(0) invert(1); }
+  .account-sidenav-item.is-active .account-sidenav-accent { background: #fff; }
 }
 </style>

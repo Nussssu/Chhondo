@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
+import { rebrand } from "@/utils/rebrand"
 import { Head, Link } from "@inertiajs/vue3"
 import { onBeforeUnmount, onMounted, ref } from "vue"
 import { Swiper, SwiperSlide } from "swiper/vue"
@@ -73,8 +74,8 @@ function share() {
 
 <template>
   <Head>
-    <title>{{ post.meta_title || post.title }}</title>
-    <meta name="description" :content="post.meta_description || post.excerpt" />
+    <title>{{ rebrand(post.meta_title || post.title) }}</title>
+    <meta name="description" :content="rebrand(post.meta_description || post.excerpt)" />
   </Head>
 
   <AppLayout>
@@ -86,7 +87,7 @@ function share() {
           <span>/</span>
           <Link href="/blog">ব্লগ</Link>
           <span>/</span>
-          <span class="post-crumb-current">{{ post.title }}</span>
+          <span class="post-crumb-current">{{ rebrand(post.title) }}</span>
         </nav>
 
         <!-- Hero: title and cover share one row on desktop -->
@@ -99,7 +100,7 @@ function share() {
             >
               {{ post.category.name }}
             </Link>
-            <h1 class="post-title">{{ post.title }}</h1>
+            <h1 class="post-title">{{ rebrand(post.title) }}</h1>
             <div class="post-meta">
               <span>{{ formatDate(post.published_at) }}</span>
               <span class="post-meta-dot"></span>
@@ -126,7 +127,7 @@ function share() {
         <div class="post-layout">
           <!-- Article -->
           <div class="post-main">
-            <div class="post-body" v-html="post.description"></div>
+            <div class="post-body" v-html="rebrand(post.description)"></div>
 
             <!-- Tags -->
             <div v-if="post.tags?.length" class="post-tags">
@@ -271,7 +272,7 @@ function share() {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 13px;
   color: #9b8d80;
 }
@@ -323,13 +324,13 @@ function share() {
   border-radius: 999px;
   background: #eef4e7;
   color: #2c5015;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 12px;
   font-weight: 600;
 }
 
 .post-title {
-  font-family: "Sora", "Hind Siliguri", sans-serif;
+  font-family: "Sora", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 27px;
   font-weight: 600;
   line-height: 40px;
@@ -348,7 +349,7 @@ function share() {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 13px;
   color: #9b8d80;
 }
@@ -409,7 +410,7 @@ function share() {
 /* ===== Body ===== */
 .post-body {
   padding: 20px 0 8px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 17px;
   line-height: 32px;
   color: #4a423b;
@@ -421,7 +422,7 @@ function share() {
 
 .post-body :deep(h2) {
   margin: 34px 0 12px;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 22px;
   font-weight: 600;
   line-height: 34px;
@@ -430,7 +431,7 @@ function share() {
 
 .post-body :deep(h3) {
   margin: 26px 0 10px;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: #3e3c3a;
@@ -492,7 +493,7 @@ function share() {
 }
 
 .post-tags-label {
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 13px;
   color: #9b8d80;
 }
@@ -502,7 +503,7 @@ function share() {
   border: 1px solid #e6dbcd;
   border-radius: 999px;
   background: #fff;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 13px;
   color: #6b5f54;
 }
@@ -520,7 +521,7 @@ function share() {
   border: 1px solid #2c5015;
   border-radius: 10px;
   color: #2c5015;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -563,7 +564,7 @@ function share() {
 
 .post-aside-title {
   margin-bottom: 14px;
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: #3e3c3a;
@@ -573,7 +574,7 @@ function share() {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
 }
 
 .post-aside-list dt {
@@ -598,7 +599,7 @@ function share() {
   border-radius: 10px;
   background: #fff;
   color: #2c5015;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -631,7 +632,7 @@ function share() {
 }
 
 .post-aside-links span {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   line-height: 22px;
   color: #4a423b;
@@ -663,7 +664,7 @@ function share() {
 }
 
 .post-related-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 22px;
   font-weight: 600;
   color: #3e3c3a;
@@ -776,7 +777,7 @@ function share() {
 }
 
 .blog-card-title {
-  font-family: "Poppins", "Hind Siliguri", sans-serif;
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 26px;
@@ -786,5 +787,10 @@ function share() {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Phones: the 48px gap every page keeps above the footer. */
+@media (max-width: 767px) {
+  .post-related { padding-bottom: 48px; }
 }
 </style>

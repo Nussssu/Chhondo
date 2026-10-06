@@ -175,11 +175,11 @@ const submit = () => {
   display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .pr-modal {
-  --rv-cream: #FFFAF4;
-  --rv-cream-2: #FFF0DF;
-  --rv-border: #F7E2CB;
-  --rv-green: #356019;
-  --rv-green-dark: #2A4D14;
+  --rv-cream: #FAF5E9;
+  --rv-cream-2: #EFE0BB;
+  --rv-border: #EFE0BB;
+  --rv-green: #252f17;
+  --rv-green-dark: #1A2110;
   --rv-ink: #2C1A0E;
   --rv-body: #4B4033;
   --rv-muted: #7A5C3E;
@@ -219,7 +219,7 @@ const submit = () => {
 .rv-label { font-size: .8rem; font-weight: 600; color: var(--rv-body); margin-bottom: 5px; display: block; }
 .rv-req { color: #C0392B; }
 .rv-input { border: 1px solid var(--rv-border); border-radius: 10px; background: var(--rv-cream); font-size: .88rem; }
-.rv-input:focus { border-color: var(--rv-green); box-shadow: 0 0 0 3px rgba(53, 96, 25, .12); background: #fff; }
+.rv-input:focus { border-color: var(--rv-green); box-shadow: 0 0 0 3px rgba(37, 47, 23, .12); background: #fff; }
 .rv-hint { color: var(--rv-muted); font-size: .72rem; display: block; margin-top: 6px; }
 
 .rv-star-input { display: flex; align-items: center; gap: 4px; }

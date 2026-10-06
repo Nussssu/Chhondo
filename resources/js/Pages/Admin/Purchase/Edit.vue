@@ -29,7 +29,7 @@
             <div v-for="product in purchases" :key="product.id" class="col-12">
               <div class="card product-card mb-4">
                 <div class="card-header d-flex align-items-center">
-                  <img :src="product.featured_image" :alt="product.product_name" class="product-image me-3">
+                  <img :src="product.featured_image || '/placeholder.svg'" :alt="product.product_name" class="product-image me-3" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'">
                   <div>
                     <h5 class="mb-1">{{ product.product_name }}</h5>
                     <div class="d-flex align-items-center">

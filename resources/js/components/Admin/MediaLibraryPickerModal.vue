@@ -253,9 +253,9 @@ onMounted(fetchItems)
 .media-picker-drop {
   position: absolute; inset: 0; z-index: 5;
   background: rgba(255, 255, 255, .94);
-  border: 2px dashed #356019; border-radius: 12px;
+  border: 2px dashed #252f17; border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  color: #356019; font-weight: 600; pointer-events: none;
+  color: #252f17; font-weight: 600; pointer-events: none;
 }
 .media-picker-doc {
   height: 110px;

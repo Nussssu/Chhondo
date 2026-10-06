@@ -45,7 +45,7 @@ const categoriesFor = (item) => {
 <template>
   <nav class="bg-transparent">
     <div class="w-full mx-auto">
-      <ul class="header-main-menu flex justify-center flex-wrap space-x-8">
+      <ul class="header-main-menu flex items-center flex-wrap gap-x-7">
 
         <!-- Menu items, in the order they are arranged in the admin. A
              "categories" item fills its dropdown from the product categories;
@@ -174,13 +174,24 @@ const categoriesFor = (item) => {
 </template>
 
 <style scoped>
+.header-main-menu > li > a {
+  /* Bangla labels set in Li Ador Noirrit (Figma); English ones from the admin in Poppins. */
+  font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #1a1817;
+}
+.header-main-menu > li > a:hover { color: #cc9b25; }
+.header-main-menu > li > a :deep(svg) { width: 24px; height: 24px; stroke-width: 1.25; margin-left: 6px; }
+
 .group:hover .group-hover\:rotate-180 {
   transform: rotate(180deg);
 }
 
 .saree-dropdown {
-  background-color: #FFF0DF;
-  border: 1px solid #f7e2cb;
+  background-color: #fff;
+  border: 1px solid #e4e1e0;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -191,7 +202,7 @@ const categoriesFor = (item) => {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: #374151;
@@ -199,7 +210,7 @@ const categoriesFor = (item) => {
 }
 
 .saree-dropdown-item:hover {
-  background-color: #FFF6EA;
+  background-color: #f7f7f5;
   color: var(--color-theme);
 }
 

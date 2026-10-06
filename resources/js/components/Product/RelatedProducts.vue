@@ -25,22 +25,23 @@ const displayProducts = computed(() => {
 </script>
 
 <template>
-  <div v-if="hasProducts" class="bg-[#FFFAF4] py-12 md:py-16">
+  <div v-if="hasProducts" class="related-section">
     <div class="container">
-      <!-- Section Header -->
-      <div class="text-center mb-8 md:mb-12">
-        <h2 class="related-title">আপনার পছন্দ হতে পারে</h2>
+      <!-- Section Header — Figma "আপনার ভালো লাগতে পারে" -->
+      <div class="related-head">
+        <h2 class="related-title">আপনার ভালো <span class="related-accent">লাগতে পারে</span></h2>
         <p class="related-subtitle">
-          প্রিমিয়াম কোয়ালিটির শাড়ি, হস্তনির্মিত নকশা এবং ঐতিহ্যবাহী কারুশিল্পের এক অনন্য সংগ্রহ।
+          নিত্যদিনের স্বাচ্ছন্দ্য আর স্নিগ্ধতার ছন্দে বোনা আরও কিছু শাড়ি
         </p>
       </div>
 
       <!-- Product Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 max-w-[1300px] mx-auto">
+      <div class="related-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <CollectionCard
           v-for="product in displayProducts"
           :key="product.id"
           :product="product"
+          button-label="কার্টে রাখুন"
           :openPreview="openPreview"
         />
       </div>
@@ -49,28 +50,34 @@ const displayProducts = computed(() => {
 </template>
 
 <style scoped>
+.related-section { background: #fff; padding: 132px 0; }
+.related-head { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 48px; text-align: center; }
 .related-title {
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 32px;
   font-weight: 600;
-  line-height: 1.25;
-  color: #3c3834;
+  line-height: 40px;
+  color: #1a1817;
 }
-
+.related-accent { color: #cc9b25; }
 .related-subtitle {
   max-width: 640px;
-  margin: 16px auto 0;
-  font-family: "Hind Siliguri", "Poppins", sans-serif;
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 24px;
-  color: #6d6560;
+  color: #3c3834;
 }
+.related-grid { gap: 20px; }
 
 @media (min-width: 768px) {
-  .related-title {
-    font-size: 56px;
-    line-height: 68px;
-  }
+  .related-title { font-size: 56px; line-height: 68px; }
+}
+@media (max-width: 767px) {
+  .related-section { padding: 48px 0; }
+  .related-section .container { padding-inline: 20px; }
+  .related-head { margin-bottom: 32px; }
+  .related-grid { gap: 12px; }
 }
 </style>

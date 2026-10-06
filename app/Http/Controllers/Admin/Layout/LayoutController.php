@@ -244,6 +244,15 @@ class LayoutController extends Controller
             'settings.show_contact'  => 'boolean',
             'settings.show_badges'   => 'boolean',
             'settings.copyright'     => 'nullable|string|max:255',
+            // The footer's own contact block (the store settings stay as they are).
+            'settings.contact_address' => 'nullable|string|max:255',
+            'settings.contact_email'   => 'nullable|string|max:255',
+            'settings.contact_phone'   => 'nullable|string|max:60',
+            'settings.linkedin_url'    => 'nullable|url|max:255',
+
+            'settings.legal_links'         => 'array|max:4',
+            'settings.legal_links.*.label' => 'required|string|max:80',
+            'settings.legal_links.*.url'   => 'required|string|max:255',
 
             'settings.columns'                 => 'array|max:4',
             'settings.columns.*.title'         => 'nullable|string|max:60',

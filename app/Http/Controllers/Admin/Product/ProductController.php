@@ -74,7 +74,7 @@ class ProductController extends Controller
         abort_if($ids === [], 422, 'Choose at least one product to export.');
 
         $csv      = $export->csv($export->products($ids));
-        $filename = 'charukothon-catalog-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'chhondo-catalog-' . now()->format('Y-m-d') . '.csv';
 
         return response($csv, 200, [
             'Content-Type'        => 'text/csv; charset=UTF-8',

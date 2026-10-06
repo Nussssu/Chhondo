@@ -33,8 +33,8 @@ class EmailBrand
 
     public function name(): string
     {
-        return $this->site?->app_name
-            ?: ($this->smtp?->email_from_name ?: config('app.name', 'Charukothon'));
+        return \App\Support\Brand::rebrand($this->site?->app_name
+            ?: ($this->smtp?->email_from_name ?: config('app.name', 'Chhondo')));
     }
 
     public function phone(): ?string
@@ -122,7 +122,10 @@ class EmailBrand
     private const MAIL_SAFE = ['image/png', 'image/jpeg', 'image/gif'];
 
     /** The width the masthead draws the logo at, in CSS pixels. */
-    public const LOGO_WIDTH = 150;
+    public const LOGO_WIDTH = 96;
+
+    /** The Chhondo logo for emails: 192px wide, twice LOGO_WIDTH. */
+    private const CHHONDO_LOGO = 'assets/chhondo/logo-email.png';
 
     /**
      * The logo in a format every mail client can actually render.
@@ -139,6 +142,14 @@ class EmailBrand
      */
     public function emailLogoPath(): ?string
     {
+        // The Chhondo logo, as a PNG every mail client can draw (the site's
+        // own logo is SVG, which they cannot). The uploaded logo is the
+        // fallback only if this file is ever missing.
+        $chhondo = public_path(self::CHHONDO_LOGO);
+        if (is_file($chhondo)) {
+            return $chhondo;
+        }
+
         $source = $this->logoPath();
 
         if ($source === null) {

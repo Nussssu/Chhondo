@@ -4,7 +4,7 @@
 @extends('emails.layout')
 
 @section('content')
-    @php $accent = $brand['colour'] ?? '#2c5015'; @endphp
+    @php $accent = $brand['colour'] ?? '#1a2110'; @endphp
 
     @if (! empty($resetUrl))
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"

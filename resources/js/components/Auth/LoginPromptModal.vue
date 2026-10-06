@@ -42,7 +42,7 @@ const goToRegister = () => {
                         </svg>
                     </div>
 
-                    <h3 class="auth-prompt-title">Log in to continue</h3>
+                    <h3 class="auth-prompt-title">চালিয়ে যেতে লগ ইন করুন</h3>
                     <p class="auth-prompt-message">{{ authPrompt.message }}</p>
 
                     <div class="auth-prompt-actions">
@@ -118,7 +118,7 @@ const goToRegister = () => {
 }
 
 .auth-prompt-title {
-    font-family: "Hind Siliguri", "Poppins", sans-serif;
+    font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
     font-size: 20px;
     font-weight: 600;
     color: #1a1a1a;

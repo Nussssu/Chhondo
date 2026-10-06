@@ -1,24 +1,23 @@
 <template>
   <Head>
-    <title>Log in</title>
+    <title>{{ texts.login_tab_title }}</title>
   </Head>
 
-  <AuthShowcaseLayout :reviews="reviews">
+  <AuthShowcaseLayout :reviews="reviews" :photos="photos" hide-footer>
     <div class="auth-form">
-      <h1 class="auth-title">Welcome back</h1>
-      <p class="auth-subtitle">Sign in to your account to continue shopping</p>
+      <h1 class="auth-title">{{ texts.login_title }}</h1>
+      <p class="auth-subtitle">{{ texts.login_subtitle }}</p>
 
       <div v-if="status" class="auth-status" role="status">{{ status }}</div>
 
       <form @submit.prevent="handleSubmit" class="auth-fields">
         <div class="auth-field">
-          <label for="email" class="auth-label">Email Address</label>
+          <label for="email" class="auth-label">{{ texts.login_email_label }}</label>
           <input
             id="email"
             v-model="form.email"
             type="email"
             autocomplete="email"
-            placeholder="you@example.com"
             class="auth-input"
             :class="{ 'has-error': errors.email }"
           />
@@ -26,14 +25,13 @@
         </div>
 
         <div class="auth-field">
-          <label for="password" class="auth-label">Password</label>
+          <label for="password" class="auth-label">{{ texts.login_password_label }}</label>
           <div class="auth-input-wrap">
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
-              placeholder="Enter your password"
               class="auth-input"
               :class="{ 'has-error': errors.password }"
             />
@@ -46,20 +44,20 @@
         </div>
 
         <div class="auth-row">
-          <label class="auth-remember">
+          <label v-if="on(texts.login_remember_show)" class="auth-remember">
             <input type="checkbox" v-model="form.remember" class="auth-checkbox" />
-            <span>Remember me</span>
+            <span>{{ texts.login_remember }}</span>
           </label>
-          <Link href="/forgot-password" class="auth-link">Forgot password?</Link>
+          <Link v-if="on(texts.login_forgot_show)" href="/forgot-password" class="auth-forgot">{{ texts.login_forgot }}</Link>
         </div>
 
         <button type="submit" class="auth-submit" :disabled="form.processing">
-          {{ form.processing ? 'Logging in...' : 'Log in' }}
+          {{ form.processing ? texts.login_loading : texts.login_button }}
         </button>
 
-        <p class="auth-switch">
-          Don't have an account?
-          <Link href="/register" class="auth-link">Create one</Link>
+        <p v-if="on(texts.login_switch_show)" class="auth-switch">
+          {{ texts.login_switch_text }}
+          <Link href="/register" class="auth-link">{{ texts.login_switch_link }}</Link>
         </p>
       </form>
     </div>
@@ -71,13 +69,18 @@ import AuthShowcaseLayout from '@/components/Auth/AuthShowcaseLayout.vue'
 import { computed, ref } from 'vue'
 import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import { Link, useForm, Head } from '@inertiajs/vue3'
+import { on } from '@/utils/cms'
 
-defineProps({
+const props = defineProps({
   reviews: { type: Array, default: () => [] },
+  // Content › Pages › Log in & Sign up.
+  texts: { type: Object, default: () => ({}) },
   // Carried over from registration, or any other page that hands the visitor
   // here with something to say.
   status: { type: String, default: null },
 })
+
+const photos = computed(() => [1, 2, 3, 4].map((n) => props.texts[`collage_photo_${n}`]))
 
 const showPassword = ref(false)
 
@@ -256,4 +259,99 @@ const handleSubmit = () => {
   color: #4b5563;
   margin-top: 8px;
 }
+
+/* ===== Figma "Log in" / "Sign up" ===== */
+.auth-form { display: flex; flex-direction: column; gap: 32px; }
+.auth-title {
+  margin: 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40px;
+  color: #1a1817;
+}
+.auth-subtitle {
+  margin: -24px 0 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.auth-fields { display: flex; flex-direction: column; gap: 16px; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.auth-label {
+  margin: 0;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #3c3834;
+}
+/* White 56px fields with a Black/200 hairline */
+.auth-input,
+.auth-form :deep(.iti__tel-input) {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #fff;
+  font-family: "Poppins", "Li Ador Noirrit", sans-serif;
+  font-size: 15px;
+  color: #1a1817;
+  box-shadow: none;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.auth-input-wrap .auth-input { padding-right: 48px; }
+.auth-input:focus,
+.auth-form :deep(.iti__tel-input):focus { border-color: #d6af51; box-shadow: 0 0 0 3px rgba(214, 175, 81, .18); }
+.auth-eye { color: #3c3834; }
+.auth-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.auth-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+}
+.auth-checkbox { width: 16px; height: 16px; accent-color: #252f17; }
+.auth-forgot {
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c3834;
+  transition: color .2s ease;
+}
+.auth-forgot:hover { color: #cc9b25; }
+.auth-submit {
+  width: 100%;
+  height: 48px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: #1a2110;
+  color: #fff;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  transition: background-color .2s ease;
+}
+.auth-submit:hover:not(:disabled) { background: #252f17; }
+.auth-switch {
+  margin: -4px 0 0;
+  text-align: center;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #121619;
+}
+.auth-link { margin-left: 8px; color: #cc9b25; font-weight: 600; }
+.auth-link:hover { color: #705514; }
+.auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 479px) { .auth-grid { grid-template-columns: 1fr; gap: 16px; } }
 </style>

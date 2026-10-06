@@ -202,8 +202,8 @@ const summary = computed(() => {
 .fs-option:hover { background: var(--surface-sunk); }
 
 .fs-option.is-on {
-  border-color: var(--bs-primary, #356019);
-  background: color-mix(in srgb, var(--bs-primary, #356019) 5%, #fff);
+  border-color: var(--bs-primary, #252f17);
+  background: color-mix(in srgb, var(--bs-primary, #252f17) 5%, #fff);
 }
 
 .fs-option input { margin-top: 3px; }

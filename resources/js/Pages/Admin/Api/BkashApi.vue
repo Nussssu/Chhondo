@@ -281,7 +281,7 @@ async function copyCallback() {
   margin-top: 4px;
   font-size: var(--fs-xs, 12px);
   line-height: 1.5;
-  color: var(--text-faint, #98a08f);
+  color: var(--text-faint, #9c9591);
 }
 
 .bk-link {
@@ -337,9 +337,9 @@ async function copyCallback() {
   overflow-x: auto;
   padding: 4px 8px;
   border-radius: var(--r-sm, 6px);
-  background: var(--surface-sunk, #f7f8f5);
+  background: var(--surface-sunk, #f5f4f2);
   font-size: 12px;
-  color: var(--text, #1f2a17);
+  color: var(--text, #1a1817);
   white-space: nowrap;
 }
 
@@ -348,7 +348,7 @@ async function copyCallback() {
   padding-left: 18px;
   font-size: var(--fs-sm, 13px);
   line-height: 1.7;
-  color: var(--text-muted, #6b7563);
+  color: var(--text-muted, #6d6560);
 }
 
 .bk-result {

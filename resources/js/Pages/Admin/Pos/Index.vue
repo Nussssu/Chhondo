@@ -478,7 +478,7 @@ function checkout() {
 
 .pt-customer-chip {
   display: flex; align-items: center; gap: 6px; margin-top: 8px;
-  background: #eef3ea; color: #2C5015;
+  background: #eef3ea; color: #1A2110;
   border-radius: 999px; padding: 5px 10px; font-size: .78rem; font-weight: 600;
 }
 .pt-customer-chip.is-walkin { background: #f1f3f5; color: #607d8b; }
@@ -559,8 +559,8 @@ function checkout() {
   border-radius: 7px; padding: 7px 4px; font-size: .74rem; font-weight: 700; cursor: pointer;
   transition: background .12s, color .12s, border-color .12s;
 }
-.pt-pay-type:hover { border-color: #356019; color: #356019; }
-.pt-pay-type.is-on { background: #356019; border-color: #356019; color: #fff; }
+.pt-pay-type:hover { border-color: #252f17; color: #252f17; }
+.pt-pay-type.is-on { background: #252f17; border-color: #252f17; color: #fff; }
 
 .pt-pay-methods {
   margin-top: 8px; padding: 8px; border-radius: 8px;
@@ -577,8 +577,8 @@ function checkout() {
   border-radius: 999px; padding: 4px 11px; font-size: .74rem; font-weight: 600; cursor: pointer;
   transition: background .12s, color .12s, border-color .12s;
 }
-.pt-pay-chip:hover { border-color: #356019; }
-.pt-pay-chip.is-on { background: #356019; border-color: #356019; color: #fff; }
+.pt-pay-chip:hover { border-color: #252f17; }
+.pt-pay-chip.is-on { background: #252f17; border-color: #252f17; color: #fff; }
 
 .pt-totals { margin: 10px 0; font-size: .84rem; }
 .pt-totals > div { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; }
@@ -588,7 +588,7 @@ function checkout() {
 .pt-count { font-size: .68rem; color: #b0bec5; margin-left: 4px; }
 .pt-grand { border-top: 1px solid #e0e4e8; margin-top: 5px; padding-top: 7px !important; }
 .pt-grand dt { font-size: .92rem; font-weight: 700; color: #263238; }
-.pt-grand dd { font-size: 1.15rem; font-weight: 800; color: #356019; }
+.pt-grand dd { font-size: 1.15rem; font-weight: 800; color: #252f17; }
 
 .pt-paid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; margin-bottom: 10px; }
 .pt-change {
@@ -596,7 +596,7 @@ function checkout() {
   background: #eef3ea; border-radius: 7px; padding: 5px 10px; text-align: right;
 }
 .pt-change span { font-size: .64rem; font-weight: 700; color: #7a8b6f; text-transform: uppercase; letter-spacing: .03em; }
-.pt-change strong { font-size: .98rem; color: #2C5015; font-variant-numeric: tabular-nums; }
+.pt-change strong { font-size: .98rem; color: #1A2110; font-variant-numeric: tabular-nums; }
 .pt-change.is-short { background: #fdecea; }
 .pt-change.is-short span { color: #b0736f; }
 .pt-change.is-short strong { color: #b71c1c; }

@@ -33,7 +33,7 @@
             :checked="isSelected(row.id)"
             @change="toggle(row.id)"
           />
-          <img :src="row.featured_image" width="48" height="48" class="se-thumb" alt="" loading="lazy" />
+          <img :src="row.featured_image || '/placeholder.svg'" width="48" height="48" class="se-thumb" alt="" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
           <span class="se-text">
             <span class="se-name" :title="row.product_name">{{ row.product_name }}</span>
             <span class="se-meta">#{{ row.id }}<template v-if="row.product_code"> · {{ row.product_code }}</template></span>

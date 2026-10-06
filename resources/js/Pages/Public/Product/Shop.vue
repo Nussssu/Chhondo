@@ -2,7 +2,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue"
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 
-defineProps({
+const props = defineProps({
   // Wording for this page, editable in Content > Pages.
   texts: { type: Object, default: () => ({}) },
   intro: { type: Object, default: () => ({}) },
@@ -32,23 +32,22 @@ const activeCategoryName = computed(() => {
 })
 
 /*
- * Heading and the line under it, from Content > Pages > Shop. A category
- * filter still names itself, since that is generated per category rather
- * than being page wording.
+ * Heading, the line under it and the breadcrumb: Content › Pages › Shop. A
+ * category filter names itself through the shop's "category heading" pattern.
  */
-const title = computed(() => {
-  if (activeCategoryName.value) return `আমাদের সব ${activeCategoryName.value}`
+const shopTexts = computed(() => props.texts || {})
 
-  return page.props.intro?.title || "আমাদের সব শাড়ি"
+const title = computed(() => {
+  if (activeCategoryName.value) {
+    return (shopTexts.value.category_title || "{category}").replace("{category}", activeCategoryName.value)
+  }
+  return props.intro?.title || ""
 })
 
-const description = computed(
-  () => page.props.intro?.subtitle
-    || "প্রিমিয়াম কোয়ালিটির শাড়ি আর আধুনিকতার মেলবন্ধনে, নিজেকে সাজান ঐতিহ্যবাহী কারুশিল্পে।"
-)
+const description = computed(() => props.intro?.subtitle || "")
 
 const breadcrumbs = computed(() => {
-  const crumbs = [{ label: "Shop", href: "/shop" }]
+  const crumbs = [{ label: shopTexts.value.breadcrumb, href: "/shop" }]
   if (activeCategoryName.value) crumbs.push({ label: activeCategoryName.value, href: null })
   return crumbs
 })
@@ -90,7 +89,7 @@ const onPageChange = (pageNum) => {
 </script>
 
 <template>
-  <Head><title>{{ texts.t1 }}</title></Head>
+  <Head><title>{{ shopTexts.tab_title }}</title></Head>
   <AppLayout>
     <ProductArchive
       :title="title"

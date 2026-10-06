@@ -271,7 +271,7 @@ onMounted(() => {
   transform: translateY(-5px);
 }
 .bg-light-purple {
-  background-color: #ECF1E8;
+  background-color: #F1F2EE;
 }
 .bg-light-success {
   background-color: #e6ffed;

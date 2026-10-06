@@ -39,6 +39,8 @@ class PagesController extends Controller
                 'url'          => $meta['url'],
                 'note'         => $meta['note'],
                 'editable'     => $meta['editable'],
+                // Some pages carry wording only and render no widgets.
+                'widgets'      => $meta['widgets'] ?? true,
                 'banners'      => $meta['banners'],
                 'permission'   => $meta['permission'],
                 'title'        => $record?->title,
@@ -189,6 +191,8 @@ class PagesController extends Controller
                 'url'          => $meta['url'],
                 'note'         => $meta['note'],
                 'editable'     => $meta['editable'],
+                // Some pages carry wording only and render no widgets.
+                'widgets'      => $meta['widgets'] ?? true,
                 'banners'      => $meta['banners'],
                 'is_published' => $page->exists ? (bool) $page->is_published : true,
                 // Not every storefront page renders the title and subtitle.
@@ -267,6 +271,12 @@ class PagesController extends Controller
 
             $value = $texts[$key];
 
+            if (($field['type'] ?? 'text') === 'toggle') {
+                // Stored as '1' / '0' so it travels like any other text value.
+                $out[$key] = in_array($value, ['0', 0, false, 'false'], true) ? '0' : '1';
+                continue;
+            }
+
             if (($field['type'] ?? 'text') !== 'repeater') {
                 $out[$key] = is_string($value) ? $value : '';
                 continue;
@@ -320,6 +330,7 @@ class PagesController extends Controller
                 'type'   => $field['type'] ?? 'text',
                 'help'   => $field['help'] ?? null,
                 'fields' => $field['fields'] ?? null,
+                'variant' => $field['variant'] ?? null,
             ];
         }
 
@@ -327,6 +338,12 @@ class PagesController extends Controller
         $ordered = [];
 
         foreach ($titles as $key => $title) {
+            // A widget slot: the editor lists the widgets that render here.
+            if (str_starts_with($key, 'widgets:')) {
+                $ordered[] = ['key' => $key, 'title' => $title, 'fields' => [], 'widget_types' => [substr($key, 8)]];
+                continue;
+            }
+
             if (isset($grouped[$key])) {
                 $ordered[] = ['key' => $key, 'title' => $title, 'fields' => $grouped[$key]];
                 unset($grouped[$key]);
@@ -396,7 +413,7 @@ class PagesController extends Controller
             // A field is either a single string or a repeater's list of rows.
             'texts.*'              => 'nullable',
             'texts.*.*'            => 'nullable|array',
-            'texts.*.*.*'          => 'nullable|string|max:500',
+            'texts.*.*.*'          => 'nullable|string|max:5000',
             'title'                => 'nullable|string|max:255',
             'subtitle'             => 'nullable|string|max:1000',
             'is_published'         => 'boolean',

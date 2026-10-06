@@ -234,7 +234,7 @@ async function clear(page) {
   padding: 1px 6px;
   border-radius: 999px;
   background: #eef4e6;
-  color: #2c5015;
+  color: #1a2110;
   font-size: 11px;
   font-weight: 500;
   vertical-align: middle;
@@ -250,7 +250,7 @@ async function clear(page) {
 .pg-url {
   font-family: var(--mono, ui-monospace, monospace);
   font-size: 13px;
-  color: #2c5015;
+  color: #1a2110;
 }
 
 .pg-url:hover {

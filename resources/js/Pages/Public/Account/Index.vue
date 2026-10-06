@@ -1,14 +1,14 @@
 <template>
   <Head>
-    <title>My Account</title>
+    <title>আমার অ্যাকাউন্ট</title>
   </Head>
 
   <AccountLayout>
     <div class="profile-page">
       <div class="stat-row">
-        <StatCard :value="stats.totalOrders ?? 0" label="Total Orders" />
-        <StatCard :value="stats.wishlistItems ?? 0" label="Wishlist Items" />
-        <StatCard :value="stats.savedAddresses ?? 0" label="Saved Addresses" />
+        <StatCard :value="stats.totalOrders ?? 0" label="মোট অর্ডার" />
+        <StatCard :value="stats.wishlistItems ?? 0" label="উইশলিস্ট আইটেম" />
+        <StatCard :value="stats.savedAddresses ?? 0" label="সংরক্ষিত ঠিকানা" />
       </div>
 
       <div class="profile-summary-card">
@@ -45,102 +45,126 @@
           <p class="profile-email">{{ authStore.user?.email }}</p>
         </div>
 
-        <button type="button" class="profile-edit-btn" @click="openEdit">
-          <img :src="'/assets/images/account/edit-pencil.svg'" alt="" />
-          Edit Profile
-        </button>
+        <!-- Figma: a dark "Back to Shop" button with a pencil icon -->
+        <Link href="/shop" class="profile-edit-btn">
+          <img :src="'/assets/images/account/edit-pencil.svg'" alt="" /> Back to Shop</Link>
       </div>
 
-      <div class="profile-info-grid">
-        <div class="profile-field">
-          <p class="profile-field-label">Full Name</p>
-          <div class="profile-field-value">{{ authStore.user?.name || '—' }}</div>
-        </div>
-        <div class="profile-field">
-          <p class="profile-field-label">Email Address</p>
-          <div class="profile-field-value">{{ authStore.user?.email || '—' }}</div>
-        </div>
-        <div class="profile-field">
-          <p class="profile-field-label">Phone Number</p>
-          <div class="profile-field-value">{{ authStore.user?.phone || '—' }}</div>
-        </div>
-        <div class="profile-field">
-          <p class="profile-field-label">Date of Birth</p>
-          <div class="profile-field-value">{{ authStore.user?.date_of_birth || '—' }}</div>
-        </div>
-      </div>
-
-      <div class="address-card">
-        <p class="address-card-title">
-          <img :src="'/assets/images/account/address-pin.svg'" alt="" />
-          Delivery Address
-        </p>
-
-        <p v-if="!addresses.length && !drafts.length" class="address-empty">
-          No saved address yet — add one below and it will fill in your checkout.
-        </p>
-
-        <!-- Saved addresses -->
-        <div v-for="addr in addresses" :key="addr.id" class="addr-item" :class="{ 'is-primary': isPrimary(addr) }">
-          <template v-if="editingId === addr.id">
-            <AddressFields v-model="editForm" :errors="errors" />
-            <div class="addr-actions">
-              <button type="button" class="addr-btn addr-btn--save" :disabled="busy" @click="saveEdit(addr)">
-                {{ busy ? 'Saving…' : 'Save' }}
-              </button>
-              <button type="button" class="addr-btn" @click="cancelEdit">Cancel</button>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="addr-head">
-              <span class="addr-type">{{ TYPES[addr.type] || 'Home' }}</span>
-              <span v-if="isPrimary(addr) && addresses.length > 1" class="addr-primary-tag">Primary</span>
-              <div class="addr-head-actions">
-                <button type="button" class="addr-link" @click="startEdit(addr)">Edit</button>
-                <button type="button" class="addr-link addr-link--danger" @click="remove(addr)">Remove</button>
-              </div>
-            </div>
-
-            <p class="addr-line addr-line--strong">{{ addr.address }}</p>
-            <p class="addr-line addr-line--muted">{{ CITIES[addr.city] || '—' }}</p>
-
-            <!-- Whichever is primary is the one checkout fills in. With only
-                 one address there is nothing to choose, so the option is not
-                 offered — it is primary by definition. -->
-            <label v-if="addresses.length > 1" class="addr-primary">
-              <input
-                type="radio"
-                name="primary-address"
-                :checked="isPrimary(addr)"
-                :disabled="busy"
-                @change="makePrimary(addr)"
-              />
-              <span>Use as primary — filled in at checkout</span>
-            </label>
-          </template>
-        </div>
-
-        <!-- New addresses being written -->
-        <div v-for="(draft, i) in drafts" :key="`draft-${i}`" class="addr-item is-draft">
-          <AddressFields v-model="drafts[i]" :errors="i === 0 ? errors : {}" />
-          <label v-if="addresses.length" class="addr-primary">
-            <input v-model="draft.is_default" type="checkbox" />
-            <span>Make this my primary address</span>
-          </label>
-          <p v-else class="addr-note">This will be your primary address.</p>
-          <div class="addr-actions">
-            <button type="button" class="addr-btn addr-btn--save" :disabled="busy" @click="saveDraft(i)">
-              {{ busy ? 'Saving…' : 'Save address' }}
-            </button>
-            <button type="button" class="addr-btn" @click="drafts.splice(i, 1)">Cancel</button>
+      <!-- Figma: details and delivery address in one card. Each field opens
+           its editor, so editing stays where it was. -->
+      <div class="profile-details-card">
+        <div class="profile-info-grid">
+          <div class="profile-field">
+            <p class="profile-field-label">নাম</p>
+            <button type="button" class="profile-field-value" aria-label="নাম এডিট করুন" @click="openEdit">{{ authStore.user?.name }}</button>
+          </div>
+          <div class="profile-field">
+            <p class="profile-field-label">ই-মেইল অ্যাড্রেস</p>
+            <button type="button" class="profile-field-value" aria-label="ই-মেইল এডিট করুন" @click="openEdit">{{ authStore.user?.email }}</button>
+          </div>
+          <div class="profile-field">
+            <p class="profile-field-label">ফোন নম্বর</p>
+            <button type="button" class="profile-field-value" aria-label="ফোন নম্বর এডিট করুন" @click="openEdit">{{ authStore.user?.phone }}</button>
+          </div>
+          <div class="profile-field">
+            <p class="profile-field-label">জন্ম তারিখ</p>
+            <button type="button" class="profile-field-value" aria-label="জন্ম তারিখ এডিট করুন" @click="openEdit">{{ authStore.user?.date_of_birth }}</button>
           </div>
         </div>
 
-        <button type="button" class="addr-add" @click="addDraft">
-          <Plus :size="15" />
-          {{ addresses.length ? 'Add another address' : 'Add an address' }}
-        </button>
+        <p class="address-card-title">
+          <img :src="'/assets/images/account/address-pin.svg'" alt="" />
+          ডেলিভারি ঠিকানা
+        </p>
+
+        <!-- The primary address, laid out as the Figma fields -->
+        <template v-if="!managingAddress">
+          <div class="profile-field">
+            <p class="profile-field-label">বিস্তারিত ঠিকানা</p>
+            <button type="button" class="profile-field-value" aria-label="ঠিকানা এডিট করুন" @click="openAddressManager">{{ primaryAddress?.address }}</button>
+          </div>
+          <div class="profile-address-row">
+            <div class="profile-field">
+              <p class="profile-field-label">শহর</p>
+              <button type="button" class="profile-field-value" aria-label="শহর এডিট করুন" @click="openAddressManager">{{ CITIES_BN[primaryAddress?.city] || '' }}</button>
+            </div>
+            <div class="profile-field">
+              <p class="profile-field-label">পোস্টাল কোড</p>
+              <button type="button" class="profile-field-value" aria-label="ঠিকানা এডিট করুন" @click="openAddressManager"></button>
+            </div>
+          </div>
+        </template>
+
+        <!-- The address manager, as before -->
+        <div v-else class="address-card">
+          <p v-if="!addresses.length && !drafts.length" class="address-empty">
+            এখনো কোনো ঠিকানা সেভ করা নেই — নিচে যোগ করুন, চেকআউটে এটিই বসে যাবে।
+          </p>
+
+          <!-- Saved addresses -->
+          <div v-for="addr in addresses" :key="addr.id" class="addr-item" :class="{ 'is-primary': isPrimary(addr) }">
+            <template v-if="editingId === addr.id">
+              <AddressFields v-model="editForm" :errors="errors" />
+              <div class="addr-actions">
+                <button type="button" class="addr-btn addr-btn--save" :disabled="busy" @click="saveEdit(addr)">
+                  {{ busy ? 'সেভ হচ্ছে…' : 'সেভ করুন' }}
+                </button>
+                <button type="button" class="addr-btn" @click="cancelEdit">বাতিল</button>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="addr-head">
+                <span class="addr-type">{{ TYPES[addr.type] || 'বাসা' }}</span>
+                <span v-if="isPrimary(addr) && addresses.length > 1" class="addr-primary-tag">প্রাইমারি</span>
+                <div class="addr-head-actions">
+                  <button type="button" class="addr-link" @click="startEdit(addr)">এডিট</button>
+                  <button type="button" class="addr-link addr-link--danger" @click="remove(addr)">মুছুন</button>
+                </div>
+              </div>
+
+              <p class="addr-line addr-line--strong">{{ addr.address }}</p>
+              <p class="addr-line addr-line--muted">{{ CITIES[addr.city] || '—' }}</p>
+
+              <!-- Whichever is primary is the one checkout fills in. With only
+                   one address there is nothing to choose, so the option is not
+                   offered — it is primary by definition. -->
+              <label v-if="addresses.length > 1" class="addr-primary">
+                <input
+                  type="radio"
+                  name="primary-address"
+                  :checked="isPrimary(addr)"
+                  :disabled="busy"
+                  @change="makePrimary(addr)"
+                />
+                <span>প্রাইমারি হিসেবে রাখুন — চেকআউটে এটিই বসবে</span>
+              </label>
+            </template>
+          </div>
+
+          <!-- New addresses being written -->
+          <div v-for="(draft, i) in drafts" :key="`draft-${i}`" class="addr-item is-draft">
+            <AddressFields v-model="drafts[i]" :errors="i === 0 ? errors : {}" />
+            <label v-if="addresses.length" class="addr-primary">
+              <input v-model="draft.is_default" type="checkbox" />
+              <span>এটিকে আমার প্রাইমারি ঠিকানা করুন</span>
+            </label>
+            <p v-else class="addr-note">এটিই হবে আপনার প্রাইমারি ঠিকানা।</p>
+            <div class="addr-actions">
+              <button type="button" class="addr-btn addr-btn--save" :disabled="busy" @click="saveDraft(i)">
+                {{ busy ? 'সেভ হচ্ছে…' : 'ঠিকানা সেভ করুন' }}
+              </button>
+              <button type="button" class="addr-btn" @click="drafts.splice(i, 1)">বাতিল</button>
+            </div>
+          </div>
+
+          <button type="button" class="addr-add" @click="addDraft">
+            <Plus :size="15" />
+            {{ addresses.length ? 'আরেকটি ঠিকানা যোগ করুন' : 'ঠিকানা যোগ করুন' }}
+          </button>
+
+          <button type="button" class="addr-btn" @click="closeAddressManager">বন্ধ করুন</button>
+        </div>
       </div>
     </div>
 
@@ -151,17 +175,17 @@
 
         <form @submit.prevent="submitProfile">
           <div class="modal-field">
-            <label class="modal-label">Full Name</label>
-            <input v-model="form.name" type="text" class="modal-input" placeholder="Your name" />
+            <label class="modal-label">নাম</label>
+            <input v-model="form.name" type="text" class="modal-input" placeholder="সম্পূর্ণ নাম" />
           </div>
 
           <div class="modal-field">
-            <label class="modal-label">Email Address</label>
+            <label class="modal-label">ই-মেইল অ্যাড্রেস</label>
             <input v-model="form.email" type="email" class="modal-input" placeholder="you@example.com" />
           </div>
 
           <div class="modal-field">
-            <label class="modal-label">Phone Number</label>
+            <label class="modal-label">ফোন নম্বর</label>
             <PhoneField
               v-model="form.phone"
               v-model:valid="phoneValid"
@@ -171,14 +195,14 @@
           </div>
 
           <div class="modal-field">
-            <label class="modal-label">Date of Birth</label>
+            <label class="modal-label">জন্ম তারিখ</label>
             <input v-model="form.date_of_birth" type="date" class="modal-input" />
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="modal-cancel-btn" @click="closeEdit">Cancel</button>
+            <button type="button" class="modal-cancel-btn" @click="closeEdit">বাতিল</button>
             <button type="submit" class="modal-save-btn" :disabled="saving">
-              {{ saving ? 'Saving...' : 'Save Changes' }}
+              {{ saving ? 'সেভ হচ্ছে...' : 'পরিবর্তন সেভ করুন' }}
             </button>
           </div>
         </form>
@@ -192,7 +216,7 @@ import AccountLayout from '@/Layouts/AccountLayout.vue';
 import StatCard from '@/components/Account/StatCard.vue';
 import AddressFields from '@/components/Account/AddressFields.vue';
 import PhoneField from '@/components/Form/PhoneField.vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { toast } from '@steveyuowo/vue-hot-toast';
@@ -225,6 +249,24 @@ const errors = ref({});
 const busy = ref(false);
 
 const isPrimary = (addr) => Number(addr.is_default) === 1;
+
+// The Figma card shows the primary address as fields; clicking one opens the
+// manager below it.
+const CITIES_BN = { inside: 'ঢাকার ভেতরে', outside: 'ঢাকার বাইরে' };
+const primaryAddress = computed(() => addresses.value.find(isPrimary) || addresses.value[0] || null);
+const managingAddress = ref(false);
+
+function openAddressManager() {
+  managingAddress.value = true;
+  if (!addresses.value.length && !drafts.value.length) addDraft();
+}
+
+function closeAddressManager() {
+  managingAddress.value = false;
+  editingId.value = null;
+  drafts.value = [];
+  errors.value = {};
+}
 
 function addDraft() {
   errors.value = {};
@@ -297,7 +339,7 @@ function uploadAvatar(event) {
   if (!file) return;
 
   if (file.size > 4 * 1024 * 1024) {
-    toast.error('The picture must be 4MB or smaller.');
+    toast.error('ছবির আকার ৪MB বা তার কম হতে হবে।');
     event.target.value = '';
     return;
   }
@@ -312,7 +354,7 @@ function uploadAvatar(event) {
     onError: (errors) => {
       // Put the old picture back; the new one was never stored.
       avatarPreview.value = previous;
-      toast.error(errors.image || 'Could not upload the picture.');
+      toast.error(errors.image || 'ছবি আপলোড করা যায়নি।');
     },
     onFinish: () => {
       uploadingAvatar.value = false;
@@ -362,7 +404,7 @@ const submitProfile = () => {
     },
     onError: (errors) => {
       phoneError.value = errors.phone || '';
-      toast.error(errors.phone || errors.email || 'Could not update profile.');
+      toast.error(errors.phone || errors.email || 'প্রোফাইল আপডেট করা যায়নি।');
     },
     onFinish: () => { saving.value = false; },
   });
@@ -851,5 +893,93 @@ const submitProfile = () => {
 .modal-save-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* ===== Figma "My Profile" ===== */
+.profile-page { gap: 20px; }
+.stat-row { gap: 20px; }
+
+.profile-summary-card,
+.profile-details-card {
+  padding: 24px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+}
+.profile-summary-card { gap: 20px; flex-wrap: nowrap; }
+
+/* Avatar 80px, Olive grey; camera badge 28px Olive/500 */
+.profile-avatar { background: #cbcdc7; color: #1f2814; font: 600 40px/32px "Poppins", sans-serif; }
+.profile-avatar-badge {
+  background: #252f17;
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .03), 0 4px 16px -4px rgba(0, 0, 0, .12);
+}
+.profile-name { margin: 0; font: 600 24px/32px "Poppins", "Li Ador Noirrit", sans-serif; color: #2c1a0e; }
+.profile-email { margin: 0; font: 400 14px/20px "DM Sans", "Poppins", sans-serif; color: #3c3834; }
+
+/* Dark 44px button, r8, 16px sides, 24px icon 8px from the label */
+.profile-edit-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 16px;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #1a2110;
+  color: #fff;
+  font: 600 16px/24px "Poppins", "Li Ador Noirrit", sans-serif;
+  white-space: pre;
+  cursor: pointer;
+}
+.profile-edit-btn:hover { background: #252f17; }
+.profile-edit-btn img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
+
+/* One card: 24px padding, 20px between rows */
+.profile-details-card { display: flex; flex-direction: column; gap: 20px; }
+.profile-info-grid { gap: 20px 12px; }
+.profile-address-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.profile-field { display: flex; flex-direction: column; gap: 8px; }
+.profile-field-label {
+  margin: 0;
+  font: 600 16px/24px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1a1817;
+}
+.profile-field-value {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #e4e1e0;
+  border-radius: 8px;
+  background: #f3f3f3;
+  font: 400 16px/24px "Poppins", "Li Ador Noirrit", sans-serif;
+  color: #9c9591;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.profile-field-value:hover { border-color: #d1cdca; }
+.address-card-title {
+  margin: 0;
+  gap: 8px;
+  font: 600 14px/20px "Li Ador Noirrit", "Hind Siliguri", sans-serif;
+  color: #1a1817;
+}
+.address-card-title img { width: 15px; height: 15px; }
+
+/* The manager keeps its own look, without a second card around it */
+.profile-details-card .address-card { padding: 0; border: 0; background: transparent; }
+
+@media (max-width: 640px) {
+  .stat-row { gap: 10px; }
+  .profile-summary-card { flex-wrap: wrap; padding: 18px 16px; }
+  .profile-details-card { padding: 18px 16px; }
+  .profile-edit-btn { margin-left: 0; width: 100%; justify-content: center; }
+  .profile-address-row { grid-template-columns: 1fr; }
 }
 </style>

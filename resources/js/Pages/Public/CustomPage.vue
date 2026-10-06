@@ -9,6 +9,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue"
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head } from "@inertiajs/vue3"
+import { rebrand } from "@/utils/rebrand"
 
 defineProps({
   title: { type: String, default: "" },
@@ -38,7 +39,7 @@ defineProps({
 
     <section v-if="content" class="cp-body">
       <div class="container max-w-4xl mx-auto px-4">
-        <div class="cp-content body-1-r text-[#666460] leading-relaxed" v-html="content"></div>
+        <div class="cp-content body-1-r text-[#666460] leading-relaxed" v-html="rebrand(content)"></div>
       </div>
     </section>
 
@@ -60,7 +61,7 @@ defineProps({
 .cp-label {
   display: block;
   margin-bottom: 8px;
-  font-family: "Hind Siliguri", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", sans-serif;
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
