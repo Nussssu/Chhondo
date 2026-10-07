@@ -657,13 +657,13 @@ class Page extends Model
             ],
             'message_label' => [
                 'section' => 'form',
-                'label' => 'Address — label',
-                'default' => 'ঠিকানা',
+                'label' => 'Message — label',
+                'default' => 'বার্তা',
             ],
             'message_placeholder' => [
                 'section' => 'form',
-                'label' => 'Address — placeholder',
-                'default' => 'বাড়ি/ফ্ল্যাট নম্বর, রাস্তা, এলাকা, শহর',
+                'label' => 'Message — placeholder',
+                'default' => 'আপনার বার্তাটি লিখুন',
             ],
             'submit_label' => [
                 'section' => 'form',
