@@ -185,6 +185,9 @@ const closePreview = () => {
       :sliders="sliders"
       :desktop-image="t.hero_image_desktop"
       :mobile-image="t.hero_image_mobile"
+      :slideshow-enabled="on(t.hero_slideshow_enabled ?? '0')"
+      :autoplay-enabled="on(t.hero_autoplay_enabled ?? '1')"
+      :slide-seconds="t.hero_slide_seconds || '5'"
       :overlay="heroOverlay"
     />
 

@@ -25,6 +25,8 @@ class BlogController extends Controller
 
         return Inertia::render('Admin/Blogs/Index', [
             'blogs' => $blogs,
+            // The Add post popup's category picker.
+            'blog_category' => BlogCategory::orderBy('name', 'asc')->get(),
         ]);
     }
 

@@ -740,25 +740,29 @@ class ManageOrdersController extends Controller
     public function validateCoupon(Request $request)
     {
 
-        $couponCode = $request->coupon_code;
         $productIds = $request->product_ids;
 
         if (empty($productIds)) {
-            return response()->json(['error' => 'Product IDs cannot be empty'], 400);
+            return response()->json(['error' => 'কার্টে কোনো পণ্য নেই।'], 400);
         }
 
-        $coupon = Coupon::where('code', $couponCode)->first();
+        // The storefront is in Bangla, so the reason is too. The rules are the
+        // Coupon model's, shared with checkout and the admin coupon list — this
+        // check used to call a coupon expired on its last day, and accepted one
+        // whose start date had not come yet.
+        $coupon = Coupon::findByTypedCode($request->coupon_code);
         if (! $coupon) {
-            return response()->json(['error' => 'No coupon found with that code'], 404);
+            return response()->json(['error' => 'এই কোডে কোনো কুপন পাওয়া যায়নি।'], 404);
         }
 
-        if ($coupon->expiry_date < Carbon::now()) {
-            return response()->json(['error' => 'This coupon has expired'], 410);
-        }
+        $reason = [
+            'scheduled' => 'এই কুপনটি এখনও চালু হয়নি।',
+            'expired'   => 'এই কুপনের মেয়াদ শেষ হয়ে গেছে।',
+            'used_up'   => 'এই কুপনটি সর্বোচ্চ সংখ্যকবার ব্যবহার করা হয়ে গেছে।',
+        ][$coupon->status()] ?? null;
 
-        // A blank usage_limit means unlimited.
-        if (! is_null($coupon->usage_limit) && $coupon->usage_limit <= $coupon->used_count) {
-            return response()->json(['error' => 'This coupon has reached its usage limit'], 403);
+        if ($reason) {
+            return response()->json(['error' => $reason], 410);
         }
 
         // Products are a restriction, not a requirement: a coupon with none
@@ -766,7 +770,7 @@ class ManageOrdersController extends Controller
         $restrictions = CouponProduct::where('coupon_id', $coupon->id);
 
         if ($restrictions->exists() && ! (clone $restrictions)->whereIn('product_id', $productIds)->exists()) {
-            return response()->json(['error' => 'This coupon does not apply to the items in your cart'], 400);
+            return response()->json(['error' => 'এই কুপনটি আপনার কার্টের পণ্যে প্রযোজ্য নয়।'], 400);
         }
 
         return response()->json(['success' => $coupon], 200);
@@ -1942,13 +1946,41 @@ class ManageOrdersController extends Controller
         ];
     }
 
+    public function fraudAssessment(Order $order)
+    {
+        return response()->json(app(\App\Services\Admin\Order\OrderRiskAssessment::class)->forOrder($order));
+    }
+
+    /** Keep TLS verification enabled, including Windows PHP without a configured CA file. */
+    private function fraudCheckHttp(): \Illuminate\Http\Client\PendingRequest
+    {
+        $request = Http::acceptJson()->connectTimeout(10)->timeout(20);
+        $caBundle = config('services.fraud_check.ca_bundle');
+
+        if (! $caBundle && PHP_OS_FAMILY === 'Windows') {
+            foreach ([
+                ini_get('curl.cainfo'),
+                ini_get('openssl.cafile'),
+                (getenv('ProgramFiles') ?: 'C:/Program Files') . '/Git/mingw64/etc/ssl/certs/ca-bundle.crt',
+                'C:/xampp/apache/bin/curl-ca-bundle.crt',
+            ] as $candidate) {
+                if ($candidate && is_readable($candidate)) {
+                    $caBundle = $candidate;
+                    break;
+                }
+            }
+        }
+
+        return $caBundle ? $request->withOptions(['verify' => $caBundle]) : $request;
+    }
+
     public function froudeCheckJson($phone_number)
     {
         $url    = rtrim(env('FRONTEND', config('app.url')), '/');
         $apiUrl = "https://efraudscan.com/api/check-succfull-fraud/{$phone_number}";
 
         try {
-            $response = Http::timeout(15)->post($apiUrl, [
+            $response = $this->fraudCheckHttp()->post($apiUrl, [
                 'url'    => $url,
                 'number' => $phone_number,
             ]);
@@ -1982,7 +2014,7 @@ class ManageOrdersController extends Controller
         $apiUrl = "https://efraudscan.com/api/check-succfull-fraud/{$phone_number}";
 
         try {
-            $response = Http::timeout(15)->post($apiUrl, [
+            $response = $this->fraudCheckHttp()->post($apiUrl, [
                 'url'    => $url,
                 'number' => $phone_number,
             ]);

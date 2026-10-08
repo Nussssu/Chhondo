@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Every admin page starts with one of these, so page titles, subtitles and
+ * Every admin page starts with one of these, so page titles and
  * the primary action always land in the same place.
  */
 defineProps({
@@ -23,8 +23,7 @@ defineProps({
 
     <div class="ph-row">
       <div class="ph-text">
-        <h1 class="ph-title">{{ title }}</h1>
-        <p v-if="subtitle" class="ph-subtitle">{{ subtitle }}</p>
+        <h1 class="ph-title"><slot name="title">{{ title }}</slot></h1>
       </div>
       <div v-if="$slots.actions" class="ph-actions">
         <slot name="actions" />
@@ -71,12 +70,6 @@ defineProps({
   line-height: var(--lh-tight);
   font-weight: 600;
   color: var(--text);
-}
-
-.ph-subtitle {
-  margin: var(--sp-1) 0 0;
-  font-size: var(--fs-md);
-  color: var(--text-muted);
 }
 
 .ph-actions {

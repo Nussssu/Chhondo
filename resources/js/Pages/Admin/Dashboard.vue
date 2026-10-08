@@ -1,16 +1,18 @@
 <template>
   <AdminLayout>
-    <div class="page-content">
+    <div class="page-content dashboard-page">
 
-      <h4 class="mb-3 fw-bold">Order Overview</h4>
+      <div class="dashboard-header flex-shrink-0">
+        <h5 class="mb-2 fw-bold">Order Overview</h5>
+      </div>
 
       <!-- Stats cards -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-4 mb-3">
-        <div class="col" v-for="card in statCards" :key="card.status">
-          <a :href="card.href ?? route('admin.orders.index', { status: card.status })" class="text-decoration-none">
-            <div class="card status-card" :class="{ 'stat-primary': card.primary }">
-              <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                <div>
+      <div class="dashboard-stats-grid flex-shrink-0">
+        <div v-for="card in statCards" :key="card.status" class="dashboard-stat-col">
+          <a :href="card.href ?? route('admin.orders.index', { status: card.status })" class="text-decoration-none d-block h-100">
+            <div class="card status-card dashboard-stat-card h-100" :class="{ 'stat-primary': card.primary }">
+              <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="stat-meta">
                   <div class="stat-number">{{ card.value }}</div>
                   <div class="stat-label">{{ card.label }}</div>
                 </div>
@@ -24,19 +26,17 @@
       </div>
 
       <!-- Performance chart -->
-      <div class="row">
-        <div class="col-12">
-          <div class="card radius-10 w-100">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-3">
-                <h5 class="mb-0">Performance</h5>
+      <div class="dashboard-chart-card-wrapper flex-grow-1">
+        <div class="card radius-10 w-100 h-100 m-0 dashboard-chart-card">
+          <div class="card-body d-flex flex-column h-100">
+            <div class="d-flex align-items-center mb-2 flex-shrink-0">
+              <h6 class="mb-0 fw-semibold">Performance</h6>
+            </div>
+            <div id="chart-container" class="position-relative flex-grow-1">
+              <div id="chart-loading" class="text-center" v-if="chartLoading">
+                <div class="spinner-border text-primary" role="status"></div>
               </div>
-              <div id="chart-container" class="position-relative">
-                <div id="chart-loading" class="text-center" v-if="chartLoading">
-                  <div class="spinner-border text-primary" role="status"></div>
-                </div>
-                <div id="chart" ref="chartEl"></div>
-              </div>
+              <div id="chart" ref="chartEl"></div>
             </div>
           </div>
         </div>
@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
@@ -65,6 +65,7 @@ const props = defineProps({
 
 const chartEl = ref(null)
 const chartLoading = ref(true)
+let chartInstance = null
 
 const statCards = computed(() => [
   { label: 'Total Orders',      value: props.total_order,     status: '',            icon: 'layout-dashboard', primary: true },
@@ -77,7 +78,7 @@ const statCards = computed(() => [
   { label: 'Return Orders',     value: props.returned_order,  status: 'returned',    icon: 'undo-2' },
 ])
 
-onMounted(() => {
+onMounted(async () => {
   // Re-init Lucide for stat icons
   if (typeof window.lucide !== 'undefined') window.lucide.createIcons()
 
@@ -95,15 +96,146 @@ onMounted(() => {
 
   chartLoading.value = false
 
+  await nextTick()
+
   if (typeof window.ApexCharts !== 'undefined' && chartEl.value) {
-    new window.ApexCharts(chartEl.value, {
+    chartInstance = new window.ApexCharts(chartEl.value, {
       series: seriesData,
-      chart: { height: 500, type: 'area' },
+      chart: { height: '100%', type: 'area' },
       dataLabels: { enabled: false },
       stroke: { curve: 'smooth' },
       xaxis: { type: 'datetime', categories },
       tooltip: { x: { format: 'dd/MM/yy HH:mm' } },
-    }).render()
+    })
+    chartInstance.render()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (chartInstance) {
+    chartInstance.destroy()
   }
 })
 </script>
+
+<style scoped>
+.dashboard-page {
+  box-sizing: border-box;
+}
+
+@media (min-width: 992px) {
+  .dashboard-page {
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
+    padding: 14px 20px 14px !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 991px) {
+  .dashboard-page {
+    min-height: calc(100vh - 60px);
+    padding: 14px 14px 24px !important;
+  }
+}
+
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 1600px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (max-width: 991px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 575px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-stat-card {
+  border-radius: 10px !important;
+  margin-bottom: 0 !important;
+}
+
+.dashboard-stat-card .card-body {
+  padding: 8px 12px !important;
+  gap: 8px;
+}
+
+.dashboard-stat-card .stat-number {
+  font-size: 19px !important;
+  line-height: 1.1 !important;
+}
+
+.dashboard-stat-card .stat-label {
+  font-size: 11px !important;
+  margin-top: 1px !important;
+  white-space: nowrap;
+}
+
+.dashboard-stat-card .stat-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 8px !important;
+}
+
+.dashboard-stat-card .stat-lucide-icon {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.dashboard-chart-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dashboard-chart-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-chart-card .card-body {
+  padding: 12px 16px !important;
+}
+
+#chart-container {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#chart {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+}
+
+#chart :deep(.apexcharts-canvas) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#chart-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+</style>

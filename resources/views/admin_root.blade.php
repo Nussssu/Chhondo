@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="icon" href="{{ asset(getMedia('favicon')) }}" type="image/png" />
+    <link rel="icon" href="{{ ($fav = getMedia('favicon')) ? asset($fav) : asset('favicon.svg') }}" type="image/svg+xml" />
 
     <!-- Lucide Icons -->
     {{-- Pinned to match the lucide-vue-next version in package.json. Previously

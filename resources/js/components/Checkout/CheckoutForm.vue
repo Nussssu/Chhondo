@@ -232,6 +232,16 @@ watch(
 
 const showCoupon = ref(false)
 const couponCode = ref("")
+const couponFeedback = ref("")
+const couponFeedbackType = ref("error")
+
+watch(couponCode, () => { couponFeedback.value = "" })
+watch(() => usePage().props.errors?.coupon_code, (message) => {
+  if (message) {
+    couponFeedback.value = message
+    couponFeedbackType.value = "error"
+  }
+})
 
 const toggleCoupon = () => {
   showCoupon.value = !showCoupon.value
@@ -253,14 +263,37 @@ const applyingCoupon = ref(false)
 const removeCoupon = () => {
   appliedCoupon.value = null
   couponCode.value = ""
+  couponFeedback.value = ""
   form.value.discount = 0
 }
 
+// The coupon's discount on the current basket, worked out the same way the
+// server bills it. Never below zero — a fixed coupon can exceed a small basket.
+const couponDiscount = () => {
+  const coupon = appliedCoupon.value
+  if (!coupon) return 0
+  const amount = Number(coupon.discount_amount) || 0
+  const discount = coupon.discount_type === "percentage"
+    ? (subtotal.value * amount) / 100
+    : amount
+  return Math.round(Math.min(discount, subtotal.value) * 100) / 100
+}
+
+// A percentage coupon was worked out once, at Apply; changing a quantity
+// afterwards left the old figure on screen while the order was billed on the
+// new basket.
+watch(subtotal, () => {
+  if (appliedCoupon.value) form.value.discount = couponDiscount()
+})
+
 const applyCoupon = async () => {
+  if (applyingCoupon.value) return
   const code = couponCode.value.trim()
+  couponFeedback.value = ""
+  couponFeedbackType.value = "error"
 
   if (!code) {
-    toast.error("কুপন কোড লিখুন।")
+    couponFeedback.value = "কুপন কোড লিখুন।"
     return
   }
 
@@ -273,30 +306,26 @@ const applyCoupon = async () => {
       credentials: "same-origin",
       body: JSON.stringify({ coupon_code: code, product_ids: productIds.value }),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => null)
 
-    if (data.success) {
-      const coupon = data.success
-      appliedCoupon.value = coupon
+    if (res.ok && data?.success) {
+      appliedCoupon.value = data.success
+      form.value.discount = couponDiscount()
 
-      const amount = Number(coupon.discount_amount) || 0
-      const discount = coupon.discount_type === "percentage"
-        ? (subtotal.value * amount) / 100
-        : amount
-
-      // Never discount below zero — a fixed coupon can exceed a small basket.
-      form.value.discount = Math.min(discount, subtotal.value)
-
-      toast.success("কুপন প্রয়োগ করা হয়েছে।")
+      couponFeedbackType.value = "success"
+      couponFeedback.value = "কুপন গ্রহণ করা হয়েছে। ডিসকাউন্ট প্রয়োগ করা হয়েছে।"
     } else {
       // The server says why: expired, used up, or not valid for these items.
       // Collapsing all of it into "invalid code" sent people hunting for a
       // typo that was not there.
-      toast.error(data.error || "এই কুপনটি প্রয়োগ করা যায়নি।")
+      couponFeedback.value = data?.error || data?.errors?.coupon_code?.[0] ||
+        (res.status === 419 ? "সেশন শেষ হয়েছে। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।" :
+          res.status === 429 ? "অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।" :
+            data?.message || "এই কুপনটি প্রয়োগ করা যায়নি। আবার চেষ্টা করুন।")
     }
   } catch (error) {
     console.error("Error applying coupon:", error)
-    toast.error("কুপনটি যাচাই করা যায়নি। আবার চেষ্টা করুন।")
+    couponFeedback.value = "কুপনটি যাচাই করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
   } finally {
     applyingCoupon.value = false
   }
@@ -958,7 +987,6 @@ onUnmounted(() => {
                      Previously an applied coupon looked the same as none. -->
                 <div v-if="appliedCoupon" class="coupon-applied">
                   <span class="coupon-applied-code">{{ appliedCoupon.code }}</span>
-                  <span class="coupon-applied-note">প্রয়োগ করা হয়েছে</span>
                   <button type="button" class="coupon-remove" @click="removeCoupon">বাতিল</button>
                 </div>
 
@@ -968,6 +996,8 @@ onUnmounted(() => {
                     type="text"
                     placeholder="কুপন কোড লিখুন"
                     class="checkout-input checkout-coupon-input checkout-placeholder--bangla"
+                    :aria-invalid="couponFeedback && couponFeedbackType === 'error' ? 'true' : undefined"
+                    aria-describedby="checkout-coupon-feedback"
                     :disabled="applyingCoupon"
                     @keyup.enter="applyCoupon"
                   />
@@ -975,6 +1005,13 @@ onUnmounted(() => {
                     {{ applyingCoupon ? '...' : 'সাবমিট' }}
                   </button>
                 </div>
+                <p
+                  v-if="couponFeedback"
+                  id="checkout-coupon-feedback"
+                  class="coupon-feedback"
+                  :class="`is-${couponFeedbackType}`"
+                  :role="couponFeedbackType === 'error' ? 'alert' : 'status'"
+                >{{ couponFeedback }}</p>
               </div>
 
               <!-- Totals -->
@@ -1274,7 +1311,9 @@ onUnmounted(() => {
   padding: 10px 14px;
 }
 .coupon-applied-code { font-weight: 700; color: #2C5015; }
-.coupon-applied-note { font-size: 0.85rem; color: #5b7a4a; }
+.coupon-feedback { margin: 8px 0 0; font: 400 14px/22px "Li Ador Noirrit", "Poppins", sans-serif; overflow-wrap: anywhere; }
+.coupon-feedback.is-error { color: #b42318; }
+.coupon-feedback.is-success { color: #5b7a4a; }
 .coupon-remove {
   margin-left: auto;
   border: 0;

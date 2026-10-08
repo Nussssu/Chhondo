@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 
 const props = defineProps({
   // Server mode: pass the Laravel paginator straight through.
@@ -30,7 +31,9 @@ const total = computed(() =>
   isClient.value ? props.totalItems : (props.paginator?.total ?? 0)
 )
 
-const lastPage = computed(() => Math.max(1, Math.ceil(total.value / props.perPage)))
+const lastPage = computed(() => isClient.value
+  ? Math.max(1, Math.ceil(total.value / props.perPage))
+  : Math.max(1, Number(props.paginator?.last_page ?? 1)))
 
 const from = computed(() => {
   if (!isClient.value) return props.paginator?.from ?? 0
@@ -44,29 +47,11 @@ const to = computed(() => {
 
 /**
  * Client mode builds the same {url,label,active} shape the Laravel paginator
- * emits, so one set of markup renders both modes. Windowed around the
- * current page with ellipses, matching Laravel's own output.
+ * emits, so one set of markup renders both modes in groups of five.
  */
-const clientLinks = computed(() => {
-  const out = [{ url: props.page > 1 ? props.page - 1 : null, label: '&laquo; Previous', active: false }]
-  const window = 1
-  let last = 0
-
-  for (let p = 1; p <= lastPage.value; p++) {
-    const inWindow = p === 1 || p === lastPage.value || Math.abs(p - props.page) <= window
-    if (!inWindow) continue
-    if (last && p - last > 1) out.push({ url: null, label: '...', active: false })
-    out.push({ url: p, label: String(p), active: p === props.page })
-    last = p
-  }
-
-  out.push({ url: props.page < lastPage.value ? props.page + 1 : null, label: 'Next &raquo;', active: false })
-  return out
-})
-
-const links = computed(() =>
-  isClient.value ? clientLinks.value : (props.paginator?.links ?? [])
-)
+const links = computed(() => adminPaginationLinks(props.paginator ?? {}, isClient.value
+  ? { page: props.page, lastPage: lastPage.value, urlForPage: page => page }
+  : {}))
 
 // A single page needs no controls, but the count line is still useful.
 const hasPages = computed(() => links.value.length > 3)
@@ -97,8 +82,8 @@ function labelOf(link) {
 
 function ariaOf(link) {
   const raw = String(link.label ?? '')
-  if (raw.includes('Previous')) return 'Previous page'
-  if (raw.includes('Next')) return 'Next page'
+  if (raw.includes('Previous')) return 'Previous group of pages'
+  if (raw.includes('Next')) return 'Next group of pages'
   return `Page ${labelOf(link)}`
 }
 </script>

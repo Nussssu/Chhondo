@@ -65,7 +65,12 @@ class LayoutController extends Controller
     public function updateHeader(Request $request)
     {
         $data = $request->validate([
+            'settings.enabled' => 'boolean',
+            'settings.options_enabled' => 'boolean',
             'settings.announcement_enabled' => 'boolean',
+            // Section on/off (Active / Hidden), for desktop and mobile together.
+            'settings.menu_enabled'         => 'boolean',
+            'settings.mobile_links_enabled' => 'boolean',
             'settings.announcement_text'    => 'nullable|string|max:255',
             'settings.announcement_url'     => 'nullable|string|max:255',
             'settings.show_search'          => 'boolean',
@@ -76,6 +81,7 @@ class LayoutController extends Controller
             'settings.mobile_links.*.label' => 'required|string|max:80',
             'settings.mobile_links.*.url'   => 'required|string|max:255',
             'settings.mobile_links.*.icon'  => 'nullable|string|max:20',
+            'settings.mobile_links.*.enabled' => 'boolean',
 
             // The menu nests to an arbitrary depth, which `menu.*.children.*`
             // rules cannot express, so the tree is checked in one closure.
@@ -229,6 +235,7 @@ class LayoutController extends Controller
             'site'        => SiteInfo::first()?->only([
                 'footer_text', 'store_email', 'phone_number', 'address',
                 'facebook_url', 'instagram_url', 'tiktok_url', 'youtube_url', 'x_url',
+                'facebook_active', 'instagram_active', 'tiktok_active', 'youtube_active', 'x_active',
             ]) ?? [],
             'suggestions' => $this->linkSuggestions(),
         ]);
@@ -237,9 +244,14 @@ class LayoutController extends Controller
     public function updateFooter(Request $request)
     {
         $data = $request->validate([
+            'settings.enabled' => 'boolean',
+            'settings.socials_enabled' => 'boolean',
+            'settings.bottom_bar_enabled' => 'boolean',
             'settings.about_text'    => 'nullable|string|max:2000',
             'settings.follow_label'  => 'nullable|string|max:60',
             'settings.show_logo'     => 'boolean',
+            'settings.about_enabled'   => 'boolean',
+            'settings.columns_enabled' => 'boolean',
             'settings.contact_title' => 'nullable|string|max:60',
             'settings.show_contact'  => 'boolean',
             'settings.show_badges'   => 'boolean',
@@ -249,21 +261,26 @@ class LayoutController extends Controller
             'settings.contact_email'   => 'nullable|string|max:255',
             'settings.contact_phone'   => 'nullable|string|max:60',
             'settings.linkedin_url'    => 'nullable|url|max:255',
+            'settings.linkedin_active' => 'boolean',
 
             'settings.legal_links'         => 'array|max:4',
             'settings.legal_links.*.label' => 'required|string|max:80',
             'settings.legal_links.*.url'   => 'required|string|max:255',
+            'settings.legal_links.*.enabled' => 'boolean',
 
             'settings.columns'                 => 'array|max:4',
             'settings.columns.*.title'         => 'nullable|string|max:60',
+            'settings.columns.*.enabled'       => 'boolean',
             'settings.columns.*.links'         => 'array|max:12',
             'settings.columns.*.links.*.label' => 'required|string|max:80',
             'settings.columns.*.links.*.url'   => 'required|string|max:255',
+            'settings.columns.*.links.*.enabled' => 'boolean',
 
             'settings.badges'         => 'array|max:6',
             'settings.badges.*.title' => 'required|string|max:80',
             'settings.badges.*.text'  => 'nullable|string|max:255',
             'settings.badges.*.icon'  => 'nullable|in:security,support,delivery',
+            'settings.badges.*.enabled' => 'boolean',
 
             'site.footer_text'        => 'nullable|string|max:500',
             'site.store_email'        => 'nullable|email',
@@ -274,6 +291,11 @@ class LayoutController extends Controller
             'site.tiktok_url'         => 'nullable|url',
             'site.youtube_url'        => 'nullable|url',
             'site.x_url'              => 'nullable|url',
+            'site.facebook_active'    => 'boolean',
+            'site.instagram_active'   => 'boolean',
+            'site.tiktok_active'      => 'boolean',
+            'site.youtube_active'     => 'boolean',
+            'site.x_active'           => 'boolean',
         ]);
 
         LayoutSetting::put('footer', $data['settings'] ?? []);

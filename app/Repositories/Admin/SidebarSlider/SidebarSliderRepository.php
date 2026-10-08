@@ -31,6 +31,9 @@ class SidebarSliderRepository implements SidebarSliderRepositoryInterface
             $slider = new SidebarSlider();
             $slider->image_path = $desktop;
             $slider->mobile_image_path = $this->resolveImage($request, 'mobile_image_path');
+            // A new banner joins the end of the carousel.
+            $slider->sort_order = (int) SidebarSlider::max('sort_order') + 1;
+            $this->fillDetails($slider, $request);
             $slider->save();
 
             return $slider;
@@ -66,6 +69,7 @@ class SidebarSliderRepository implements SidebarSliderRepositoryInterface
                 $slider->{$field} = $incoming;
             }
 
+            $this->fillDetails($slider, $request);
             $slider->save();
 
             return $slider;
@@ -93,6 +97,30 @@ class SidebarSliderRepository implements SidebarSliderRepositoryInterface
             : null;
     }
 
+    /** Alt text, link and on/off — only the ones the request carries. */
+    private function fillDetails(SidebarSlider $slider, $request): void
+    {
+        foreach (['title', 'link_url'] as $field) {
+            if ($request->has($field)) {
+                $slider->{$field} = trim((string) $request->input($field)) ?: null;
+            }
+        }
+
+        foreach (['link_new_tab', 'is_active'] as $field) {
+            if ($request->has($field)) {
+                $slider->{$field} = $request->boolean($field);
+            }
+        }
+    }
+
+    /** Save a new carousel order: the ids, first to last. */
+    public function reorder(array $ids): void
+    {
+        foreach (array_values($ids) as $i => $id) {
+            SidebarSlider::whereKey((int) $id)->update(['sort_order' => $i + 1]);
+        }
+    }
+
     public function delete($id)
     {
         $slider = SidebarSlider::findorFail($id);
@@ -112,7 +140,7 @@ class SidebarSliderRepository implements SidebarSliderRepositoryInterface
     {
        
 
-        return SidebarSlider::latest()->get();
+        return SidebarSlider::ordered()->get();
     }
 
     public function getById($id)

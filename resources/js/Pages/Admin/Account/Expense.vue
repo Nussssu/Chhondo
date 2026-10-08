@@ -153,7 +153,7 @@
             </div>
             <nav>
               <ul class="pagination pagination-bootstrap-5">
-                <li class="page-item" v-for="link in debits.meta.links" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
+                <li class="page-item" v-for="link in adminPaginationLinks(debits.meta)" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
                   <a class="page-link" :href="link.url || '#'" v-html="link.label"></a>
                 </li>
               </ul>
@@ -162,26 +162,29 @@
         </div>
       </div>
     </div>
+    <TransactionEntryModal v-if="entryOpen" type="debit" :account-types="accountTypes" :purposes="purposes" @close="entryOpen = false" />
   </AdminLayout>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import TransactionEntryModal from './Partials/TransactionEntryModal.vue'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 
 const props = defineProps({
   credits: { type: Object, default: () => ({ data: [], meta: null }) },
   debits: { type: Object, default: () => ({ data: [], meta: null }) },
   accountTypes: { type: Array, default: () => [] },
+  purposes: { type: Array, default: () => [] },
   income: { type: Number, default: 0 },
   expense: { type: Number, default: 0 },
   balance: { type: Number, default: 0 },
   accountType: { type: Number, default: 0 },
 })
 
-function goToAddDebit() {
-  window.location.href = route('admin.account.add-debit')
-}
+const entryOpen = ref(false)
+function goToAddDebit() { entryOpen.value = true }
 
 function exportTable() {
   const table = document.getElementById('transactionsTable')

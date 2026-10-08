@@ -22,6 +22,8 @@ class LayoutSetting extends Model
         return match ($key) {
             'header' => [
                 'announcement_enabled' => false,
+                'menu_enabled'         => true,
+                'mobile_links_enabled' => true,
                 'announcement_text'    => '',
                 'announcement_url'     => '',
                 'show_search'          => true,
@@ -42,6 +44,8 @@ class LayoutSetting extends Model
                 'about_text'  => "রুচিশীল বুনন আর আরামদায়ক অনুভূতির ছোঁয়ায় 'ছন্দ' হয়ে উঠুক আপনার প্রতিদিনের সাবলীল সাজের সঙ্গী।",
                 'follow_label' => 'Follow Us',
                 'show_logo'   => true,
+                'about_enabled'   => true,
+                'columns_enabled' => true,
                 'columns'     => [
                     [
                         'title' => '',
@@ -90,6 +94,32 @@ class LayoutSetting extends Model
         $stored = is_string($stored) ? (json_decode($stored, true) ?: []) : ($stored ?: []);
 
         return array_replace(self::defaults($key), $stored);
+    }
+
+    /**
+     * What the storefront receives: the settings with any section switched to
+     * Hidden in the admin taken out, so the storefront shows nothing for it on
+     * desktop or mobile without needing to know about the switch.
+     */
+    public static function forStorefront(string $key): array
+    {
+        $settings = self::get($key);
+
+        if ($key === 'header' && ($settings['mobile_links_enabled'] ?? true) === false) {
+            $settings['mobile_links'] = [];
+        }
+
+        if ($key === 'footer') {
+            if (($settings['about_enabled'] ?? true) === false) {
+                $settings['about_text'] = '';
+                $settings['show_logo'] = false;
+            }
+            if (($settings['columns_enabled'] ?? true) === false) {
+                $settings['columns'] = [];
+            }
+        }
+
+        return $settings;
     }
 
     public static function put(string $key, array $value): void

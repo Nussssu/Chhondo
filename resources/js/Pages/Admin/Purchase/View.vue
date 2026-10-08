@@ -21,32 +21,30 @@
                 </h5>
               </div>
               <div class="card-body">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">Purchase ID:</label>
-                      <span class="ms-2">#{{ purchase.id }}</span>
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">Purchase Date:</label>
-                      <span class="ms-2">{{ formatDate(purchase.created_at) }}</span>
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">Status:</label>
-                      <span v-if="purchase.purchasing_paid > 0 && purchase.purchasing_due > 0" class="badge bg-warning ms-2">Partial</span>
-                      <span v-else-if="purchase.purchasing_paid > 0 && purchase.purchasing_due <= 0" class="badge bg-success ms-2">Paid</span>
-                      <span v-else class="badge bg-danger ms-2">Due</span>
+                <div class="row g-3 flex-nowrap">
+                  <div class="col text-center">
+                    <div class="text-muted small">Purchase ID</div>
+                    <div class="fw-semibold text-truncate">#{{ purchase.id }}</div>
+                  </div>
+                  <div class="col text-center">
+                    <div class="text-muted small">Purchase Date</div>
+                    <div class="fw-semibold text-truncate">{{ formatDate(purchase.created_at) }}</div>
+                  </div>
+                  <div class="col text-center">
+                    <div class="text-muted small">Status</div>
+                    <div class="fw-semibold text-truncate">
+                      <span v-if="purchase.purchasing_paid > 0 && purchase.purchasing_due > 0" class="badge bg-warning">Partial</span>
+                      <span v-else-if="purchase.purchasing_paid > 0 && purchase.purchasing_due <= 0" class="badge bg-success">Paid</span>
+                      <span v-else class="badge bg-danger">Due</span>
                     </div>
                   </div>
-                  <div class="col-md-4">
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">Supplier:</label>
-                      <span class="ms-2">{{ purchase.supplier?.supplier_name || 'N/A' }}</span>
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">Reference:</label>
-                      <span class="ms-2">{{ purchase.reference || 'N/A' }}</span>
-                    </div>
+                  <div class="col text-center">
+                    <div class="text-muted small">Supplier</div>
+                    <div class="fw-semibold text-truncate">{{ purchase.supplier?.supplier_name || 'N/A' }}</div>
+                  </div>
+                  <div class="col text-center">
+                    <div class="text-muted small">Reference</div>
+                    <div class="fw-semibold text-truncate">{{ purchase.reference || 'N/A' }}</div>
                   </div>
                 </div>
               </div>

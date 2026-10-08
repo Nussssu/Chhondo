@@ -299,8 +299,8 @@ function exportExcel() {
 .ph-supplier { margin-bottom: 12px; overflow: hidden; }
 
 .ph-supplier-head {
-  display: flex; align-items: center; gap: 12px; width: 100%;
-  padding: 14px 16px; border: 0; background: #fff; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: 16px minmax(0, 1.6fr) minmax(0, 3fr); align-items: center; gap: 12px; width: 100%;
+  padding: 12px; border: 0; background: #fff; text-align: left; cursor: pointer;
 }
 .ph-supplier-head:hover { background: #fafbfc; }
 
@@ -308,19 +308,19 @@ function exportExcel() {
 .ph-chevron.is-open { transform: rotate(90deg); }
 
 .ph-supplier-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-.ph-supplier-name { font-weight: 700; color: #263238; }
+.ph-supplier-name { font-weight: 700; color: #263238; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ph-supplier-meta {
   font-size: .76rem; color: #90a4ae;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-.ph-supplier-figures { display: flex; gap: 22px; flex-shrink: 0; }
-.ph-figure { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.ph-supplier-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.ph-figure { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
 .ph-figure-label {
   font-size: .62rem; font-weight: 700; color: #b0bec5;
   text-transform: uppercase; letter-spacing: .04em;
 }
-.ph-figure-value { font-size: .92rem; font-weight: 700; color: #455a64; font-variant-numeric: tabular-nums; }
+.ph-figure-value { font-size: .85rem; font-weight: 700; color: #455a64; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ph-figure.is-owed .ph-figure-value { color: #B23113; }
 .ph-figure.is-clear .ph-figure-value { color: #1A2110; }
 
@@ -350,7 +350,7 @@ function exportExcel() {
 }
 
 @media (max-width: 767px) {
-  .ph-supplier-head { flex-wrap: wrap; }
-  .ph-supplier-figures { width: 100%; justify-content: space-between; gap: 12px; padding-left: 28px; }
+  .ph-supplier-head { grid-template-columns: 16px minmax(0, 1fr); }
+  .ph-supplier-figures { grid-column: 2; width: 100%; gap: 8px; }
 }
 </style>

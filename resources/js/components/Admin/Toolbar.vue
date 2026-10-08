@@ -137,6 +137,7 @@ function clearSearch() {
 .tb-left :deep(.btn),
 .tb-right :deep(.btn) {
   height: 38px;
+  min-height: 0; /* the height above (or a page's own) decides */
   flex-shrink: 0;
   white-space: nowrap;
 }

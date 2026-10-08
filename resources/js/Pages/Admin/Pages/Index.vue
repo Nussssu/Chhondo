@@ -6,91 +6,120 @@
         subtitle="Every storefront page — edit its content, banners and visibility in one place"
       >
         <template #actions>
-          <button type="button" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center" @click="openCreate">
+          <a :href="route('admin.layout.header')" class="btn btn-fig-secondary btn-fig-sm d-inline-flex align-items-center">
+            <PanelsTopLeft :size="16" class="me-1" /> Header &amp; Footer
+          </a>
+          <button type="button" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center ms-2" @click="openCreate">
             <Plus :size="16" class="me-1" /> Add page
           </button>
         </template>
       </PageHeader>
 
-      <div class="card">
+      <!-- Search -->
+      <div class="card pl-search-card">
         <div class="card-body">
-          <div class="table-compact-wrapper">
-            <table class="table table-compact align-middle w-100">
-              <thead>
-                <tr>
-                  <th>Page</th>
-                  <th>URL</th>
-                  <th style="width: 150px;">Status</th>
-                  <th style="width: 160px;">Last updated</th>
-                  <th style="width: 120px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="page in pages" :key="page.type">
-                  <td>
-                    <span class="pg-name">
-                      {{ page.label }}
-                      <span v-if="page.is_custom" class="pg-tag">Your page</span>
-                    </span>
-                    <span v-if="page.note" class="pg-note">{{ page.note }}</span>
-                  </td>
-                  <td>
-                    <a v-if="page.url" :href="page.url" target="_blank" class="pg-url">{{ page.url }}</a>
-                    <span v-else class="text-muted">—</span>
-                  </td>
-                  <td>
-                    <span :title="page.is_published ? PUBLISHED_HINT : HIDDEN_HINT">
-                      <StatusPill
-                        :tone="page.is_published ? 'success' : 'neutral'"
-                        :label="page.is_published ? 'Published' : 'Content hidden'"
-                        :dot="false"
-                      />
-                    </span>
-                  </td>
-                  <td class="text-muted">{{ page.updated_at ? formatDate(page.updated_at) : 'Never' }}</td>
-                  <td>
-                    <div class="d-flex align-items-center gap-1">
-                      <a
-                        :href="route('admin.pages.edit', page.type)"
-                        class="table-icon-btn is-primary"
-                        title="Edit page"
-                      >
-                        <Pencil :size="14" />
-                      </a>
-                      <a
-                        v-if="page.url"
-                        :href="page.url"
-                        target="_blank"
-                        class="table-icon-btn"
-                        title="View on site"
-                      >
-                        <ExternalLink :size="14" />
-                      </a>
-                      <button
-                        v-if="page.editable"
-                        type="button"
-                        class="table-icon-btn"
-                        title="Duplicate into a new page"
-                        @click="duplicate(page)"
-                      >
-                        <Copy :size="14" />
-                      </button>
-                      <button
-                        v-if="page.editable"
-                        type="button"
-                        class="table-icon-btn is-danger"
-                        :title="page.is_custom ? 'Delete page' : 'Clear content'"
-                        :disabled="!page.is_custom && !page.has_content"
-                        @click="clear(page)"
-                      >
-                        <Trash2 :size="14" />
-                      </button>
+          <label class="pl-search">
+            <Search :size="16" aria-hidden="true" />
+            <input v-model="search" type="search" placeholder="Search pages…" aria-label="Search pages" />
+          </label>
+        </div>
+      </div>
+
+      <div class="card pl-card">
+        <div class="table-compact-wrapper">
+          <table class="table table-compact align-middle w-100 pl-table">
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>URL</th>
+                <th style="width: 80px;">Visibility</th>
+                <th style="width: 170px;">Last updated</th>
+                <th class="text-end" style="width: 190px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="page in filteredPages" :key="page.type">
+                <td data-label="Page">
+                  <div class="pl-page">
+                    <span class="pl-icon"><component :is="iconFor(page)" :size="16" /></span>
+                    <div class="min-w-0">
+                      <span class="pg-name">
+                        {{ page.label }}
+                        <span v-if="page.is_custom" class="pg-tag">Your page</span>
+                        <span
+                          v-if="page.editable && !page.is_published"
+                          class="pl-chip"
+                          :title="HIDDEN_HINT"
+                        >Content hidden</span>
+                      </span>
+                      <span v-if="page.note" class="pg-note">{{ page.note }}</span>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                </td>
+                <td data-label="URL">
+                  <a v-if="page.url" :href="page.url" target="_blank" class="pg-url">{{ page.url }}</a>
+                  <span v-else class="text-muted">—</span>
+                </td>
+                <td data-label="Visibility">
+                  <VisibilityToggle
+                    v-if="page.editable"
+                    switch-only
+                    :model-value="page.is_published"
+                    :aria-label="`Show ${page.label} content`"
+                    :disabled="savingPages.has(page.type)"
+                    @update:model-value="setPageVisibility(page, $event)"
+                  />
+                </td>
+                <td data-label="Last updated">
+                  <span v-if="page.updated_at" class="text-muted">{{ formatDate(page.updated_at) }}</span>
+                  <span v-else class="pl-chip">Default content</span>
+                </td>
+                <td data-label="Actions">
+                  <div class="pl-actions">
+                    <a
+                      :href="route('admin.pages.edit', page.type)"
+                      class="pl-act"
+                      title="Edit page"
+                    >
+                      <Pencil :size="15" />
+                    </a>
+                    <a
+                      v-if="page.url"
+                      :href="page.url"
+                      target="_blank"
+                      class="pl-act"
+                      title="View on site"
+                    >
+                      <ExternalLink :size="15" />
+                    </a>
+                    <span v-else class="pl-act is-disabled" aria-hidden="true"><ExternalLink :size="15" /></span>
+                    <button
+                      v-if="page.editable"
+                      type="button"
+                      class="pl-act"
+                      title="Duplicate into a new page"
+                      @click="duplicate(page)"
+                    >
+                      <Copy :size="15" />
+                    </button>
+                    <button
+                      v-if="page.editable"
+                      type="button"
+                      class="pl-act is-danger"
+                      :title="page.is_custom ? 'Delete page' : 'Clear content'"
+                      :disabled="!page.is_custom && !page.has_content"
+                      @click="clear(page)"
+                    >
+                      <Trash2 :size="15" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!filteredPages.length">
+                <td colspan="5" class="text-center text-muted py-4">No pages match “{{ search }}”.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -142,19 +171,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/components/Admin/PageHeader.vue'
-import StatusPill from '@/components/Admin/StatusPill.vue'
 import FormModal from '@/components/Admin/FormModal.vue'
+import VisibilityToggle from '@/components/Admin/VisibilityToggle.vue'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { slugify } from '@/utils/slug'
-import { Pencil, Trash2, ExternalLink, Plus, Copy } from 'lucide-vue-next'
+import {
+  Pencil, Trash2, ExternalLink, Plus, Copy, Search, PanelsTopLeft,
+  Home, ShoppingBag, Info, Mail, FileText, LogIn, Newspaper, CreditCard,
+  Truck, ShoppingCart, LayoutGrid, CircleAlert, CircleCheck, File,
+} from 'lucide-vue-next'
 
-defineProps({
+const props = defineProps({
   pages: { type: Array, default: () => [] },
 })
+
+/* ---------- search ---------- */
+
+const search = ref('')
+const savingPages = ref(new Set())
+function setPageVisibility(page, on) {
+  savingPages.value.add(page.type)
+  router.patch(route('admin.pages.visibility', page.type), { is_published: on }, {
+    preserveScroll: true,
+    onFinish: () => savingPages.value.delete(page.type),
+  })
+}
+const filteredPages = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return props.pages
+  return props.pages.filter((p) =>
+    [p.label, p.note, p.url].some((v) => (v ?? '').toLowerCase().includes(q))
+  )
+})
+
+// A small icon per page, so the list scans at a glance.
+const ICONS = {
+  home: Home, shop: ShoppingBag, about: Info, contact: Mail,
+  refund: FileText, shipping_delivery: FileText, policies: FileText, terms: FileText,
+  auth: LogIn, blog: Newspaper, checkout: CreditCard, track_order: Truck,
+  cart: ShoppingCart, categories: LayoutGrid, not_found: CircleAlert, order_success: CircleCheck,
+}
+const iconFor = (page) => ICONS[page.type] ?? File
 
 /* ---------- adding a page of your own ---------- */
 
@@ -190,7 +251,6 @@ function duplicate(page) {
 // "Hidden" never takes a page off the storefront — every page here is a fixed
 // route that always answers. It only controls whether the widgets written in
 // the editor are rendered on it. See PageController::pageBlocks().
-const PUBLISHED_HINT = 'The content written in the editor is shown on this page.'
 const HIDDEN_HINT = 'The page is still live on the storefront — only the content written in the editor is held back.'
 
 function formatDate(iso) {
@@ -255,5 +315,87 @@ async function clear(page) {
 
 .pg-url:hover {
   text-decoration: underline;
+}
+
+/* ── Search card, icon + name rows, square actions ── */
+.pl-search-card .card-body { padding: 16px; }
+.pl-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 14px;
+  height: 42px;
+  border: 1px solid var(--line, #e7e2d6);
+  border-radius: 8px;
+  background: #fbf9f4;
+  color: var(--text-muted, #6d6560);
+}
+.pl-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+}
+.pl-card { overflow: hidden; }
+.pl-table th:first-child, .pl-table td:first-child { padding-left: 16px; }
+.pl-table th:last-child, .pl-table td:last-child { padding-right: 16px; }
+
+.pl-page { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pl-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f5f1e8;
+  color: #1a2110;
+}
+.min-w-0 { min-width: 0; }
+
+.pl-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #f1ece3;
+  color: #6d6560;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+td > .pl-chip { margin-left: 0; }
+
+.pl-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.pl-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line, #e7e2d6);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: #1a2110;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.pl-act:hover:not(:disabled):not(.is-disabled) { background: #f5f1e8; border-color: #d9d2c4; }
+.pl-act.is-danger { color: #b23113; }
+.pl-act:disabled, .pl-act.is-disabled { opacity: .35; cursor: not-allowed; }
+
+/* Phones: each page becomes a card. */
+@media (max-width: 767px) {
+  .pl-table thead { display: none; }
+  .pl-table, .pl-table tbody, .pl-table tr, .pl-table td { display: block; width: 100%; }
+  .pl-table tr { padding: 12px 14px; border-bottom: 1px solid var(--line, #efe9e1); }
+  .pl-table td { padding: 4px 0 !important; border: 0; }
+  .pl-table td[data-label="URL"], .pl-table td[data-label="Last updated"] { padding-left: 48px !important; }
+  .pl-actions { justify-content: flex-start; padding-left: 48px; margin-top: 6px; }
 }
 </style>

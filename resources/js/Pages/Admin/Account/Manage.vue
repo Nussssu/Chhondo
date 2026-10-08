@@ -5,7 +5,6 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h4 class="mb-1 fw-bold">Account</h4>
-          <p class="text-muted mb-0">Accounts, transactions, transfers and purposes — all in one place</p>
         </div>
       </div>
 
@@ -139,8 +138,8 @@
                 <a :href="route('admin.account.dashboard')" class="btn btn-fig-secondary btn-fig-sm">Reset</a>
               </form>
               <div class="d-flex gap-2">
-                <a :href="route('admin.account.add-credit')" class="btn btn-fig-tertiary btn-fig-sm"><Plus :size="14" /> Income</a>
-                <a :href="route('admin.account.add-debit')" class="btn btn-fig-tertiary btn-fig-sm"><Plus :size="14" /> Expense</a>
+                <button type="button" class="btn btn-fig-tertiary btn-fig-sm" @click="entryType = 'credit'"><Plus :size="14" /> Income</button>
+                <button type="button" class="btn btn-fig-tertiary btn-fig-sm" @click="entryType = 'debit'"><Plus :size="14" /> Expense</button>
               </div>
             </div>
 
@@ -340,6 +339,7 @@
       update-route="admin.account.updatePurpose"
       @close="purposeModalOpen = false"
     />
+    <TransactionEntryModal v-if="entryType" :type="entryType" :account-types="accountTypes" :purposes="purposes" @close="entryType = null" />
   </AdminLayout>
 </template>
 
@@ -347,9 +347,11 @@
 import { ref, onMounted, h } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import NameFieldModal from '@/components/Admin/NameFieldModal.vue'
+import TransactionEntryModal from './Partials/TransactionEntryModal.vue'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { Plus, Pencil, Trash2, Wallet, Layers, TrendingUp, TrendingDown } from 'lucide-vue-next'
 import { useStickyTab } from '@/composables/useStickyTab'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 
 const props = defineProps({
   accountTypes: { type: Array, default: () => [] },
@@ -369,6 +371,7 @@ const csrfToken = document.querySelector('meta[name=csrf-token]')?.content
 // Account types and purposes are edited in place — the standalone
 // add/edit pages they used to link to are gone.
 const typeModalOpen = ref(false)
+const entryType = ref(null)
 const editingType = ref(null)
 const purposeModalOpen = ref(false)
 const editingPurpose = ref(null)
@@ -396,7 +399,7 @@ const Pagination = {
       return h('div', { class: 'd-flex justify-content-between align-items-center mt-3 flex-wrap gap-2' }, [
         h('div', { class: 'small text-muted' }, `Showing ${p.meta.from ?? 0} to ${p.meta.to ?? 0} of ${p.meta.total ?? 0}`),
         h('nav', {}, h('ul', { class: 'pagination pagination-sm mb-0' },
-          p.meta.links.map((link) =>
+          adminPaginationLinks(p.meta).map((link) =>
             h('li', { class: ['page-item', { active: link.active, disabled: !link.url }] },
               h('a', { class: 'page-link', href: link.url || '#', innerHTML: link.label })
             )

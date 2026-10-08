@@ -34,6 +34,12 @@ class BannerRequest extends FormRequest
             // Optional everywhere: without it the desktop image is used on phones too.
             'mobile_image_path' => "nullable|image|{$mimes}|dimensions:min_width=" . self::MIN_MOBILE_WIDTH,
             'mobile_image_path_library_path' => 'nullable|string',
+
+            // Carousel details: alt text, where a click goes, and on/off.
+            'title'        => 'nullable|string|max:150',
+            'link_url'     => 'nullable|string|max:500',
+            'link_new_tab' => 'nullable|boolean',
+            'is_active'    => 'nullable|boolean',
         ];
     }
 

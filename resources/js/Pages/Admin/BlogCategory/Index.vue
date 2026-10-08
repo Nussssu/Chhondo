@@ -1,64 +1,17 @@
 <template>
   <AdminLayout>
     <div class="page-content">
-      <PageHeader title="Blog categories" subtitle="Group your posts so readers can browse by topic" />
+      <PageHeader title="Blog categories" subtitle="Group your posts so readers can browse by topic">
+        <template #actions>
+          <button type="button" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center" @click="openCreate">
+            <Plus :size="16" class="me-1" /> Add blog category
+          </button>
+        </template>
+      </PageHeader>
 
       <div class="row g-3 mt-0">
-        <!-- Add form: always open, so adding several in a row costs no clicks -->
-        <div class="col-lg-4 col-xl-3">
-          <div class="card cat-form-card">
-            <div class="card-header">
-              <h6 class="mb-0">Add new category</h6>
-            </div>
-            <div class="card-body">
-              <form @submit.prevent="submitCreate">
-                <div class="mb-3">
-                  <label class="form-label" for="bc-name">Name</label>
-                  <input
-                    id="bc-name"
-                    v-model="createForm.name"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': createForm.errors.name }"
-                    placeholder="e.g. Styling tips"
-                    @input="onCreateName"
-                  >
-                  <div class="invalid-feedback">{{ createForm.errors.name }}</div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="bc-slug">Slug</label>
-                  <input
-                    id="bc-slug"
-                    v-model="createForm.slug"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': createForm.errors.slug }"
-                    placeholder="styling-tips"
-                    @input="createSlugTouched = true"
-                  >
-                  <div class="invalid-feedback">{{ createForm.errors.slug }}</div>
-                  <small class="cat-hint">Used in the URL: /blog?category=slug</small>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="bc-status">Status</label>
-                  <select id="bc-status" v-model="createForm.status" class="form-select">
-                    <option value="Enable">Enabled</option>
-                    <option value="Disable">Disabled</option>
-                  </select>
-                </div>
-
-                <button type="submit" class="btn btn-fig-primary btn-fig-md w-100" :disabled="createForm.processing">
-                  <Plus :size="15" class="me-1" /> Add category
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
         <!-- Listing -->
-        <div class="col-lg-8 col-xl-9">
+        <div class="col-12">
           <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
               <div>
@@ -98,6 +51,7 @@
                             :class="item.status === 'Enable' ? 'bg-soft-success' : 'bg-soft-secondary'"
                             type="button"
                             data-bs-toggle="dropdown"
+                            data-bs-popper-config='{"strategy":"fixed"}'
                             aria-expanded="false"
                             :disabled="busyId === item.id"
                           >
@@ -122,7 +76,7 @@
                     </tr>
                     <tr v-if="!categories.length">
                       <td colspan="5" class="text-center text-muted py-4">
-                        No categories yet — add your first one on the left.
+                        No categories yet — use “Add blog category” to create the first one.
                       </td>
                     </tr>
                   </tbody>
@@ -132,6 +86,56 @@
           </div>
         </div>
       </div>
+
+      <!-- Adding a category: the same form, in a popup -->
+      <FormModal v-if="creating" title="Add new category" :show-footer="false" @close="closeCreate">
+        <form @submit.prevent="submitCreate">
+          <div class="mb-3">
+            <label class="form-label" for="bc-name">Name</label>
+            <input
+              id="bc-name"
+              v-model="createForm.name"
+              type="text"
+              class="form-control"
+              :class="{ 'is-invalid': createForm.errors.name }"
+              placeholder="e.g. Styling tips"
+              autofocus
+              @input="onCreateName"
+            >
+            <div class="invalid-feedback">{{ createForm.errors.name }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="bc-slug">Slug</label>
+            <input
+              id="bc-slug"
+              v-model="createForm.slug"
+              type="text"
+              class="form-control"
+              :class="{ 'is-invalid': createForm.errors.slug }"
+              placeholder="styling-tips"
+              @input="createSlugTouched = true"
+            >
+            <div class="invalid-feedback">{{ createForm.errors.slug }}</div>
+            <small class="cat-hint">Used in the URL: /blog?category=slug</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="bc-status">Status</label>
+            <select id="bc-status" v-model="createForm.status" class="form-select">
+              <option value="Enable">Enabled</option>
+              <option value="Disable">Disabled</option>
+            </select>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-fig-secondary btn-fig-md" @click="closeCreate">Cancel</button>
+            <button type="submit" class="btn btn-fig-primary btn-fig-md" :disabled="createForm.processing">
+              <Plus :size="15" class="me-1" /> Add category
+            </button>
+          </div>
+        </form>
+      </FormModal>
 
       <!-- Editing stays in a popup -->
       <FormModal v-if="editingId" title="Edit category" :show-footer="false" @close="resetEdit">
@@ -193,6 +197,7 @@ const categories = computed(() => props.blog_categories)
 
 /* ---------- create ---------- */
 
+const creating = ref(false)
 const createSlugTouched = ref(false)
 
 const createForm = useForm({
@@ -206,6 +211,18 @@ function onCreateName() {
   createForm.slug = slugify(createForm.name)
 }
 
+function openCreate() {
+  createForm.reset()
+  createForm.clearErrors()
+  createForm.status = 'Enable'
+  createSlugTouched.value = false
+  creating.value = true
+}
+
+function closeCreate() {
+  creating.value = false
+}
+
 function submitCreate() {
   createForm.post(route('blog-category.store'), {
     preserveScroll: true,
@@ -213,6 +230,7 @@ function submitCreate() {
       createForm.reset()
       createForm.status = 'Enable'
       createSlugTouched.value = false
+      creating.value = false
     },
   })
 }
@@ -280,11 +298,6 @@ async function destroy(item) {
 </script>
 
 <style scoped>
-.cat-form-card {
-  position: sticky;
-  top: 16px;
-}
-
 .cat-name {
   font-weight: 500;
 }

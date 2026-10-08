@@ -40,7 +40,8 @@ class PageController extends Controller
         $categories = Category::where('status', 'Active')
             ->get();
 
-        $sliders = SidebarSlider::latest()->get();
+        // The home carousel: switched-on banners, in the admin's order.
+        $sliders = SidebarSlider::where('is_active', true)->ordered()->get();
 
         $campaigns = Campaign::with('products')->get();
 
@@ -78,7 +79,13 @@ class PageController extends Controller
             'product'          => $product->hideInternalFields(),
             'related_products' => $relatedProducts
                 ->each(fn (Product $related) => $related->hideInternalFields(listing: true)),
-            'otherInfo'        => [],
+            // The Call and WhatsApp buttons on the product page. They read the
+            // store's numbers (Settings › Manage site); this was an empty array,
+            // so both buttons linked to "undefined". wa.me wants digits only.
+            'otherInfo'        => ($site = SiteInfo::first()) ? [
+                'phone_number'    => $site->phone_number,
+                'whatsapp_number' => preg_replace('/\D+/', '', (string) $site->whatsapp_number),
+            ] : [],
             'reviews'          => $this->productReviews($product),
         ]);
     }
@@ -605,6 +612,7 @@ class PageController extends Controller
     public function register()
     {
         return Inertia::render('Public/Auth/Registration', [
+            'blocks'  => $this->pageBlocks('auth'),
             'reviews' => $this->authReviews(),
             'texts'   => $this->pageTexts('auth'),
         ]);
@@ -613,6 +621,7 @@ class PageController extends Controller
     public function login()
     {
         return Inertia::render('Public/Auth/Login', [
+            'blocks'  => $this->pageBlocks('auth'),
             'reviews' => $this->authReviews(),
             'texts'   => $this->pageTexts('auth'),
             // Set by registration, and by anything else that hands the visitor
@@ -836,6 +845,9 @@ class PageController extends Controller
 
     public function notFound()
     {
-        return Inertia::render('Public/Error/NotFound', ['texts' => $this->pageTexts('not_found')])->toResponse(request())->setStatusCode(404);
+        return Inertia::render('Public/Error/NotFound', [
+            'texts' => $this->pageTexts('not_found'),
+            'blocks' => $this->pageBlocks('not_found'),
+        ])->toResponse(request())->setStatusCode(404);
     }
 }

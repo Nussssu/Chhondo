@@ -15,6 +15,8 @@ import MediaLibraryPickerModal from '@/components/Admin/MediaLibraryPickerModal.
 import BannerEditModal from '@/Pages/Admin/Sliders/Partials/BannerEditModal.vue'
 import RichTextField from './Partials/RichTextField.vue'
 import ProductSequenceModal from './Partials/ProductSequenceModal.vue'
+import MainBannerModal from './Partials/MainBannerModal.vue'
+import VisibilityToggle from '@/components/Admin/VisibilityToggle.vue'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { slugify } from '@/utils/slug'
 import { toast } from '@/utils/toast'
@@ -166,10 +168,16 @@ async function removeWidget(index) {
 
 // Ids are collapsed rather than indexes, so reordering does not collapse the
 // wrong widget.
-const collapsed = ref(new Set())
+const collapsed = ref(new Set(form.blocks.filter(block => widgetSlot(block)).map(block => block.id)))
 
 // Text sections start closed, so a page with many fields is still scannable.
-const closedSections = ref(new Set((props.page.text_sections ?? []).map((s) => s.key)))
+// The page's other rows (settings, banners, header, visibility) do too; their
+// keys start with "_" so they never clash with a section's.
+const closedSections = ref(new Set([
+  ...(props.page.text_sections ?? []).map((s) => s.key),
+  '_settings', '_header', '_fields',
+]))
+const isOpen = (key) => !closedSections.value.has(key)
 
 function toggleSection(key) {
   const next = new Set(closedSections.value)
@@ -193,6 +201,15 @@ function addRow(field) {
     // An on/off switch starts on, so a new row shows straight away.
     Object.fromEntries(Object.entries(field.fields).map(([k, sub]) => [k, sub.type === 'toggle' ? '1' : '']))
   )
+}
+
+/** Move a list item one place up or down. */
+function moveRow(field, i, delta) {
+  const rows = [...form.texts[field.key]]
+  const to = i + delta
+  if (to < 0 || to >= rows.length) return
+  ;[rows[i], rows[to]] = [rows[to], rows[i]]
+  form.texts[field.key] = rows
 }
 
 function dropRow(field, to) {
@@ -248,20 +265,121 @@ async function uploadBanner(field, event) {
 
 // A slot shows, in page order, the widgets that render at that point.
 const SLOT_TYPES = ['product_section', 'cta_banner', 'video_strip']
+function widgetSlot(block) {
+  return (props.page.text_sections ?? []).find(section => section.widget_types && (
+    section.widget_types.includes('other')
+      ? !['product_section', 'cta_banner', 'video_strip'].includes(block.type)
+      : section.widget_types.includes(block.type)
+  ))
+}
 const slotBlocks = (section) =>
   form.blocks.filter((block) =>
     section.widget_types.includes('other')
       ? !SLOT_TYPES.includes(block.type)
       : section.widget_types.includes(block.type)
   )
+const slotInserter = ref(null)
+const slotWidgetOptions = (section) => WIDGETS.filter((widget) =>
+  section.widget_types.includes('other')
+    ? !SLOT_TYPES.includes(widget.type)
+    : section.widget_types.includes(widget.type)
+)
+function addSlotWidget(section, type) {
+  addWidget(type)
+  slotInserter.value = null
+}
+/* --------------------------------------------- section fields -- */
+
+// A section's own on/off switch ("hero_show" for "hero"). It sits on the
+// section's header as Active / Hidden rather than among its fields, and
+// covers the desktop and the mobile version together.
+const mainToggleKey = (section) =>
+  (section.fields ?? []).some((f) => f.type === 'toggle' && f.key === `${section.key}_show`)
+    ? `${section.key}_show`
+    : null
+
+function sectionFields(section) {
+  const main = mainToggleKey(section)
+  // Every field of the section shows together — where the desktop and the
+  // mobile banner differ (e.g. Home hero) both options sit in the same
+  // section, so there is no separate mobile/desktop view to flip.
+  // On a page with hero banners the main Desktop / Mobile banner is row 1 of
+  // the banner list (edited in a popup), not a pair of inline fields.
+  const bannerList = section.key === 'hero' && props.page.banners
+  return section.fields.filter((f) =>
+    f.key !== main
+    && !['hero_slideshow_enabled', 'hero_autoplay_enabled', 'hero_slide_seconds'].includes(f.key)
+    && !(bannerList && f.type === 'banner')
+  )
+}
+
+/* ------------------------------------------------------- main banner -- */
+
+const mainBannerOpen = ref(false)
+
+/** Save the main banner's images: they are page fields, so the page saves. */
+function saveMainBanner({ desktop, mobile }) {
+  form.texts.hero_image_desktop = desktop
+  form.texts.hero_image_mobile = mobile
+  form.put(route('admin.pages.update', props.page.type), {
+    preserveScroll: true,
+    onSuccess: () => { mainBannerOpen.value = false },
+  })
+}
+
+/** Whether a section can be switched off, and whether it is on. */
+function sectionVisibilityTargets(section) {
+  const targets = []
+  for (const field of section.fields ?? []) {
+    if (field.type === 'toggle' && /(^show$|_show$|_enabled$)/.test(field.key)) {
+      targets.push({ object: form.texts, key: field.key })
+    }
+    if (field.type === 'repeater') {
+      for (const row of form.texts[field.key] ?? []) {
+        for (const [key, sub] of Object.entries(field.fields ?? {})) {
+          if (sub.type === 'toggle' && /(^show$|_show$|_enabled$)/.test(key)) targets.push({ object: row, key })
+        }
+      }
+    }
+  }
+  return targets
+}
+const hasSwitch = (section) => Boolean(mainToggleKey(section)) || Boolean(section.widget_types) || sectionVisibilityTargets(section).length > 0
+function sectionOn(section) {
+  const key = mainToggleKey(section)
+  if (key) return isOn(form.texts[key])
+  if (section.widget_types) return slotVisible(section)
+  return sectionVisibilityTargets(section).some(({ object, key }) => isOn(object[key]))
+}
+function setSectionOn(section, on) {
+  const key = mainToggleKey(section)
+  if (key) form.texts[key] = on ? '1' : '0'
+  else if (section.widget_types) setSlotVisible(section, on)
+  else sectionVisibilityTargets(section).forEach(({ object, key }) => { object[key] = on ? '1' : '0' })
+}
+
+// A widget slot is active while any of its widgets shows.
+const slotVisible = (section) => slotBlocks(section).some((b) => !b.hidden)
+function setSlotVisible(section, on) {
+  slotBlocks(section).forEach((b) => { b.hidden = !on })
+}
+
+/** Copy a widget listed in a section, right after the original. */
+function duplicateSlotWidget(block) {
+  const index = form.blocks.findIndex((b) => b.id === block.id)
+  if (index >= 0) duplicateWidget(index)
+}
+
+/** Copy a row of a list (cards, images, links…), right after the original. */
+function duplicateRow(field, i) {
+  form.texts[field.key].splice(i + 1, 0, structuredClone(toRaw(form.texts[field.key][i])))
+}
+
 const widgetLabel = (block) =>
   block.title || WIDGETS.find((w) => w.type === block.type)?.label || block.type
 
 function goToWidget(block) {
-  const next = new Set(collapsed.value)
-  next.delete(block.id)
-  collapsed.value = next
-  document.getElementById(`pg-w-${block.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  toggleCollapse(block.id)
 }
 
 /** On/off fields are stored as '1' / '0', like every other text value. */
@@ -492,6 +610,29 @@ function escapeHtml(value) {
 // null = closed, 'new' = adding, or the banner being edited.
 const bannerModal = ref(null)
 
+// Order and on/off are saved straight away, like adding or deleting a banner.
+const bannerBusy = ref(false)
+const bannerSaveOptions = {
+  preserveScroll: true,
+  preserveState: true,
+  only: ['banners', 'flash'],
+  onFinish: () => { bannerBusy.value = false },
+}
+
+function moveBanner(index, delta) {
+  const ids = props.banners.map((b) => b.id)
+  const to = index + delta
+  if (to < 0 || to >= ids.length) return
+  ;[ids[index], ids[to]] = [ids[to], ids[index]]
+  bannerBusy.value = true
+  router.patch(route('admin.sliders.banner.reorder'), { ids }, bannerSaveOptions)
+}
+
+function setBannerActive(banner, on) {
+  bannerBusy.value = true
+  router.post(route('admin.sliders.banner.update', banner.id), { _method: 'PATCH', is_active: on }, bannerSaveOptions)
+}
+
 async function removeBanner(banner) {
   const ok = await confirmDelete({
     title: 'Delete this banner?',
@@ -510,8 +651,19 @@ function submit() {
 
 <template>
   <AdminLayout>
-    <div class="page-content pg-editor">
+    <div class="page-content pg-editor" :class="{ 'has-savebar': canSave }">
       <PageHeader :title="page.label" :subtitle="page.note || 'Edit what this page shows on the storefront'">
+        <template #title>
+          <span class="pg-page-title">
+            {{ page.label }}
+            <VisibilityToggle
+              v-if="page.editable"
+              v-model="form.is_published"
+              switch-only
+              :aria-label="`Show ${page.label} content`"
+            />
+          </span>
+        </template>
         <template #actions>
           <a :href="route('admin.pages.index')" class="btn btn-fig-secondary btn-fig-sm d-inline-flex align-items-center">
             <ArrowLeft :size="16" class="me-1" /> All pages
@@ -519,29 +671,23 @@ function submit() {
           <a v-if="page.url" :href="page.url" target="_blank" class="btn btn-fig-secondary btn-fig-sm ms-2 d-inline-flex align-items-center">
             <ExternalLink :size="16" class="me-1" /> View
           </a>
-          <button
-            v-if="canSave"
-            type="button"
-            class="btn btn-fig-primary btn-fig-sm ms-2"
-            :disabled="form.processing"
-            @click="submit"
-          >
-            {{ form.processing ? 'Saving…' : 'Save page' }}
-          </button>
         </template>
       </PageHeader>
 
       <div class="pg-layout" :class="{ 'has-preview': showPreview }">
         <div class="pg-main">
           <!-- ── Page settings (pages you created) ────────────────── -->
-          <div v-if="page.is_custom" class="card">
-            <div class="card-header">
-              <h6 class="mb-0">Page settings</h6>
-              <p class="mb-0 text-muted small">
-                The name of this page and the address it answers on.
-              </p>
+          <div v-if="page.is_custom" class="card pe-row">
+            <div class="card-header pe-row-head">
+              <button type="button" class="pe-row-title" :aria-expanded="isOpen('_settings')" @click="toggleSection('_settings')">
+                <h6 class="mb-0">Page settings &amp; SEO</h6>
+              </button>
+              <button type="button" class="pe-chev" :class="{ 'is-open': isOpen('_settings') }" aria-label="Expand section" @click="toggleSection('_settings')">
+                <ChevronDown :size="18" />
+              </button>
             </div>
-            <div class="card-body">
+            <div v-show="isOpen('_settings')" class="card-body">
+              <p class="pe-help">The name of this page, the address it answers on, and what search engines show.</p>
               <label class="form-label" for="pg-custom-title">Title</label>
               <input
                 id="pg-custom-title"
@@ -599,51 +745,21 @@ function submit() {
             </div>
           </div>
 
-          <!-- ── Banners ─────────────────────────────────────────── -->
-          <div v-if="page.banners" class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="mb-0">Banners</h6>
-                <p class="mb-0 text-muted small">
-                  Hero images at the top of the page. 1900×560 for desktop, plus an
-                  optional square image for phones.
-                </p>
-              </div>
-              <button type="button" class="btn btn-fig-primary btn-fig-sm" @click="bannerModal = 'new'">
-                <Plus :size="15" class="me-1" /> Add banner
+          <!-- ── Page header ─────────────────────────────────────── -->
+          <div v-if="page.editable && page.has_header" class="card pe-row">
+            <div class="card-header pe-row-head">
+              <button type="button" class="pe-row-title" :aria-expanded="isOpen('_header')" @click="toggleSection('_header')">
+                <h6 class="mb-0">Page header</h6>
+              </button>
+              <button type="button" class="pe-chev" :class="{ 'is-open': isOpen('_header') }" aria-label="Expand section" @click="toggleSection('_header')">
+                <ChevronDown :size="18" />
               </button>
             </div>
-            <div class="card-body">
-              <div v-if="banners.length" class="pg-banners">
-                <figure v-for="banner in banners" :key="banner.id" class="pg-banner">
-                  <img :src="banner.image_path" alt="" />
-                  <span class="pg-banner-tag" :class="{ 'is-missing': !banner.mobile_image_path }">
-                    {{ banner.mobile_image_path ? 'Mobile set' : 'No mobile image' }}
-                  </span>
-                  <figcaption>
-                    <button type="button" class="table-icon-btn is-primary" title="Replace images" @click="bannerModal = banner">
-                      <Pencil :size="14" />
-                    </button>
-                    <button type="button" class="table-icon-btn is-danger" title="Delete" @click="removeBanner(banner)">
-                      <Trash2 :size="14" />
-                    </button>
-                  </figcaption>
-                </figure>
-              </div>
-              <p v-else class="text-muted mb-0">No banners yet — add the first one.</p>
-            </div>
-          </div>
-
-          <!-- ── Page header ─────────────────────────────────────── -->
-          <div v-if="page.editable && page.has_header" class="card">
-            <div class="card-header">
-              <h6 class="mb-0">Page header</h6>
-              <p class="mb-0 text-muted small">
+            <div v-show="isOpen('_header')" class="card-body">
+              <p class="pe-help">
                 The heading and the line under it at the top of the page. Leave them
                 blank to keep the storefront's built-in wording.
               </p>
-            </div>
-            <div class="card-body">
               <template v-if="page.has_label">
                 <label class="form-label" for="pg-label">Label</label>
                 <input id="pg-label" v-model="form.label" type="text" class="form-control" />
@@ -662,39 +778,85 @@ function submit() {
           <div
             v-for="section in page.text_sections ?? []"
             :key="section.key"
-            class="card pg-textsec"
-            :class="{ 'is-collapsed': closedSections.has(section.key) }"
+            class="card pe-row pg-textsec"
+            :class="{ 'is-collapsed': closedSections.has(section.key), 'is-off': hasSwitch(section) && !sectionOn(section) }"
           >
-            <div class="card-header pg-block-head">
+            <div class="card-header pe-row-head">
               <button
                 type="button"
-                class="pg-block-toggle"
+                class="pe-row-title"
                 :aria-expanded="!closedSections.has(section.key)"
                 @click="toggleSection(section.key)"
               >
-                <ChevronRight :size="14" class="pg-caret" />
                 <span class="pg-block-type">{{ section.title }}</span>
                 <span class="pg-block-summary">
                   <template v-if="section.widget_types">{{ slotBlocks(section).length }} widget{{ slotBlocks(section).length === 1 ? '' : 's' }}</template>
                   <template v-else>{{ section.fields.length }} field{{ section.fields.length === 1 ? '' : 's' }}</template>
                 </span>
               </button>
+              <!-- One switch for the desktop and the mobile version -->
+              <VisibilityToggle
+                v-if="hasSwitch(section)"
+                switch-only
+                :disabled="!!section.widget_types && !slotBlocks(section).length"
+                :model-value="sectionOn(section)"
+                :aria-label="`Show ${section.title}`"
+                @update:model-value="setSectionOn(section, $event)"
+              />
+              <button
+                type="button"
+                class="pe-chev"
+                :class="{ 'is-open': !closedSections.has(section.key) }"
+                aria-label="Expand section"
+                @click="toggleSection(section.key)"
+              >
+                <ChevronDown :size="18" />
+              </button>
             </div>
 
             <div v-show="!closedSections.has(section.key)" class="card-body">
               <!-- Widgets that render here on the page -->
               <div v-if="section.widget_types" class="pg-slot">
-                <p class="pg-text-note mb-2">Shown here on the page. Edit them in Widgets below.</p>
-                <div v-for="block in slotBlocks(section)" :key="block.id" class="pg-slot-row">
+                <p class="pg-text-note mb-2">Widgets saved here appear in this position on the storefront. Edit expands their details directly below.</p>
+                <div v-for="block in slotBlocks(section)" :key="block.id" class="pg-slot-item">
+                <div class="pg-slot-row">
                   <span class="pg-slot-name">{{ widgetLabel(block) }}</span>
-                  <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="goToWidget(block)">Edit</button>
+                  <div class="d-flex align-items-center gap-2">
+                    <VisibilityToggle
+                      switch-only
+                      :model-value="!block.hidden"
+                      :aria-label="`Show ${widgetLabel(block)}`"
+                      @update:model-value="block.hidden = !$event"
+                    />
+                    <button type="button" class="btn btn-fig-secondary btn-fig-sm" :aria-expanded="!collapsed.has(block.id)" @click="goToWidget(block)">{{ collapsed.has(block.id) ? 'Edit' : 'Collapse' }}</button>
+                    <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateSlotWidget(block)">
+                      <Copy :size="14" />
+                    </button>
+                  </div>
                 </div>
-                <p v-if="!slotBlocks(section).length" class="text-muted small mb-0">None yet.</p>
+                <div :id="`pg-slot-editor-${block.id}`" class="pg-slot-editor"></div>
+                </div>
+                <p v-if="!slotBlocks(section).length" class="text-muted small mb-0">No widgets added to this section yet.</p>
+                <button type="button" class="pe-add" @click="slotInserter = slotInserter === section.key ? null : section.key">
+                  <Plus :size="15" /> Add widget
+                </button>
+                <div v-if="slotInserter === section.key" class="pg-inserter">
+                  <button
+                    v-for="widget in slotWidgetOptions(section)"
+                    :key="widget.type"
+                    type="button"
+                    class="pg-inserter-btn"
+                    @click="addSlotWidget(section, widget.type)"
+                  >
+                    <component :is="widget.icon" :size="14" />
+                    <span>{{ widget.label }}</span>
+                  </button>
+                </div>
               </div>
 
               <div v-else class="pg-text-grid">
                 <div
-                  v-for="field in section.fields"
+                  v-for="field in sectionFields(section)"
                   :key="field.key"
                   class="pg-text-field"
                   :class="{ 'is-wide': field.type === 'textarea' || field.type === 'image' || field.type === 'banner' }"
@@ -711,15 +873,38 @@ function submit() {
                       @dragover.prevent="repDragOver = i"
                       @drop.prevent="dropRow(field, i)"
                     >
-                      <span
-                        class="pg-drag"
-                        title="Drag to reorder"
-                        draggable="true"
-                        @dragstart="repDragFrom = i"
-                        @dragend="repDragFrom = null; repDragOver = null"
-                      >
-                        <GripVertical :size="15" />
-                      </span>
+                      <!-- Numbered item header: drag, move, copy, remove -->
+                      <div class="pe-item-head">
+                        <span
+                          class="pg-drag"
+                          title="Drag to reorder"
+                          draggable="true"
+                          @dragstart="repDragFrom = i"
+                          @dragend="repDragFrom = null; repDragOver = null"
+                        >
+                          <GripVertical :size="15" />
+                        </span>
+                        <span class="pe-item-title">{{ field.label }} #{{ i + 1 }}</span>
+                        <div class="pe-item-actions">
+                          <button type="button" class="table-icon-btn" title="Move up" :disabled="i === 0" @click="moveRow(field, i, -1)">
+                            <ChevronUp :size="14" />
+                          </button>
+                          <button type="button" class="table-icon-btn" title="Move down" :disabled="i === (form.texts[field.key] ?? []).length - 1" @click="moveRow(field, i, 1)">
+                            <ChevronDown :size="14" />
+                          </button>
+                          <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateRow(field, i)">
+                            <Copy :size="14" />
+                          </button>
+                          <button
+                            type="button"
+                            class="table-icon-btn is-danger"
+                            title="Remove"
+                            @click="form.texts[field.key].splice(i, 1)"
+                          >
+                            <Trash2 :size="14" />
+                          </button>
+                        </div>
+                      </div>
 
                       <div class="pg-rep-fields">
                         <div v-for="(sub, subKey) in field.fields" :key="subKey" class="pg-rep-field">
@@ -759,18 +944,10 @@ function submit() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        class="table-icon-btn is-danger"
-                        title="Remove"
-                        @click="form.texts[field.key].splice(i, 1)"
-                      >
-                        <Trash2 :size="14" />
-                      </button>
                     </div>
 
-                    <button type="button" class="btn btn-fig-secondary btn-fig-sm mt-2" @click="addRow(field)">
-                      <Plus :size="14" class="me-1" /> Add
+                    <button type="button" class="pe-add" @click="addRow(field)">
+                      <Plus :size="15" /> Add {{ field.label }}
                     </button>
                   </div>
 
@@ -850,17 +1027,102 @@ function submit() {
                 </div>
               </div>
 
+              <!-- More hero images: added one after another, they rotate with the
+                   hero image above. With none added the hero stays a single image. -->
+              <div v-if="section.key === 'hero' && page.banners" class="hs-block">
+                <label class="form-label mb-1">Hero banners</label>
+                <p class="pe-help">
+                  The main banner shows first. Add more and they follow it in this order, changing
+                  automatically; with only the main banner, the hero stays as it is.
+                </p>
+                <!-- Every hero banner, in display order: the main one first -->
+              <div class="bc-list">
+                <div class="bc-row bc-row--main">
+                  <span class="bc-num">1</span>
+                  <img :src="form.texts.hero_image_desktop || '/assets/chhondo/hero-home-desktop.webp'" alt="" class="bc-thumb" loading="lazy" />
+                  <img :src="form.texts.hero_image_mobile || form.texts.hero_image_desktop || '/assets/chhondo/hero-home-mobile.webp'" alt="" class="bc-thumb bc-thumb--m" loading="lazy" />
+                  <div class="bc-meta">
+                    <span class="bc-title">Main banner <span class="bc-badge">Always first</span></span>
+                    <span class="bc-link">Desktop &amp; mobile image</span>
+                  </div>
+                  <div class="bc-actions">
+                    <button type="button" class="table-icon-btn is-primary" title="Edit main banner" @click="mainBannerOpen = true">
+                      <Pencil :size="14" />
+                    </button>
+                  </div>
+                </div>
+                <div v-for="(banner, bi) in banners" :key="banner.id" class="bc-row" :class="{ 'is-off': banner.is_active === false }">
+                  <span class="bc-num">{{ bi + 2 }}</span>
+                  <img :src="banner.image_path" alt="" class="bc-thumb" loading="lazy" />
+                  <img :src="banner.mobile_image_path || banner.image_path" alt="" class="bc-thumb bc-thumb--m" loading="lazy" :title="banner.mobile_image_path ? 'Mobile image' : 'No mobile image — the desktop one is used'" />
+                  <div class="bc-meta">
+                    <span class="bc-title">
+                      {{ banner.title || `Banner ${bi + 2}` }}
+                      <span v-if="banner.is_active === false" class="pe-hidden">Hidden</span>
+                    </span>
+                    <span class="bc-link">{{ banner.link_url ? `→ ${banner.link_url}${banner.link_new_tab ? ' (new tab)' : ''}` : 'No link' }}</span>
+                  </div>
+                  <div class="bc-actions">
+                    <button type="button" class="table-icon-btn" title="Move up" :disabled="bi === 0 || bannerBusy" @click="moveBanner(bi, -1)">
+                      <ChevronUp :size="14" />
+                    </button>
+                    <button type="button" class="table-icon-btn" title="Move down" :disabled="bi === banners.length - 1 || bannerBusy" @click="moveBanner(bi, 1)">
+                      <ChevronDown :size="14" />
+                    </button>
+                    <label class="form-check form-switch mb-0 pe-switch" :title="banner.is_active === false ? 'Hidden from the carousel' : 'Shown in the carousel'">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        :aria-label="`Show banner ${bi + 2}`"
+                        :checked="banner.is_active !== false"
+                        :disabled="bannerBusy"
+                        @change="setBannerActive(banner, $event.target.checked)"
+                      />
+                    </label>
+                    <button type="button" class="table-icon-btn is-primary" title="Edit banner" @click="bannerModal = banner">
+                      <Pencil :size="14" />
+                    </button>
+                    <button type="button" class="table-icon-btn is-danger" title="Delete" @click="removeBanner(banner)">
+                      <Trash2 :size="14" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+                <button type="button" class="pe-add" @click="bannerModal = 'new'">
+                  <Plus :size="15" /> Add banner
+                </button>
+                <div v-if="banners.some((b) => b.is_active !== false)" class="hs-speed">
+                  <label for="hero-slide-seconds" class="form-label">Change image every (seconds)</label>
+                  <input
+                    id="hero-slide-seconds"
+                    :value="form.texts.hero_slide_seconds || '5'"
+                    type="number"
+                    min="1"
+                    max="120"
+                    step="1"
+                    class="form-control"
+                    @input="form.texts.hero_slide_seconds = $event.target.value"
+                  />
+                </div>
+              </div>
+
               <p v-if="!section.widget_types" class="pg-text-note">Clear a field to put back the wording this page came with.</p>
             </div>
           </div>
 
           <!-- ── Page settings ───────────────────────────────────── -->
-          <div v-if="pageFields.length" class="card">
-            <div class="card-header">
-              <h6 class="mb-0">Page settings</h6>
-              <p class="mb-0 text-muted small">What this page shows besides its body copy.</p>
+          <div v-if="pageFields.length" class="card pe-row">
+            <div class="card-header pe-row-head">
+              <button type="button" class="pe-row-title" :aria-expanded="isOpen('_fields')" @click="toggleSection('_fields')">
+                <h6 class="mb-0">Page settings</h6>
+              </button>
+              <button type="button" class="pe-chev" :class="{ 'is-open': isOpen('_fields') }" aria-label="Expand section" @click="toggleSection('_fields')">
+                <ChevronDown :size="18" />
+              </button>
             </div>
-            <div class="card-body">
+            <div v-show="isOpen('_fields')" class="card-body">
+              <p class="pe-help">What this page shows besides its body copy.</p>
               <div v-for="field in pageFields" :key="field.key" class="mb-3">
                 <label class="form-label" :for="`pf-${field.key}`">{{ field.label }}</label>
 
@@ -923,8 +1185,8 @@ function submit() {
 
             <div v-if="!form.blocks.length" class="card pg-empty">
               <div class="card-body text-center">
-                <h6 class="mb-1">This page is empty</h6>
-                <p class="text-muted small mb-3">Pick a widget to start building it.</p>
+                <h6 class="mb-1">No additional widgets yet</h6>
+                <p class="text-muted small mb-3">Add a widget below the page's existing content, then save to publish it.</p>
                 <div class="pg-empty-grid">
                   <button
                     v-for="w in WIDGETS"
@@ -943,6 +1205,7 @@ function submit() {
             <template v-for="(block, index) in form.blocks" :key="block.id">
               <!-- Drop zone + insert point above this widget -->
               <div
+                v-if="!widgetSlot(block)"
                 class="pg-gap"
                 :class="{ 'is-over': dragOver === index && dragFrom !== null, 'is-open': insertAt === index }"
                 @dragover.prevent="onDragOver(index)"
@@ -965,49 +1228,63 @@ function submit() {
                 </div>
               </div>
 
-            <div
+            <Teleport :to="widgetSlot(block) ? `#pg-slot-editor-${block.id}` : 'body'" :disabled="!widgetSlot(block)" defer>
+            <div v-show="!widgetSlot(block) || !collapsed.has(block.id)"
               :id="`pg-w-${block.id}`"
-              class="card pg-block"
-              :class="{ 'is-dragging': dragFrom === index, 'is-collapsed': collapsed.has(block.id) }"
+              class="card pe-row pg-block"
+              :class="{ 'is-dragging': dragFrom === index, 'is-collapsed': collapsed.has(block.id), 'is-hidden': block.hidden, 'is-off': block.hidden }"
               @dragover.prevent="onDragOver(index)"
               @drop.prevent="onDrop(index)"
             >
-              <div class="card-header pg-block-head">
-                <span
-                  class="pg-drag"
+              <div class="card-header pe-row-head">
+                <!-- Order: the arrows move it, and the column can be dragged -->
+                <div
+                  class="pe-arrows"
                   title="Drag to reorder"
                   draggable="true"
                   @dragstart="onDragStart(index, $event)"
                   @dragend="onDragEnd"
                 >
-                  <GripVertical :size="15" />
-                </span>
+                  <button type="button" title="Move up" aria-label="Move section up" :disabled="index === 0" @click="move(index, -1)">
+                    <ChevronUp :size="16" />
+                  </button>
+                  <button type="button" title="Move down" aria-label="Move section down" :disabled="index === form.blocks.length - 1" @click="move(index, 1)">
+                    <ChevronDown :size="16" />
+                  </button>
+                </div>
 
                 <button
                   type="button"
-                  class="pg-block-toggle"
+                  class="pe-row-title"
                   :aria-expanded="!collapsed.has(block.id)"
                   @click="toggleCollapse(block.id)"
                 >
-                  <ChevronRight :size="14" class="pg-caret" />
                   <span class="pg-block-type">{{ WIDGET_LABELS[block.type] || block.type }}</span>
                   <span class="pg-block-summary">{{ summarise(block) }}</span>
                 </button>
 
-                <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                  <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateWidget(index)">
-                    <Copy :size="14" />
-                  </button>
-                  <button type="button" class="table-icon-btn" title="Move up" :disabled="index === 0" @click="move(index, -1)">
-                    <ChevronUp :size="14" />
-                  </button>
-                  <button type="button" class="table-icon-btn" title="Move down" :disabled="index === form.blocks.length - 1" @click="move(index, 1)">
-                    <ChevronDown :size="14" />
-                  </button>
-                  <button type="button" class="table-icon-btn is-danger" title="Remove" @click="removeWidget(index)">
-                    <Trash2 :size="14" />
-                  </button>
-                </div>
+                <!-- Show / hide this widget on the site (desktop and mobile) -->
+                <VisibilityToggle
+                  switch-only
+                  :model-value="!block.hidden"
+                  :aria-label="`Show ${WIDGET_LABELS[block.type] || block.type}`"
+                  @update:model-value="block.hidden = !$event"
+                />
+                <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateWidget(index)">
+                  <Copy :size="14" />
+                </button>
+                <button type="button" class="table-icon-btn is-danger" title="Remove" @click="removeWidget(index)">
+                  <Trash2 :size="14" />
+                </button>
+                <button
+                  type="button"
+                  class="pe-chev"
+                  :class="{ 'is-open': !collapsed.has(block.id) }"
+                  aria-label="Expand section"
+                  @click="toggleCollapse(block.id)"
+                >
+                  <ChevronDown :size="18" />
+                </button>
               </div>
 
               <div v-show="!collapsed.has(block.id)" class="card-body">
@@ -1273,6 +1550,7 @@ function submit() {
                 </template>
               </div>
             </div>
+            </Teleport>
             </template>
 
             <!-- Drop zone + insert point at the end of the page -->
@@ -1282,8 +1560,8 @@ function submit() {
               @dragover.prevent="onDragOver(form.blocks.length)"
               @drop.prevent="onDrop(form.blocks.length)"
             >
-              <button type="button" class="pg-gap-btn" title="Add a widget here" @click="openInserter(form.blocks.length)">
-                <Plus :size="13" />
+              <button type="button" class="pe-add" @click="openInserter(form.blocks.length)">
+                <Plus :size="15" /> Add widget
               </button>
               <div v-if="insertAt === form.blocks.length" class="pg-inserter">
                 <button
@@ -1320,72 +1598,28 @@ function submit() {
           </div>
         </aside>
 
-        <!-- ── Sidebar ─────────────────────────────────────────── -->
-        <aside class="pg-side">
-          <div v-if="page.editable && page.widgets !== false" class="card">
-            <div class="card-header"><h6 class="mb-0">Add a widget</h6></div>
-            <div class="card-body pg-widget-list">
-              <button
-                v-for="w in WIDGETS"
-                :key="w.type"
-                type="button"
-                class="pg-widget-btn"
-                @click="addWidget(w.type)"
-              >
-                <component :is="w.icon" :size="16" />
-                <span>{{ w.label }}</span>
-                <Plus :size="14" class="ms-auto" />
-              </button>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header"><h6 class="mb-0">Show this content</h6></div>
-            <div class="card-body">
-              <div class="form-check form-switch">
-                <input
-                  id="pg-published"
-                  v-model="form.is_published"
-                  class="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  :disabled="!page.editable"
-                />
-                <label class="form-check-label" for="pg-published">
-                  {{ form.is_published ? 'Published' : 'Content hidden' }}
-                </label>
-              </div>
-              <p class="text-muted small mb-0 mt-2">
-                The page itself always stays live on the storefront. Turning this
-                off only holds back the content written here.
-              </p>
-              <p class="text-muted small mb-0 mt-2">
-                Last saved: {{ page.updated_at ? new Date(page.updated_at).toLocaleString() : 'never' }}
-              </p>
-
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
 
-    <div v-if="canSave && form.isDirty" class="pg-savebar">
-      <span class="pg-savebar-text">Unsaved changes</span>
-      <button
-        type="button"
-        class="btn btn-fig-secondary btn-fig-sm"
-        :disabled="form.processing"
-        @click="form.reset()"
-      >
-        Discard
-      </button>
+    <div v-if="canSave" class="pg-savebar">
+      <template v-if="form.isDirty">
+        <span class="pg-savebar-text">Unsaved changes</span>
+        <button
+          type="button"
+          class="btn btn-fig-secondary btn-fig-sm"
+          :disabled="form.processing"
+          @click="form.reset()"
+        >
+          Discard
+        </button>
+      </template>
       <button
         type="button"
         class="btn btn-fig-primary btn-fig-sm"
         :disabled="form.processing"
         @click="submit"
       >
-        {{ form.processing ? 'Saving…' : 'Save page' }}
+        {{ form.processing ? 'Saving…' : 'Save changes' }}
       </button>
     </div>
 
@@ -1412,6 +1646,14 @@ function submit() {
       @select="onGallerySelected"
       @select-multiple="onGallerySelected"
     />
+    <MainBannerModal
+      v-if="mainBannerOpen"
+      :desktop="form.texts.hero_image_desktop || ''"
+      :mobile="form.texts.hero_image_mobile || ''"
+      :saving="form.processing"
+      @close="mainBannerOpen = false"
+      @save="saveMainBanner"
+    />
     <BannerEditModal
       v-if="bannerModal"
       :banner="bannerModal === 'new' ? null : bannerModal"
@@ -1431,6 +1673,26 @@ function submit() {
 </template>
 
 <style scoped>
+.pg-banner-settings { display: grid; gap: 14px; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.pg-banner-option { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; }
+.pg-banner-settings .form-control { max-width: 160px; }
+.pg-slot-editor:has(.pg-block:not(.is-collapsed)) { margin-top: 10px; }
+.pg-slot-editor .pg-block { margin: 0; }
+.pg-page-title { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pg-editor :deep(.dv-switch) {
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+}
+.pg-editor :deep(.dv-switch button) {
+  min-height: 30px;
+  padding: 4px 11px;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.pg-editor :deep(.dv-switch button svg) { width: 14px; height: 14px; }
+
 /* The Sequence button sits with the source it orders, not on its own row. */
 .pg-source-row {
   display: flex;
@@ -1457,9 +1719,11 @@ function submit() {
 .pg-layout {
   display: grid;
   grid-template-columns: 1fr;
+  grid-template-areas: 'main';
   gap: var(--sp-4, 16px);
   align-items: start;
 }
+.pg-layout.has-preview { grid-template-areas: 'main' 'preview'; }
 
 .pg-main { grid-area: main; }
 .pg-preview-pane { grid-area: preview; }
@@ -1467,21 +1731,21 @@ function submit() {
 
 @media (min-width: 992px) {
   .pg-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    grid-template-areas: 'main side';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'main';
   }
 
   /* Below three-column width the preview sits under the editor rather than
      squeezing both into an unusable width. */
   .pg-layout.has-preview {
-    grid-template-areas: 'main side' 'preview side';
+    grid-template-areas: 'main' 'preview';
   }
 }
 
 @media (min-width: 1500px) {
   .pg-layout.has-preview {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 520px) 300px;
-    grid-template-areas: 'main preview side';
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    grid-template-areas: 'main preview';
   }
 }
 
@@ -1686,18 +1950,36 @@ function submit() {
 
 /* ── Sticky save bar ─────────────────────────────────────── */
 .pg-savebar {
-  position: sticky;
+  position: fixed;
+  left: var(--sidebar-width, 260px);
+  right: 0;
   bottom: 0;
   z-index: 20;
   display: flex;
   align-items: center;
   gap: var(--sp-2, 8px);
-  margin-top: var(--sp-4, 16px);
-  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  margin: 0;
+  padding: var(--sp-3, 12px) var(--sp-4, 16px) calc(var(--sp-3, 12px) + env(safe-area-inset-bottom, 0px));
   border: 1px solid var(--line, #e4e1e0);
-  border-radius: var(--r-md, 10px);
+  border-radius: 0;
   background: var(--surface, #fff);
   box-shadow: var(--el-2, 0 8px 24px rgba(26, 33, 16, .12));
+}
+
+.pg-editor.has-savebar { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+
+@media (min-width: 992px) and (max-width: 1440px) {
+  .pg-savebar { left: 200px; }
+}
+@media (min-width: 992px) {
+  :global(.wrapper.toggled) .pg-savebar { left: 68px; }
+}
+@media (max-width: 991px) {
+  .pg-savebar { left: 0; }
+}
+@media (max-width: 575px) {
+  .pg-savebar { flex-wrap: wrap; row-gap: 6px; }
+  .pg-savebar-text { flex-basis: 100%; }
 }
 
 .pg-savebar-text {
@@ -1767,6 +2049,8 @@ function submit() {
 .pg-text-field.is-wide { grid-column: 1 / -1; }
 
 .pg-text-field { min-width: 0; }
+
+.pg-rep-actions { display: flex; flex-direction: column; gap: 4px; }
 
 .pg-rep-row {
   display: grid;
@@ -2011,4 +2295,219 @@ function submit() {
 }
 .pg-slot-row:last-of-type { border-bottom: 0; }
 .pg-slot-name { font-weight: 500; }
+
+/* A widget switched off stays editable but reads as hidden */
+.pg-block.is-hidden { opacity: .6; }
+.pg-show { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   Section-row layout: one narrow column of compact rows, each with its
+   name, a Hidden tag when off, an on/off switch and an expand arrow;
+   numbered item cards inside; the Save bar fixed to the bottom.
+   Fonts and font sizes are left exactly as they were.
+   ════════════════════════════════════════════════════════════════════ */
+@media (min-width: 992px) {
+  .pg-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'main';
+  }
+  .pg-layout.has-preview { grid-template-areas: 'main' 'preview'; }
+}
+@media (min-width: 1500px) {
+  .pg-layout.has-preview {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    grid-template-areas: 'main preview';
+  }
+}
+
+.pg-editor .pe-row {
+  border: 1px solid var(--line, #ebe5d8) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  background: var(--surface, #fff);
+}
+.pg-editor .pe-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 16px 10px 10px !important;
+  background: transparent !important;
+  border-bottom: 1px solid transparent !important;
+  border-radius: 0 !important;
+  transition: background-color .15s ease;
+}
+.pg-editor .pe-row-head:hover { background: rgba(37, 47, 23, .03) !important; }
+.pg-editor .pe-row > .card-body {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--line, #f0ebe0);
+}
+
+/* A switched-off section is faded, like the reference. */
+.pg-editor .pe-row.is-off { background: #fbf9f4; }
+.pg-editor .pe-row.is-off > .pe-row-head { opacity: .62; }
+
+.pe-row-title {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.pe-row-title .pg-block-summary { margin-left: 4px; }
+
+.pe-hidden {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #f1ece3;
+  color: #8b847d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.pe-chev {
+  flex: none;
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-muted, #6d6560);
+  cursor: pointer;
+}
+.pe-chev svg { transition: transform .2s ease; }
+.pe-chev.is-open svg { transform: rotate(180deg); }
+
+/* Stacked ↑ ↓ — the column is also the drag handle. */
+.pe-arrows {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+}
+.pe-arrows button {
+  display: inline-flex;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--text-muted, #6d6560);
+  line-height: 0;
+  cursor: pointer;
+}
+.pe-arrows button:hover:not(:disabled) { color: var(--admin-green-600, #252f17); }
+.pe-arrows button:disabled { opacity: .25; cursor: not-allowed; }
+
+/* The on/off switch: larger, no label beside it. */
+.pe-switch { flex: none; padding-left: 0; min-height: 0; display: inline-flex; align-items: center; }
+.pe-switch .form-check-input {
+  float: none;
+  margin: 0;
+  width: 42px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.pe-help { margin: -2px 0 14px; color: var(--text-muted, #6d6560); font-size: .875em; }
+
+/* "+ Add …" link under a list. */
+.pe-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--admin-green-600, #252f17);
+  font-weight: 600;
+  cursor: pointer;
+}
+.pe-add:hover { text-decoration: underline; }
+
+/* Fields stack one per line. */
+.pg-editor .pg-text-grid { grid-template-columns: 1fr; gap: 18px; }
+
+/* Numbered item cards. */
+.pg-editor .pg-rep-row {
+  display: block;
+  padding: 12px 14px 14px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: #fbf9f4;
+}
+.pe-item-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pe-item-title {
+  color: var(--text-muted, #6d6560);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.pe-item-actions { margin-left: auto; display: flex; gap: 2px; }
+.pg-editor .pg-rep-fields { grid-template-columns: 1fr; gap: 12px; }
+
+/* Save bar: always there, button on the right. */
+.pg-editor ~ .pg-savebar,
+.pg-savebar { justify-content: flex-end; }
+
+@media (max-width: 575px) {
+  .pg-editor .pe-row-head { padding: 8px 10px 8px 6px !important; }
+  .pg-editor .pe-row > .card-body { padding: 14px; }
+  .pe-row-title .pg-block-summary { display: none; }
+}
+
+/* ── Home banner carousel list ── */
+.bc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.bc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #ebe5d8);
+  border-radius: 12px;
+  background: #fbf9f4;
+}
+.bc-row.is-off > :not(.bc-actions) { opacity: .55; }
+.bc-num { flex: none; width: 20px; text-align: center; font-weight: 600; color: var(--text-muted, #6d6560); }
+.bc-thumb { flex: none; width: 112px; aspect-ratio: 1900 / 560; object-fit: cover; border-radius: 6px; background: #e4e1e0; }
+.bc-thumb--m { width: 34px; aspect-ratio: 402 / 514; }
+.bc-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bc-title { display: flex; align-items: center; gap: 6px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bc-link { color: var(--text-muted, #6d6560); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .875em; }
+.bc-actions { flex: none; display: flex; align-items: center; gap: 2px; }
+.bc-actions .pe-switch { margin: 0 6px; }
+@media (max-width: 575px) {
+  .bc-row { flex-wrap: wrap; }
+  .bc-meta { flex-basis: calc(100% - 200px); }
+  .bc-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* More hero images, inside the Hero section */
+.hs-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line, #f0ebe0); }
+.hs-speed { margin-top: 14px; }
+.hs-speed .form-control { max-width: 160px; }
+
+/* The main banner leads the hero banner list. */
+.bc-row--main { background: #f5f1e8; }
+.bc-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #eef4e6;
+  color: #1a2110;
+  font-size: 11px;
+  font-weight: 600;
+}
 </style>

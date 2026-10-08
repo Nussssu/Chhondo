@@ -1,10 +1,12 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
+import PageBlocks from '@/components/Page/PageBlocks.vue'
 import { Head, Link } from '@inertiajs/vue3'
 import { on } from '@/utils/cms'
 
 // Content › Pages › 404 page.
 defineProps({
+  blocks: { type: Array, default: () => [] },
   texts: { type: Object, default: () => ({}) },
 })
 </script>
@@ -36,6 +38,7 @@ defineProps({
         </div>
       </div>
     </div>
+    <PageBlocks :blocks="blocks" />
   </AppLayout>
 </template>
 

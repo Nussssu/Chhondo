@@ -27,6 +27,8 @@ class CouponController extends Controller
     public function index()
     {
        $coupons = $this->couponService->allProductsInCoupon();
+        // Status by the storefront's own rule, so the list shows which codes work.
+        $coupons->each(fn ($coupon) => $coupon->setAttribute('status', $coupon->status()));
         return Inertia::render('Admin/Coupons/Index', ['coupons' => $coupons]);
     }
 

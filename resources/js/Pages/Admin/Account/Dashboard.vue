@@ -4,7 +4,6 @@
       <!-- Header -->
       <div class="mb-4">
         <h4 class="mb-1 fw-bold">Financial Overview</h4>
-        <p class="text-muted mb-0">Track your financial health at a glance</p>
       </div>
 
       <!-- Quick Stats -->

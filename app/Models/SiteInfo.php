@@ -18,10 +18,15 @@ class SiteInfo extends Model
         'support_hours',
         'map_embed_url',
         'facebook_url',
+        'facebook_active',
         'tiktok_url',
+        'tiktok_active',
         'youtube_url',
+        'youtube_active',
         'instagram_url',
+        'instagram_active',
         'x_url',
+        'x_active',
         'shipping_charge_inside_dhaka',
         'shipping_charge_outside_dhaka',
         'free_shipping_enabled',
@@ -48,6 +53,11 @@ class SiteInfo extends Model
         'free_shipping_enabled' => 'boolean',
         'free_shipping_min_amount' => 'decimal:2',
         'maintenance_mode' => 'boolean',
+        'facebook_active' => 'boolean',
+        'tiktok_active' => 'boolean',
+        'youtube_active' => 'boolean',
+        'instagram_active' => 'boolean',
+        'x_active' => 'boolean',
     ];
 
     /** The store name as shown: an old Charukothon value reads as Chhondo. */

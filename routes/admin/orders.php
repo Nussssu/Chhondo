@@ -14,6 +14,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/', [ManageOrdersController::class, 'index'])->name('index');
         // Registered before /{order} routes so "pos" is not read as an order id.
         Route::get('/pos', [ManageOrdersController::class, 'posOrders'])->name('pos');
+        Route::get('/{order}/fraud-assessment', [ManageOrdersController::class, 'fraudAssessment'])->name('fraudAssessment');
         Route::post('/cart-push/{id}', [ManageOrdersController::class, 'cartDataToGive'])->name('carPush');
 
 

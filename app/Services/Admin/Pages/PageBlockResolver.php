@@ -29,6 +29,8 @@ class PageBlockResolver
         }
 
         return collect($blocks)
+            // A widget switched off in the editor stays saved but is not shown.
+            ->reject(fn ($block) => ! empty($block['hidden']))
             ->map(fn ($block) => $this->resolveBlock($block))
             ->filter()
             ->values()

@@ -1,7 +1,8 @@
 <template>
-  <AdminLayout>
-    <div class="page-content">
+  <component :is="embedded ? 'div' : AdminLayout">
+    <div class="page-content" :class="{ 'product-embedded': embedded }">
       <PageHeader
+        v-if="!embedded"
         title="Edit product"
         :subtitle="product.product_name"
         :breadcrumbs="[{ label: 'Products', href: route('products.index') }, { label: 'Edit' }]"
@@ -14,6 +15,7 @@
         id="editProductForm"
       >
         <input type="hidden" name="_token" :value="csrfToken">
+        <input v-if="embedded" type="hidden" name="_modal" value="1">
         <input type="hidden" name="_method" value="PUT">
 
         <!-- Section tabs. Panels stay in the DOM and are hidden with the
@@ -383,7 +385,7 @@
     <MediaLibraryPickerModal v-if="showFeaturedPicker" @close="showFeaturedPicker = false" @select="onFeaturedSelected" />
     <MediaLibraryPickerModal v-if="showGalleryPicker" multiple @close="showGalleryPicker = false" @select-multiple="onGallerySelected" />
     <MediaLibraryPickerModal v-if="showVideoPicker" kind="video" @close="showVideoPicker = false" @select="onVideoSelected" />
-  </AdminLayout>
+  </component>
 </template>
 
 <script setup>
@@ -400,6 +402,7 @@ import { slugify } from '@/utils/slug'
 import { parseGalleryImages } from '@/utils/galleryImages'
 
 const props = defineProps({
+  embedded: { type: Boolean, default: false },
   product: { type: Object, default: () => ({}) },
   tagValues: { type: Array, default: () => [] },
   specifications: { type: Array, default: () => [] },
@@ -604,6 +607,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.product-embedded { padding: 0 !important; }
 /* ── Section rhythm inside a panel ── */
 .pf-section {
   margin: 0 0 4px;

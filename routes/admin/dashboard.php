@@ -20,6 +20,9 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'admin'], function () {
     // DELETE, not GET — see the note on admin.orders.delete.
     Route::delete('/user/{id}', [ProfileController::class, 'delete'])->name('users.delete');
     Route::patch('/user/toggle-block/{id}', [ProfileController::class, 'blockUser'])->name('users.toggle-block');
+    // Customer edit (name, email, phone) and an emailed password-reset link.
+    Route::patch('/user/{id}', [ProfileController::class, 'updateUser'])->name('users.update');
+    Route::post('/user/{id}/reset-password', [ProfileController::class, 'sendPasswordReset'])->name('users.reset-password');
     
     Route::get('/sms/promotions', [SmsPromotionController::class, 'index'])->name('sms.promotion');
     Route::post('/sms/promotions/send', [SmsPromotionController::class, 'send'])->name('sms.promotion.send');

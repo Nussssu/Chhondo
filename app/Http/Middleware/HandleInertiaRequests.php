@@ -222,9 +222,12 @@ class HandleInertiaRequests extends Middleware
             'wishlistIds' => $wishlistIds,
             // Header menu and footer content, both editable under Settings.
             'layout' => ($request->is('admin') || $request->is('admin/*')) ? null : [
-                'menu'   => \App\Models\MenuItem::tree('header'),
-                'header' => \App\Models\LayoutSetting::get('header'),
-                'footer' => \App\Models\LayoutSetting::get('footer'),
+                // A section switched to Hidden (Header & footer) arrives empty.
+                'menu'   => (\App\Models\LayoutSetting::get('header')['menu_enabled'] ?? true) === false
+                    ? []
+                    : \App\Models\MenuItem::tree('header'),
+                'header' => \App\Models\LayoutSetting::forStorefront('header'),
+                'footer' => \App\Models\LayoutSetting::forStorefront('footer'),
             ],
             // Custom code snippets, so SPA navigation can inject the ones the
             // initial server render did not cover. Storefront only.

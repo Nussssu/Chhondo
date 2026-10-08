@@ -8,27 +8,27 @@
 
     <div v-else-if="purchase">
       <!-- Summary -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
+      <div class="row g-3 flex-nowrap mb-3">
+        <div class="col text-center">
           <div class="text-muted small">Invoice</div>
-          <div class="fw-semibold">{{ purchase.invoice_number }}</div>
+          <div class="fw-semibold text-truncate">{{ purchase.invoice_number }}</div>
         </div>
-        <div class="col-md-6">
+        <div class="col text-center">
           <div class="text-muted small">Purchase Name</div>
-          <div class="fw-semibold">{{ purchase.purchase_name }}</div>
+          <div class="fw-semibold text-truncate">{{ purchase.purchase_name }}</div>
         </div>
-        <div class="col-md-6">
+        <div class="col text-center">
           <div class="text-muted small">Supplier</div>
-          <div class="fw-semibold">
+          <div class="fw-semibold text-truncate">
             {{ purchase.supplier?.supplier_name || 'N/A' }}
             <span class="text-muted small" v-if="purchase.supplier?.company_name">({{ purchase.supplier.company_name }})</span>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col text-center">
           <div class="text-muted small">Date</div>
-          <div class="fw-semibold">{{ formatDate(purchase.created_at) }}</div>
+          <div class="fw-semibold text-truncate">{{ formatDate(purchase.created_at) }}</div>
         </div>
-        <div class="col-md-6">
+        <div class="col text-center">
           <div class="text-muted small">Status</div>
           <span class="badge" :class="statusInfo.class">{{ statusInfo.label }}</span>
         </div>

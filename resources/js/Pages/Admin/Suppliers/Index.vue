@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <div class="page-content">
+    <div class="page-content suppliers-admin-page">
       <PageHeader
         title="Suppliers"
         subtitle="Companies you purchase stock from"
@@ -126,3 +126,17 @@ async function destroy(supplier) {
   }
 }
 </script>
+
+<style scoped>
+@media (min-width: 768px) {
+  .suppliers-admin-page :deep(.dt-table th.dt-actions-col),
+  .suppliers-admin-page :deep(.dt-table td.dt-actions-col) {
+    width: 112px;
+    text-align: center;
+  }
+  .suppliers-admin-page :deep(.dt-actions) {
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+}
+</style>

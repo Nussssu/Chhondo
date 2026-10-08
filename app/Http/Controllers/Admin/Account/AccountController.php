@@ -198,6 +198,7 @@ class AccountController extends Controller
 
         $accountType = $accountTypes->count();
         return Inertia::render('Admin/Account/Income', [
+            'purposes'     => $this->accountTypeService->getAllPurposes(),
             'credits'      => $credits,
             'debits'       => $debits,
             'accountTypes' => $accountTypes,
@@ -228,6 +229,7 @@ class AccountController extends Controller
 
         $accountType = $accountTypes->count();
         return Inertia::render('Admin/Account/Expense', [
+            'purposes'     => $this->accountTypeService->getAllPurposes(),
             'credits'      => $credits,
             'debits'       => $debits,
             'accountTypes' => $accountTypes,

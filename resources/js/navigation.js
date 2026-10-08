@@ -28,7 +28,7 @@ export const NAV = [
       { label: 'Orders', route: 'admin.orders.index', icon: 'clipboard-list', permission: 'OrderManagement', badge: 'adminPendingOrderCount', badgeTitle: 'orders waiting to be processed', match: 'admin.orders.index' },
       { label: 'POS orders', route: 'admin.orders.pos', icon: 'receipt', permission: 'OrderManagement', badge: 'adminPendingPosOrderCount', badgeTitle: 'counter sales waiting to be processed', match: 'admin.orders.pos' },
       { label: 'POS',       route: 'admin.pos.manage', icon: 'monitor', permission: 'PosManagement', match: 'admin.pos.*' },
-      { label: 'Reviews',   route: 'admin.pages.reviews.index', icon: 'star', permission: 'Comment', badge: 'adminPendingReviewCount', badgeTitle: 'reviews awaiting approval' },
+      { label: 'Reviews', route: 'admin.pages.reviews.index', icon: 'star', permission: 'Comment', badge: 'adminPendingReviewCount', badgeTitle: 'reviews awaiting approval' },
       // Was reachable only from a small topbar icon.
       { label: 'Messages',  route: 'admin.contact-messages.index', icon: 'mail', badge: 'adminUnreadMessageCount', badgeTitle: 'unread messages', match: 'admin.contact-messages.*' },
       { label: 'Customers', route: 'users', icon: 'users', permission: 'UserInformation' },

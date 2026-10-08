@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
+import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, router } from "@inertiajs/vue3"
 import { computed, ref } from "vue"
 import { on, plain } from "@/utils/cms"
@@ -85,7 +86,7 @@ const submitForm = async () => {
           <p v-if="intro.subtitle" class="contact-sub">{{ intro.subtitle }}</p>
         </div>
 
-        <div class="contact-card">
+        <div v-if="on(t.form_show)" class="contact-card">
           <h2 class="contact-card-title">{{ t.card_title }}</h2>
           <form @submit.prevent="submitForm" class="contact-form">
             <div class="contact-row">
@@ -160,6 +161,7 @@ const submitForm = async () => {
       </div>
     </section>
 
+    <PageBlocks :blocks="blocks" />
   </AppLayout>
 </template>
 

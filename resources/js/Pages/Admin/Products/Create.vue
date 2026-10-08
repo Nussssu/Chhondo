@@ -1,7 +1,8 @@
 <template>
-  <AdminLayout>
-    <div class="page-content">
+  <component :is="embedded ? 'div' : AdminLayout">
+    <div class="page-content" :class="{ 'product-embedded': embedded }">
       <PageHeader
+        v-if="!embedded"
         title="Add product"
         :breadcrumbs="[{ label: 'Products', href: route('products.index') }, { label: 'Add' }]"
       />
@@ -26,6 +27,7 @@
         @submit="checkBeforeSubmit"
       >
         <input type="hidden" name="_token" :value="csrfToken">
+        <input v-if="embedded" type="hidden" name="_modal" value="1">
 
         <!-- Panels stay in the DOM and are hidden with the `hidden` attribute
              rather than v-if, so every field still posts with the native form
@@ -354,7 +356,7 @@
     <MediaLibraryPickerModal v-if="showFeaturedPicker" @close="showFeaturedPicker = false" @select="onFeaturedSelected" />
     <MediaLibraryPickerModal v-if="showGalleryPicker" multiple @close="showGalleryPicker = false" @select-multiple="onGallerySelected" />
     <MediaLibraryPickerModal v-if="showVideoPicker" kind="video" @close="showVideoPicker = false" @select="onVideoSelected" />
-  </AdminLayout>
+  </component>
 </template>
 
 <script setup>
@@ -370,6 +372,7 @@ import { useDragSort } from '@/composables/useDragSort'
 import { slugify } from '@/utils/slug'
 
 const props = defineProps({
+  embedded: { type: Boolean, default: false },
   categories: { type: Array, default: () => [] },
 })
 
@@ -537,6 +540,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.product-embedded { padding: 0 !important; }
 /* ── Section rhythm inside a panel ── */
 .pf-section {
   margin: 0 0 4px;

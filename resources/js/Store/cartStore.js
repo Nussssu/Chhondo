@@ -142,7 +142,7 @@ export const useCartStore = defineStore("cartStore", () => {
 
     send("/cart/add", cartData)
       .then(() => {
-        if (typeof window !== "undefined" && window.innerWidth > 768) {
+        if (typeof window !== "undefined") {
           isCartOpen.value = true;
         }
         cartOrder();

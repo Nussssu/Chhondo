@@ -104,7 +104,8 @@ class Page extends Model
                 continue;
             }
 
-            $out[$key] = filled($value) ? $value : $meta['default'];
+            $cleared = in_array($key, $saved['_cleared_fields'] ?? [], true);
+            $out[$key] = $cleared ? '' : (filled($value) ? $value : $meta['default']);
         }
 
         return $out;
@@ -167,7 +168,7 @@ class Page extends Model
             'reviews' => 'ছন্দময়ীদের গল্প',
             'editorial' => 'খুঁজে নিন আপনার নিজস্ব \'ছন্দ\'',
             'widgets:other' => 'অন্যান্য উইজেট',
-            'campaign' => 'বিশেষ অফার',
+            'campaign' => 'বিশেষ অফার — ক্যাম্পেইন (কাউন্টডাউন অফার)',
         ],
         'about' => [
             'page' => 'পেজ',
@@ -241,6 +242,12 @@ class Page extends Model
      */
     public const PAGE_TEXTS = [
         'home' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -302,6 +309,15 @@ class Page extends Model
                 'label' => 'Mobile Banner',
                 'help' => 'Shown on phones. Best at 804 × 1024 px (402 × 512 shape).',
                 'default' => '/assets/chhondo/hero-home-mobile.webp',
+            ],
+            'hero_slideshow_enabled' => [
+                'section' => 'hero', 'type' => 'toggle', 'label' => 'Use banner slideshow', 'default' => '0',
+            ],
+            'hero_autoplay_enabled' => [
+                'section' => 'hero', 'type' => 'toggle', 'label' => 'Automatically change banners', 'default' => '1',
+            ],
+            'hero_slide_seconds' => [
+                'section' => 'hero', 'type' => 'number', 'label' => 'Banner change interval (seconds)', 'default' => '5', 'min' => 1, 'max' => 120,
             ],
             'gallery_show' => [
                 'section' => 'gallery',
@@ -556,7 +572,7 @@ class Page extends Model
             'campaign_show' => [
                 'section' => 'campaign',
                 'type' => 'toggle',
-                'label' => 'Show campaign sections',
+                'label' => 'Show campaign sections (Marketing › Campaigns, with a countdown) — not the product-section widgets',
                 'default' => '1',
             ],
             't2' => [
@@ -586,6 +602,12 @@ class Page extends Model
             ],
         ],
         'shop' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -604,6 +626,12 @@ class Page extends Model
             ],
         ],
         'contact' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -613,6 +641,12 @@ class Page extends Model
                 'section' => 'form',
                 'label' => 'Form heading',
                 'default' => 'ডেলিভারির ঠিকানা',
+            ],
+            'form_show' => [
+                'section' => 'form',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
             ],
             'email_label' => [
                 'section' => 'form',
@@ -677,6 +711,12 @@ class Page extends Model
             ],
         ],
         'checkout' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -727,6 +767,12 @@ class Page extends Model
             ],
         ],
         'categories' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -739,6 +785,12 @@ class Page extends Model
             ],
         ],
         'cart' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -746,6 +798,12 @@ class Page extends Model
             ],
         ],
         'track_order' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -755,6 +813,12 @@ class Page extends Model
                 'section' => 'search',
                 'label' => 'Search box placeholder',
                 'default' => 'e.g. CHK-2025-0481',
+            ],
+            'search_show' => [
+                'section' => 'search',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
             ],
             'search_button' => [
                 'section' => 'search',
@@ -780,6 +844,12 @@ class Page extends Model
                 'section' => 'result',
                 'label' => 'Invoice prefix',
                 'default' => 'Invoice #',
+            ],
+            'result_show' => [
+                'section' => 'result',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
             ],
             't14' => [
                 'section' => 'result',
@@ -843,6 +913,12 @@ class Page extends Model
             ],
         ],
         'order_success' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -903,6 +979,12 @@ class Page extends Model
             ],
         ],
         'blog' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -918,6 +1000,12 @@ class Page extends Model
                 'section' => 'listing',
                 'label' => 'Reading time word',
                 'default' => 'মিনিট পড়া',
+            ],
+            'listing_show' => [
+                'section' => 'listing',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
             ],
             't2' => [
                 'section' => 'listing',
@@ -936,6 +1024,12 @@ class Page extends Model
             ],
         ],
         'about' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -1223,6 +1317,12 @@ Customers',
             ],
         ],
         'policies' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -1230,6 +1330,12 @@ Customers',
             ],
         ],
         'terms' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -1237,6 +1343,12 @@ Customers',
             ],
         ],
         'refund' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -1296,6 +1408,12 @@ Customers',
                         'show' => '1',
                     ],
                 ],
+            ],
+            'sections_show' => [
+                'section' => 'sections',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
             ],
             'contact_show' => [
                 'section' => 'contact',
@@ -1343,6 +1461,12 @@ Customers',
             ],
         ],
         'shipping_delivery' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
@@ -1403,6 +1527,12 @@ Customers',
                     ],
                 ],
             ],
+            'sections_show' => [
+                'section' => 'sections',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'contact_show' => [
                 'section' => 'contact',
                 'type' => 'toggle',
@@ -1449,6 +1579,12 @@ Customers',
             ],
         ],
         'auth' => [
+            'login_show' => [
+                'section' => 'login',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'login_tab_title' => [
                 'section' => 'login',
                 'label' => 'Browser tab title',
@@ -1522,6 +1658,12 @@ Customers',
                 'label' => 'Link to sign up',
                 'default' => 'নতুন অ্যাকাউন্ট তৈরি করুন',
             ],
+            'register_show' => [
+                'section' => 'register',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'register_tab_title' => [
                 'section' => 'register',
                 'label' => 'Browser tab title',
@@ -1588,6 +1730,12 @@ Customers',
                 'label' => 'Link to log in',
                 'default' => 'লগ ইন করুন',
             ],
+            'collage_show' => [
+                'section' => 'collage',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'collage_photo_1' => [
                 'section' => 'collage',
                 'type' => 'image',
@@ -1614,6 +1762,12 @@ Customers',
             ],
         ],
         'not_found' => [
+            'page_show' => [
+                'section' => 'page',
+                'type' => 'toggle',
+                'label' => 'Show this section',
+                'default' => '1',
+            ],
             'title' => [
                 'section' => 'page',
                 'label' => 'Heading (also the browser tab title)',
@@ -1666,9 +1820,10 @@ Customers',
         'home' => [
             'label'      => 'হোম',
             'url'        => '/',
-            // The hero's Desktop / Mobile banners are fields of the page now; the
-            // old slider banners no longer show on the site.
-            'banners'    => false,
+            // The hero's Desktop / Mobile banners are fields of the page; the
+            // banner carousel (ordered, linkable, on/off) is managed here too and
+            // replaces them on the site while its slideshow switch is on.
+            'banners'    => true,
             'editable'   => true,
             'permission' => 'Slider',
             'note'       => 'Hero banners, the headline, and any sections you add below the built-in ones.',
@@ -1688,7 +1843,7 @@ Customers',
             'url'        => '/contact-us',
             'banners'    => false,
             'editable'   => true,
-            'widgets'    => false,
+            'widgets'    => true,
             'permission' => 'Contact',
             'note'       => 'Contact details and the copy above the enquiry form.',
             // These are the same columns the footer reads, so a change here shows
@@ -1755,7 +1910,7 @@ Customers',
             'url'        => '/about-us',
             'banners'    => false,
             'editable'   => true,
-            'widgets'    => false,
+            'widgets'    => true,
             'permission' => null,
             'note'       => 'Your company story.',
             'site_fields' => [],
@@ -1801,8 +1956,8 @@ Customers',
             'url'        => '/login',
             'banners'    => false,
             'editable'   => true,
-            // Its wording and photos only — the page shows no widgets.
-            'widgets'    => false,
+            // Saved widgets render after the shared authentication layout.
+            'widgets'    => true,
             'permission' => null,
             'note'       => 'Both account pages: headings, field labels, buttons and the four collage photos.',
             'site_fields' => [],
@@ -1812,7 +1967,7 @@ Customers',
             'url'        => null,
             'banners'    => false,
             'editable'   => true,
-            'widgets'    => false,
+            'widgets'    => true,
             'permission' => null,
             'note'       => 'Shown when an address does not exist.',
             'site_fields' => [],

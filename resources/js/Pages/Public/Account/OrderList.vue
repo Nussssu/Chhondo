@@ -5,6 +5,10 @@
 
   <AccountLayout>
     <div class="orders-page">
+      <Transition name="copy-toast">
+        <div v-if="copyNotice" class="copy-toast" role="status" aria-live="polite">Copied</div>
+      </Transition>
+
       <div class="section-header">
         <span class="section-header-icon">
           <img :src="'/assets/images/account/nav-order-history.svg'" alt="" />
@@ -91,9 +95,8 @@
 <script setup>
 import AccountLayout from "@/Layouts/AccountLayout.vue";
 import OrderStepper from "@/components/Account/OrderStepper.vue";
-import { ref, watch } from "vue";
+import { onBeforeUnmount, ref, watch } from "vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
-import { toast } from "@steveyuowo/vue-hot-toast";
 import { getOrderStepIndex, getOrderStatusBadge, isExceptionStatus } from "@/utils/orderStatus";
 
 const page   = usePage();
@@ -104,6 +107,17 @@ watch(() => page.props.orders, (val) => {
 });
 
 const expandedId = ref(null);
+const copyNotice = ref(false);
+let copyNoticeTimer;
+
+const showCopyNotice = () => {
+  copyNotice.value = true;
+  window.clearTimeout(copyNoticeTimer);
+  copyNoticeTimer = window.setTimeout(() => { copyNotice.value = false; }, 2200);
+};
+
+onBeforeUnmount(() => window.clearTimeout(copyNoticeTimer));
+
 const toggle = (id) => {
   expandedId.value = expandedId.value === id ? null : id;
 };
@@ -119,11 +133,34 @@ const badgeStyle = (status) => {
 };
 
 const copyId = async (invoice) => {
+  const text = String(invoice ?? '');
+  const legacyCopy = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('copy failed');
+  };
   try {
-    await navigator.clipboard.writeText(invoice);
-    toast.success('অর্ডার আইডি কপি হয়েছে!');
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        legacyCopy();
+      }
+    } else {
+      legacyCopy();
+    }
+    showCopyNotice();
   } catch {
-    toast.error('অর্ডার আইডি কপি করা যায়নি।');
+    copyNotice.value = false;
   }
 };
 </script>
@@ -134,6 +171,26 @@ const copyId = async (invoice) => {
   flex-direction: column;
   gap: 16px;
 }
+
+.copy-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 10000;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #fefaf3;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+  font: 500 14px/20px "Poppins", sans-serif;
+  color: #2c1a0e;
+  pointer-events: none;
+}
+
+.copy-toast-enter-active,
+.copy-toast-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.copy-toast-enter-from,
+.copy-toast-leave-to { opacity: 0; transform: translate(-50%, -8px); }
 
 .section-header {
   display: flex;

@@ -17,6 +17,7 @@ class ContactMessage extends Model
         'phone',
         'message',
         'is_read',
+        'status',
     ];
 
     protected $casts = [

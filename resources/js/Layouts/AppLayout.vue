@@ -141,7 +141,7 @@ watch(
         <!-- Phones: the fixed bottom nav is cleared below the footer, so every
              page keeps the same gap above it. Without a footer the content
              clears it instead. -->
-        <div :class="hideFooter ? 'pb-[76px] md:pb-0' : null">
+        <div class="storefront-content" :class="hideFooter || page.props.layout?.footer?.enabled === false ? 'pb-[76px] md:pb-0' : null">
             <slot />
         </div>
         <Footer v-if="!hideFooter" />
@@ -149,3 +149,61 @@ watch(
         <LoginPromptModal />
     </div>
 </template>
+
+<style scoped>
+@media (max-width: 767px) {
+    .storefront-content {
+        --mobile-section-spacing: 48px;
+        --mobile-content-spacing: 32px;
+    }
+
+    /* Main sections use a common vertical rhythm; prose blocks stay grouped
+       with their headings, and image strips keep their edge-to-edge layout. */
+    .storefront-content :deep(.blog-page),
+    .storefront-content :deep(.categories-page),
+    .storefront-content :deep(> section.track-page),
+    .storefront-content :deep(.policy-page),
+    .storefront-content :deep(.contact-page),
+    .storefront-content :deep(.ab-hero),
+    .storefront-content :deep(.ab-band),
+    .storefront-content :deep(.ab-craft),
+    .storefront-content :deep(.ab-values),
+    .storefront-content :deep(.ab-quote),
+    .storefront-content :deep(.chhondo-story),
+    .storefront-content :deep(.chhondo-editorial),
+    .storefront-content :deep(.reviews-section),
+    .storefront-content :deep(.related-section),
+    .storefront-content :deep(.recently-viewed),
+    .storefront-content :deep(.post-related),
+    .storefront-content :deep(.pb-block:not(.pb-block--prose)) {
+        padding-block: var(--mobile-section-spacing);
+    }
+
+    .storefront-content :deep(.policy-inner),
+    .storefront-content :deep(.policy-body),
+    .storefront-content :deep(.checkout-grid),
+    .storefront-content :deep(.ab-values-grid),
+    .storefront-content :deep(.profile-address-row) {
+        gap: var(--mobile-content-spacing);
+    }
+
+    .storefront-content :deep(.checkout-form-col) {
+        gap: var(--mobile-content-spacing);
+    }
+
+    .storefront-content :deep(.auth-page) { gap: var(--mobile-content-spacing); }
+    .storefront-content :deep(.blog-featured) { margin-bottom: var(--mobile-section-spacing); }
+    .storefront-content :deep(.archive-header) { padding-bottom: var(--mobile-content-spacing); }
+    .storefront-content :deep(.archive-inner) { padding-bottom: var(--mobile-section-spacing); }
+    .storefront-content :deep(.cartPage > .container > .flex) { gap: var(--mobile-content-spacing); }
+
+    .storefront-content :deep(.account-body) {
+        padding-top: var(--mobile-content-spacing);
+        gap: var(--mobile-content-spacing);
+    }
+
+    .storefront-content :deep(.account-titlebar-inner) {
+        padding-bottom: var(--mobile-content-spacing);
+    }
+}
+</style>

@@ -189,7 +189,8 @@ watch(() => page.url, () => {
       </template>
     </div>
 
-    <p v-if="!collapsed" class="sb-version">v{{ version }}</p>
+    <!-- Only when a release version is known; "unknown" read as a bug. -->
+    <p v-if="!collapsed && version && version !== 'unknown'" class="sb-version">v{{ version }}</p>
   </nav>
 </template>
 

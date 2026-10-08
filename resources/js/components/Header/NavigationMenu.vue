@@ -16,7 +16,7 @@ const props = defineProps({
 
 // Header options come from Settings › Header & footer.
 const settings = computed(() => usePage().props.layout?.header ?? {});
-const showCategories = computed(() => settings.value.show_categories_menu !== false);
+const showCategories = computed(() => settings.value.options_enabled !== false && settings.value.show_categories_menu !== false);
 
 // Rendered in two passes: the categories dropdown, then everything else.
 // A categories item is hidden when the header option turns those dropdowns off.

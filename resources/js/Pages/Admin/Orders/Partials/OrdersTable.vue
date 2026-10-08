@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="orders-table" :class="{ 'is-daily-compact': dailyCompact, 'is-reference-compact': referenceCompact }">
     <DataTable
       v-model:selected="selectedIds"
       :columns="columns"
@@ -8,36 +8,48 @@
       empty-title="No orders found"
       empty-message="Orders appear here as customers check out."
     >
-      <!-- Date + invoice -->
+      <!-- Keep the list scannable: the full invoice, staff and note details
+           remain available from the order view/edit flows. -->
       <template #cell-created_at="{ row }">
         <div class="date-cell-date">
-          {{ isRecent(row.created_at) ? timeAgo(row.created_at) : formatDate(row.created_at) }}
+          <span class="date-cell-value" :title="formatDate(row.created_at)">{{ isRecent(row.created_at) ? timeAgo(row.created_at) : formatDate(row.created_at) }}</span>
           <span v-if="!row.viewed_at" class="new-order-tag">New</span>
         </div>
-        <div class="date-cell-meta">
-          #{{ row.invoice_number }}<span v-if="orderNumber(row)"> · {{ orderNumber(row) }} order</span>
-        </div>
-        <div v-if="row.author" class="date-cell-author"><UserCheck :size="11" /> {{ row.author.name }}</div>
+        <div v-if="referenceCompact" class="date-cell-meta">#{{ row.invoice_number }}</div>
       </template>
 
       <template #cell-customer="{ row }">
-        <OrderCustomerCell :order="row" />
+        <OrderCustomerCell :order="row" :compact="dailyCompact && !referenceCompact" />
       </template>
 
       <template #cell-products="{ row }">
         <OrderProductsCell
           :order="row"
           :expanded="expandedRows.has(row.id)"
+          :compact="dailyCompact && !referenceCompact"
           @toggle-expanded="toggleExpanded(row.id)"
         />
       </template>
 
+      <!-- Total carries the payment summary underneath, so payment does not
+           need a column of its own. -->
       <template #cell-total_price="{ row }">
-        {{ orderTotal(row) }}
+        <div class="total-cell">
+          <span class="total-amount">{{ orderTotal(row) }}</span>
+          <div v-if="!referenceCompact" class="total-pay">
+            <PaymentMethodBadge :order="row" />
+            <StatusPill
+              v-if="row.payment_type === 'online'"
+              :tone="paymentStatus(row).tone"
+              :label="paymentStatus(row).label"
+              :dot="false"
+            />
+          </div>
+        </div>
       </template>
 
       <template #cell-order_status="{ row }">
-        <OrderStatusDropdown :order="row" />
+        <OrderStatusDropdown :order="row" :portal="dailyCompact" />
       </template>
 
       <template #cell-payment="{ row }">
@@ -66,9 +78,9 @@
 
       <template #cell-comment="{ row }">
         <div class="note-cell">
-          <span class="note-cell-text">{{ row.comment?.name ?? '—' }}</span>
-          <button type="button" class="table-icon-btn is-primary" title="Edit comment" @click="commentModalOrder = row">
-            <Pencil :size="13" />
+          <span class="note-cell-text" :title="row.comment?.name ?? 'No comment'">{{ row.comment?.name ?? '—' }}</span>
+          <button type="button" class="table-icon-btn comment-edit-btn" title="Edit comment" @click="commentModalOrder = row">
+            <Pencil :size="12" />
           </button>
         </div>
       </template>
@@ -77,14 +89,14 @@
         <button type="button" class="table-icon-btn" title="Fraud check" @click="fraudModalOrder = row">
           <ShieldCheck :size="14" />
         </button>
-        <a :href="route('admin.orders.show', row.id)" target="_blank" rel="noopener" class="table-icon-btn" title="View invoice">
-          <Eye :size="14" />
-        </a>
         <button type="button" class="table-icon-btn" title="View order" @click="$emit('view-order', row.id)">
           <FileText :size="14" />
         </button>
         <button type="button" class="table-icon-btn is-primary" title="Edit order" @click="$emit('edit-order', row.id)">
           <SquarePen :size="14" />
+        </button>
+        <button v-if="!referenceCompact" type="button" class="table-icon-btn" title="Edit comment" @click="commentModalOrder = row">
+          <MessageSquareText :size="14" />
         </button>
         <button
           type="button"
@@ -129,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 import { confirmDelete } from '@/utils/confirmDelete'
@@ -146,28 +158,42 @@ import OrderConsignmentModal from './OrderConsignmentModal.vue'
 import OrderCommentModal from './OrderCommentModal.vue'
 import OrderFraudCheckModal from './OrderFraudCheckModal.vue'
 import SendCourierModal from './SendCourierModal.vue'
-import { limit, capitalize, formatDate, isRecent, timeAgo, orderNumber } from '@/utils/orderFormatting'
-import { UserCheck, Pencil, ShieldCheck, Eye, FileText, SquarePen, Trash2, Truck } from 'lucide-vue-next'
+import { capitalize, formatDate, isRecent, timeAgo } from '@/utils/orderFormatting'
+import { ShieldCheck, FileText, SquarePen, MessageSquareText, Pencil, Trash2, Truck } from 'lucide-vue-next'
 
 const props = defineProps({
   orders: { type: Object, required: true },
   comments: { type: Array, default: () => [] },
+  dailyCompact: { type: Boolean, default: false },
+  referenceCompact: { type: Boolean, default: false },
 })
 
 defineEmits(['view-order', 'edit-order'])
 
-const columns = [
-  { key: 'created_at',   label: 'Date', width: '15%' },
-  { key: 'customer',     label: 'Customer' },
-  { key: 'products',     label: 'Products' },
-  { key: 'total_price',  label: 'Total', align: 'right' },
-  { key: 'order_status', label: 'Status' },
-  // The note is still written by customers at checkout and edited in the order
-  // modals; it just does not earn a column here.
-  { key: 'payment',      label: 'Payment' },
-  { key: 'couriar_name', label: 'Courier' },
-  { key: 'comment',      label: 'Comment', align: 'center' },
-]
+const columns = computed(() => {
+  if (props.referenceCompact) {
+    return [
+      { key: 'created_at',   label: 'Date',     width: '8%' },
+      { key: 'customer',     label: 'Customer', width: '13%' },
+      { key: 'products',     label: 'Products', width: '18%' },
+      { key: 'total_price',  label: 'Total',    width: '7%', align: 'right', nowrap: true },
+      { key: 'order_status', label: 'Status',   width: '10%' },
+      { key: 'payment',      label: 'Payment',  width: '7%' },
+      { key: 'couriar_name', label: 'Courier',  width: '8%' },
+      { key: 'comment',      label: 'Comment',  width: '7%' },
+    ]
+  }
+
+  return [
+    { key: 'created_at',   label: 'Date',     width: props.dailyCompact ? '94px' : '100px' },
+    { key: 'customer',     label: 'Customer', width: props.dailyCompact ? '126px' : '132px' },
+    { key: 'products',     label: 'Products', width: props.dailyCompact ? '176px' : undefined },
+    { key: 'total_price',  label: 'Total',    width: '88px', align: 'right', nowrap: true },
+    { key: 'order_status', label: 'Status',   width: '108px' },
+    // Payment stays under Total, avoiding a redundant standalone column.
+    { key: 'couriar_name', label: 'Courier',  width: '100px' },
+  ]
+})
 
 const courierModalOrder = ref(null)
 
@@ -250,6 +276,98 @@ defineExpose({ selectedIds, bulkDelete, bulkUpdateStatus })
 </script>
 
 <style scoped>
+/* Fixed layout so the columns honour their widths and the table never grows
+   wider than the card — content wraps inside cells instead of scrolling the
+   page sideways. The flexible Products column absorbs the leftover width. */
+.orders-table :deep(.dt-table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.orders-table :deep(.dt-table th),
+.orders-table :deep(.dt-table td) {
+  padding: 8px 10px;
+  /* No overflow:hidden here: the status dropdown menu must escape its cell.
+     Long text is truncated by the inner cell elements instead. */
+}
+
+.orders-table :deep(.dt-check-col) { width: 36px; }
+
+/* Six action buttons in one row cost ~180px; wrapped 3+3 they cost ~90px. */
+.orders-table :deep(.dt-actions-col) { width: 90px; }
+
+.orders-table :deep(.dt-actions) {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  max-width: 86px;
+}
+
+/* Used only by Orders and POS Orders. Keep every summary on one visual line;
+   full details remain available in the View action. */
+.orders-table.is-daily-compact .date-cell-date,
+.orders-table.is-daily-compact .courier-name,
+.orders-table.is-daily-compact .courier-links {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orders-table.is-daily-compact .courier-links {
+  display: block;
+}
+
+.orders-table.is-daily-compact .date-cell-date { gap: 3px; min-width: 0; }
+.orders-table.is-daily-compact .date-cell-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.orders-table.is-daily-compact .new-order-tag { flex: 0 0 auto; white-space: nowrap; }
+
+/* Reference layout used by the storefront Orders page only. */
+.orders-table.is-reference-compact :deep(.dt-table) {
+  font-size: 11.5px;
+}
+
+.orders-table.is-reference-compact :deep(.dt-table th),
+.orders-table.is-reference-compact :deep(.dt-table td) {
+  padding: 7px 6px;
+}
+
+.orders-table.is-reference-compact :deep(.dt-table tbody td) {
+  height: 56px;
+}
+
+.orders-table.is-reference-compact :deep(.dt-check-col) { width: 30px; }
+.orders-table.is-reference-compact :deep(.dt-actions-col) { width: 126px; }
+
+.orders-table.is-reference-compact :deep(.dt-actions) {
+  max-width: none;
+  flex-wrap: nowrap;
+  gap: 1px;
+}
+
+.orders-table.is-reference-compact :deep(.table-icon-btn) {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.orders-table.is-reference-compact :deep(.product-item) { padding: 2px 4px; gap: 5px; }
+.orders-table.is-reference-compact :deep(.product-thumb img) { width: 26px; height: 26px; }
+.orders-table.is-reference-compact :deep(.ocust) { font-size: 11px; line-height: 1.3; }
+
+.orders-table.is-reference-compact .date-cell-date,
+.orders-table.is-reference-compact .date-cell-meta,
+.orders-table.is-reference-compact .courier-name,
+.orders-table.is-reference-compact .courier-links {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .date-cell-date {
   font-weight: 600;
   color: var(--admin-green-800);
@@ -258,6 +376,8 @@ defineExpose({ selectedIds, bulkDelete, bulkUpdateStatus })
   align-items: center;
   gap: 6px;
 }
+
+.date-cell-meta { margin-top: 2px; color: var(--text-muted); font-size: 10.5px; }
 
 .new-order-tag {
   display: inline-block;
@@ -272,39 +392,86 @@ defineExpose({ selectedIds, bulkDelete, bulkUpdateStatus })
   line-height: 1.5;
 }
 
-.date-cell-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-.date-cell-author {
-  font-size: 10.5px;
-  color: var(--text-faint);
-  margin-top: 2px;
+.total-cell {
   display: flex;
-  gap: 4px;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.total-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-pay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.total-pay :deep(.pm-logo) {
+  width: 44px;
+  height: 17px;
 }
 
 .pay-cell {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2, 8px);
-  white-space: nowrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
 }
 
-.note-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.pay-cell :deep(.pm-logo) { width: 40px; height: 16px; }
+
+.note-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
 
 .note-cell-text {
-  font-size: 11.5px;
-  color: var(--text);
-  max-width: 110px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-muted);
 }
 
-.courier-cell { display: flex; flex-direction: column; gap: 2px; }
+.comment-edit-btn { flex: 0 0 22px; width: 22px; height: 22px; }
+
+.courier-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .courier-name { font-weight: 600; font-size: 11.5px; color: var(--admin-green-800); }
-.courier-links { font-size: 11px; }
+.courier-links { font-size: 11px; display: flex; flex-wrap: wrap; column-gap: 4px; overflow-wrap: anywhere; }
 .courier-links a { color: var(--admin-green-600); text-decoration: none; }
 .courier-links a:hover { text-decoration: underline; }
-.courier-sep { color: var(--text-faint); margin: 0 3px; }
+.courier-sep { color: var(--text-faint); }
+
+/* Only the Orders and POS Orders lists share this centered column layout. */
+@media (min-width: 768px) {
+  .orders-table.is-daily-compact :deep(.dt-table thead th),
+  .orders-table.is-daily-compact :deep(.dt-table tbody td) { text-align: center; }
+  .orders-table.is-daily-compact .date-cell-date,
+  .orders-table.is-daily-compact .note-cell,
+  .orders-table.is-daily-compact .courier-links,
+  .orders-table.is-daily-compact :deep(.dt-actions),
+  .orders-table.is-daily-compact :deep(.product-item) { justify-content: center; }
+  .orders-table.is-daily-compact .total-cell,
+  .orders-table.is-daily-compact .total-pay,
+  .orders-table.is-daily-compact .pay-cell { align-items: center; }
+  .orders-table.is-daily-compact :deep(.dt-actions) { margin-inline: auto; }
+}
+
+/* Narrow laptops: shave the fixed columns further before scrolling. */
+@media (max-width: 1280px) {
+  .orders-table :deep(.dt-table th),
+  .orders-table :deep(.dt-table td) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
 </style>

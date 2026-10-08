@@ -23,7 +23,8 @@
                   <th>Discount</th>
                   <th>Valid From</th>
                   <th>Expiry Date</th>
-                  <th>Usage Limit</th>
+                  <th>Used</th>
+                  <th>Status</th>
                   <th>With Product</th>
                   <th class="text-center">Actions</th>
                 </tr>
@@ -34,7 +35,10 @@
                   <td>{{ capitalize(coupon.discount_type) }} ({{ coupon.discount_amount }})</td>
                   <td>{{ formatDate(coupon.valid_from) }}</td>
                   <td>{{ formatDate(coupon.expiry_date) }}</td>
-                  <td>{{ coupon.usage_limit }}</td>
+                  <td class="text-nowrap">{{ coupon.used_count ?? 0 }} / {{ coupon.usage_limit ?? '∞' }}</td>
+                  <td>
+                    <span class="badge" :class="STATUS[coupon.status]?.cls">{{ STATUS[coupon.status]?.label ?? coupon.status }}</span>
+                  </td>
                   <td>
                     <ul class="product-list mb-0">
                       <li v-for="product in coupon.products" :key="product.id" class="small">{{ product.product_name }}</li>
@@ -59,7 +63,7 @@
                   </td>
                 </tr>
                 <tr v-if="!filteredCoupons.length">
-                  <td colspan="7" class="text-center">No coupons found</td>
+                  <td colspan="8" class="text-center">No coupons found</td>
                 </tr>
               </tbody>
             </table>
@@ -97,6 +101,15 @@ const props = defineProps({
   coupons: { type: Array, default: () => [] },
 })
 
+// The same status the storefront checks a code against (Coupon::status()),
+// so what the list says is what a shopper gets.
+const STATUS = {
+  active:    { label: 'Active',    cls: 'text-bg-success' },
+  scheduled: { label: 'Scheduled', cls: 'text-bg-info' },
+  expired:   { label: 'Expired',   cls: 'text-bg-secondary' },
+  used_up:   { label: 'Used up',   cls: 'text-bg-warning' },
+}
+
 const search = ref('')
 const showModal = ref(false)
 const editingCoupon = ref(null)
@@ -106,7 +119,7 @@ const filteredCoupons = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return props.coupons
   return props.coupons.filter((c) =>
-    [c.code, c.discount_type].some((v) => (v ?? '').toString().toLowerCase().includes(q))
+    [c.code, c.discount_type, c.status].some((v) => (v ?? '').toString().toLowerCase().includes(q))
   )
 })
 

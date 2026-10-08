@@ -9,7 +9,19 @@ class SidebarSlider extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['image_path', 'mobile_image_path'];
+    protected $fillable = ['image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active'];
+
+    protected $casts = [
+        'sort_order'   => 'integer',
+        'link_new_tab' => 'boolean',
+        'is_active'    => 'boolean',
+    ];
+
+    /** Carousel order: the admin's sequence, newest first among equals. */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderByDesc('id');
+    }
 
     protected $appends = ['mobile_or_desktop_image'];
 

@@ -1,85 +1,144 @@
 <template>
   <AdminLayout>
-    <div class="page-content">
-      <PageHeader title="Customers" subtitle="Everyone who has registered on the storefront" />
+    <div class="page-content customers-page">
+      <PageHeader
+        title="Customers"
+        :subtitle="`${counts.all ?? 0} registered · ${counts.active ?? 0} active · ${counts.blocked ?? 0} blocked`"
+      />
+
+      <!-- Status tabs and the joined-date range -->
+      <div class="cu-filter-row">
+        <div class="cu-tabs" role="group" aria-label="Customer status">
+          <button
+            v-for="tab in statusTabs"
+            :key="tab.value"
+            type="button"
+            :class="{ 'is-active': status === tab.value }"
+            @click="status = tab.value"
+          >
+            {{ tab.label }} <span>{{ tab.count }}</span>
+          </button>
+        </div>
+        <div class="cu-dates">
+          <label>Joined from<input v-model="from" type="date" :max="to || undefined" /></label>
+          <label>To<input v-model="to" type="date" :min="from || undefined" /></label>
+          <button v-if="from || to" type="button" class="cu-date-reset" @click="from = ''; to = ''">Clear</button>
+        </div>
+      </div>
 
       <div class="card">
         <div class="card-body">
           <Toolbar
             v-model="search"
-            search-placeholder="Search by name, email or phone…"
-          />
+            search-placeholder="Search customers…"
+            :per-page="perPage"
+            @update:per-page="perPage = Number($event)"
+          >
+            <template #filters>
+              <!-- Sorting for small screens, where the column headers collapse -->
+              <select v-model="sortChoice" class="form-select cu-sort" aria-label="Sort customers">
+                <option v-for="o in SORTS" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </template>
+          </Toolbar>
 
           <DataTable
             :columns="columns"
             :rows="users.data ?? []"
+            :sort="sort"
             empty-title="No customers found"
-            :empty-message="search
-              ? 'Try a different search term.'
-              : 'Customers appear here once they register.'"
-            :empty-variant="search ? 'filtered' : 'empty'"
+            :empty-message="hasFilters ? 'Try a different search or filter.' : 'Customers appear here once they register.'"
+            :empty-variant="hasFilters ? 'filtered' : 'empty'"
+            @sort="onSort"
           >
             <template #cell-name="{ row }">
-              <div class="d-flex align-items-center gap-2">
-                <img
-                  :src="avatarFor(row)"
-                  width="32"
-                  height="32"
-                  class="user-avatar flex-shrink-0"
-                  alt=""
-                  loading="lazy"
-                />
-                <div class="min-w-0">
-                  <div class="fw-semibold text-truncate">{{ row.name }}</div>
-                  <div class="text-muted small text-truncate">{{ row.email }}</div>
+              <div class="cu-person">
+                <img :src="avatarFor(row)" width="32" height="32" class="cu-avatar" alt="" loading="lazy" @error="onAvatarError($event, row)" />
+                <div class="cu-person-text">
+                  <strong>{{ row.name }}</strong>
+                  <span>{{ row.email }}</span>
+                  <span v-if="row.phone" class="cu-phone">{{ row.phone }}</span>
                 </div>
               </div>
             </template>
 
-            <template #cell-phone="{ row }">
-              {{ row.phone || '—' }}
-              <span v-if="row.ip_address" class="d-block text-muted small">{{ row.ip_address }}</span>
+            <template #cell-created_at="{ value }">
+              <span class="cu-date">{{ formatDay(value) }}</span>
+            </template>
+
+            <template #cell-orders_count="{ row }">
+              <span class="cu-num">{{ row.orders_count ?? 0 }}</span>
+            </template>
+
+            <template #cell-lifetime_spend="{ row }">
+              <span class="cu-num">{{ money(row.lifetime_spend) }}</span>
+            </template>
+
+            <template #cell-last_order_at="{ value }">
+              <span class="cu-date" :class="{ 'is-none': !value }">{{ value ? formatDay(value) : 'No orders' }}</span>
             </template>
 
             <template #cell-is_block="{ row }">
               <StatusPill
                 :tone="row.is_block ? 'danger' : 'success'"
                 :label="row.is_block ? 'Blocked' : 'Active'"
-                :dot="false"
               />
             </template>
 
-            <template #cell-orders_count="{ row }">
-              {{ row.orders_count ?? 0 }}
-            </template>
-
             <template #actions="{ row }">
-              <button type="button" class="table-icon-btn is-primary" title="View customer" @click="openView(row)">
-                <Eye :size="14" />
+              <button type="button" class="table-icon-btn is-primary" title="View orders" @click="openView(row)">
+                <ShoppingBag :size="14" />
               </button>
-              <template v-if="!isAdmin(row)">
+                <button type="button" class="table-icon-btn" :disabled="isAdmin(row)" :title="isAdmin(row) ? 'Admin accounts are edited under Profile settings' : 'Edit customer'" @click="openEdit(row)">
+                  <Pencil :size="14" />
+                </button>
+                <button type="button" class="table-icon-btn" :disabled="isAdmin(row)" :title="isAdmin(row) ? 'Admin passwords are changed under Profile settings' : 'Send password reset link'" @click="resetPassword(row)">
+                  <KeyRound :size="14" />
+                </button>
                 <button
                   type="button"
                   class="table-icon-btn"
-                  :title="row.is_block ? 'Unblock customer' : 'Block customer'"
+                  :disabled="isAdmin(row)"
+                  :title="isAdmin(row) ? 'Admin accounts cannot be blocked' : (row.is_block ? 'Unblock customer' : 'Block customer')"
                   @click="toggleBlock(row)"
                 >
                   <ShieldCheck v-if="row.is_block" :size="14" />
                   <ShieldBan v-else :size="14" />
                 </button>
-                <button type="button" class="table-icon-btn is-danger" title="Delete customer" @click="deleteUser(row)">
+                <button type="button" class="table-icon-btn is-danger" :disabled="isAdmin(row)" :title="isAdmin(row) ? 'Admin accounts cannot be deleted' : 'Delete customer'" @click="deleteUser(row)">
                   <Trash2 :size="14" />
                 </button>
-              </template>
             </template>
           </DataTable>
 
-          <Pagination :paginator="users" :only="['users']" />
+          <Pagination :paginator="users" :only="['users', 'counts', 'filters']" />
         </div>
       </div>
     </div>
 
-    <!-- Customer View Modal -->
+    <!-- Edit customer -->
+    <FormModal v-if="editing" title="Edit customer" :subtitle="editing.email" @close="editing = null">
+      <form id="cu-edit-form" class="cu-edit" @submit.prevent="saveEdit">
+        <label class="form-label" for="cu-name">Name</label>
+        <input id="cu-name" v-model="editForm.name" type="text" class="form-control" required />
+        <p v-if="editForm.errors.name" class="cu-error">{{ editForm.errors.name }}</p>
+
+        <label class="form-label mt-3" for="cu-email">Email</label>
+        <input id="cu-email" v-model="editForm.email" type="email" class="form-control" required />
+        <p v-if="editForm.errors.email" class="cu-error">{{ editForm.errors.email }}</p>
+
+        <label class="form-label mt-3" for="cu-phone">Phone</label>
+        <input id="cu-phone" v-model="editForm.phone" type="text" class="form-control" />
+        <p v-if="editForm.errors.phone" class="cu-error">{{ editForm.errors.phone }}</p>
+      </form>
+      <template #footer>
+        <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="editing = null">Cancel</button>
+        <button type="submit" form="cu-edit-form" class="btn btn-fig-primary btn-fig-sm" :disabled="editForm.processing">
+          {{ editForm.processing ? 'Saving…' : 'Save changes' }}
+        </button>
+      </template>
+    </FormModal>
+
     <FormModal v-if="viewOpen" size="xl" :show-footer="false" title="Customer Details" @close="closeView">
       <div v-if="loadingView" class="text-center py-5 text-muted">Loading…</div>
 
@@ -134,7 +193,7 @@
         <p v-else class="text-muted small mb-4">No saved addresses.</p>
 
         <!-- Order history -->
-        <h6 class="fw-bold mb-2">Order History <span class="text-muted">({{ viewData.orders.length }})</span></h6>
+        <h6 id="cu-order-history" class="fw-bold mb-2">Order History <span class="text-muted">({{ viewData.orders.length }})</span></h6>
         <div class="orders-table-wrapper mb-4">
           <table class="table table-striped table-hover orders-table-compact">
             <thead>
@@ -202,13 +261,12 @@
         </div>
 
         <!-- Products pagination (10 per page) -->
-        <div class="d-flex justify-content-between align-items-center mt-2" v-if="productPageCount > 1">
-          <small class="text-muted">Page {{ productPage }} of {{ productPageCount }}</small>
-          <div class="btn-group">
-            <button class="btn btn-fig-sm btn-fig-secondary" :disabled="productPage === 1" @click="productPage--">Prev</button>
-            <button class="btn btn-fig-sm btn-fig-secondary" :disabled="productPage === productPageCount" @click="productPage++">Next</button>
-          </div>
-        </div>
+        <Pagination
+          v-if="productPageCount > 1"
+          v-model:page="productPage"
+          :per-page="PRODUCTS_PER_PAGE"
+          :total-items="viewData.products.length"
+        />
       </div>
     </FormModal>
 
@@ -217,7 +275,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import axios from 'axios'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/components/Admin/PageHeader.vue'
@@ -227,24 +285,97 @@ import StatusPill from '@/components/Admin/StatusPill.vue'
 import Pagination from '@/components/Admin/Pagination.vue'
 import FormModal from '@/components/Admin/FormModal.vue'
 import { confirmDelete } from '@/utils/confirmDelete'
-import { Eye, ShieldBan, ShieldCheck, Trash2 } from 'lucide-vue-next'
+import { ShieldBan, ShieldCheck, Trash2, ShoppingBag, Pencil, KeyRound } from 'lucide-vue-next'
 
 const props = defineProps({
   users: Object,
+  counts: { type: Object, default: () => ({}) },
+  filters: { type: Object, default: () => ({}) },
 })
 
 const columns = [
-  { key: 'name',         label: 'Customer' },
-  { key: 'phone',        label: 'Phone / IP' },
-  { key: 'is_block',     label: 'Status' },
-  { key: 'orders_count', label: 'Orders', align: 'right' },
+  { key: 'name',           label: 'Customer', sortable: true },
+  { key: 'created_at',     label: 'Joined', sortable: true, align: 'center', width: '110px' },
+  { key: 'orders_count',   label: 'Orders', sortable: true, align: 'center', width: '80px' },
+  { key: 'lifetime_spend', label: 'Lifetime Spend', sortable: true, align: 'center', width: '130px' },
+  { key: 'last_order_at',  label: 'Last Order', sortable: true, align: 'center', width: '115px' },
+  { key: 'is_block',       label: 'Status', align: 'center', width: '100px' },
 ]
 
 const avatarFor = (row) =>
   row.image
-    ? `/${row.image}`
+    ? (/^(https?:)?\/\//.test(row.image) ? row.image : `/${String(row.image).replace(/^\/+/, '')}`)
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name ?? 'C')}&background=e6efdd&color=234011`
 
+// A missing upload falls back to the initials avatar.
+function onAvatarError(e, row) {
+  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name ?? 'C')}&background=e6efdd&color=234011`
+  if (e.target.src !== fallback) e.target.src = fallback
+}
+
+const formatDay = (value) => value
+  ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  : '—'
+const money = (value) => `৳${Math.round(Number(value) || 0).toLocaleString('en-IN')}`
+
+const isAdmin = (item) => Array.isArray(item.role_names) && item.role_names.includes('Admin')
+
+/* ------------------------------------------------- filters and sort -- */
+// Everything runs on the server, so search, filters and sort cover every
+// customer, not just the page on screen. The URL keeps the state.
+// An empty query reaches us as [] (PHP), where `.sort` would be Array#sort.
+const f = Array.isArray(props.filters) ? {} : props.filters
+const search = ref(f.search ?? '')
+const status = ref(f.status ?? '')
+const from = ref(f.from ?? '')
+const to = ref(f.to ?? '')
+const perPage = ref(Number(f.per_page) || 20)
+const sort = ref({ key: f.sort || 'created_at', dir: f.dir === 'asc' ? 'asc' : 'desc' })
+
+const statusTabs = computed(() => [
+  { value: '', label: 'All', count: props.counts.all ?? 0 },
+  { value: 'active', label: 'Active', count: props.counts.active ?? 0 },
+  { value: 'blocked', label: 'Blocked', count: props.counts.blocked ?? 0 },
+])
+
+const SORTS = [
+  { value: 'created_at:desc', label: 'Newest first' },
+  { value: 'created_at:asc', label: 'Oldest first' },
+  { value: 'lifetime_spend:desc', label: 'Top spenders' },
+  { value: 'orders_count:desc', label: 'Most orders' },
+  { value: 'last_order_at:desc', label: 'Recent buyers' },
+  { value: 'name:asc', label: 'Name A–Z' },
+]
+const sortChoice = computed({
+  get: () => `${sort.value.key}:${sort.value.dir}`,
+  set: (v) => { const [key, dir] = v.split(':'); sort.value = { key, dir } },
+})
+
+function onSort(next) { sort.value = next }
+
+const hasFilters = computed(() => Boolean(search.value || status.value || from.value || to.value))
+
+function applyQuery() {
+  router.get(
+    route('users'),
+    {
+      search: search.value || undefined,
+      status: status.value || undefined,
+      from: from.value || undefined,
+      to: to.value || undefined,
+      sort: sort.value.key !== 'created_at' || sort.value.dir !== 'desc' ? sort.value.key : undefined,
+      dir: sort.value.key !== 'created_at' || sort.value.dir !== 'desc' ? sort.value.dir : undefined,
+      per_page: perPage.value !== 20 ? perPage.value : undefined,
+    },
+    { preserveState: true, replace: true, preserveScroll: true, only: ['users', 'counts', 'filters'] }
+  )
+}
+
+let debounce = null
+watch(search, () => { clearTimeout(debounce); debounce = setTimeout(applyQuery, 400) })
+watch([status, from, to, perPage, () => sort.value.key, () => sort.value.dir], applyQuery)
+
+/* ----------------------------------------------------------- actions -- */
 async function deleteUser(item) {
   const ok = await confirmDelete({
     title: 'Delete this customer?',
@@ -253,33 +384,37 @@ async function deleteUser(item) {
   if (ok) router.delete(route('users.delete', { id: item.id }), { preserveScroll: true })
 }
 
-// Was a <form method="POST"> per row, which made a full page load and lost
-// scroll position on every block/unblock.
 function toggleBlock(item) {
   router.patch(route('users.toggle-block', item.id), {}, { preserveScroll: true, preserveState: true })
 }
 
-// Seed the controls from the current URL so the state survives navigation.
-const initialParams = new URLSearchParams(window.location.search)
-const search = ref(initialParams.get('search') ?? '')
-
-const isAdmin = (item) => Array.isArray(item.role_names) && item.role_names.includes('Admin')
-
-// Server-side search (debounced) so results cover the whole dataset, not just
-// the current page.
-let debounce = null
-function applyQuery() {
-  router.get(
-    route('users'),
-    { search: search.value || undefined },
-    { preserveState: true, replace: true, preserveScroll: true }
-  )
+async function resetPassword(item) {
+  const ok = await confirmDelete({
+    title: 'Send a password reset link?',
+    text: `${item.email} will get an email with a link to choose a new password.`,
+    confirmButtonText: 'Send link',
+    tone: 'question',
+  })
+  if (ok) router.post(route('users.reset-password', item.id), {}, { preserveScroll: true, preserveState: true })
 }
 
-watch(search, () => {
-  clearTimeout(debounce)
-  debounce = setTimeout(applyQuery, 400)
-})
+// Edit
+const editing = ref(null)
+const editForm = useForm({ name: '', email: '', phone: '' })
+function openEdit(item) {
+  editForm.clearErrors()
+  editForm.name = item.name ?? ''
+  editForm.email = item.email ?? ''
+  editForm.phone = item.phone ?? ''
+  editing.value = item
+}
+function saveEdit() {
+  editForm.patch(route('users.update', editing.value.id), {
+    preserveScroll: true,
+    preserveState: true,
+    onSuccess: () => { editing.value = null },
+  })
+}
 
 // --- Customer view modal ---
 const viewOpen = ref(false)
@@ -299,6 +434,7 @@ const productPageCount = computed(() => {
   return Math.ceil(viewData.value.products.length / PRODUCTS_PER_PAGE)
 })
 
+// Each opening starts at the top; order history is reached by manual scrolling.
 async function openView(item) {
   viewOpen.value = true
   loadingView.value = true
@@ -337,5 +473,68 @@ function closeView() {
 .wishlist-chip {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid #e9ecef; border-radius: 20px; padding: 4px 10px; font-size: 0.8rem;
+}
+
+/* ---- Customers list ---- */
+.cu-filter-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 12px;
+}
+.cu-tabs {
+  display: inline-flex; gap: 4px; padding: 4px;
+  background: var(--surface, #fff); border: 1px solid var(--line, #e7e2d6); border-radius: var(--r-md, 10px);
+}
+.cu-tabs button {
+  border: 0; background: transparent; padding: 6px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-muted, #6b6b5f); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.cu-tabs button span {
+  font-size: 11px; padding: 1px 7px; border-radius: 999px; background: rgba(0,0,0,.06);
+}
+.cu-tabs button.is-active { background: var(--admin-green-600, #4b5a1f); color: #fff; }
+.cu-tabs button.is-active span { background: rgba(255,255,255,.22); }
+.cu-dates { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cu-dates label {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0;
+  font-size: 12px; font-weight: 600; color: var(--text-muted, #6b6b5f);
+}
+.cu-dates input {
+  height: 34px; padding: 0 8px; font-size: 13px;
+  border: 1px solid var(--line, #e7e2d6); border-radius: 8px; background: var(--surface, #fff); color: inherit;
+}
+.cu-date-reset {
+  border: 0; background: none; font-size: 12px; font-weight: 600;
+  color: var(--admin-green-600, #4b5a1f); text-decoration: underline; cursor: pointer;
+}
+.cu-sort { height: 34px; font-size: 13px; min-width: 150px; }
+
+.cu-person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cu-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: none; }
+.cu-person-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.cu-person-text strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cu-person-text span { font-size: 12px; color: var(--text-muted, #6b6b5f); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cu-date { font-size: 13px; white-space: nowrap; }
+.cu-date.is-none { color: var(--text-muted, #6b6b5f); font-size: 12px; }
+.customers-page :deep(.dt-actions) { flex-wrap: nowrap; }
+.customers-page :deep(.dt-table thead th.is-center),
+.customers-page :deep(.dt-table thead th.dt-actions-col) { text-align: center; }
+@media (min-width: 768px) {
+  .customers-page :deep(.dt-table tbody td.is-center),
+  .customers-page :deep(.dt-table tbody td.dt-actions-col) { text-align: center; }
+  .customers-page :deep(.dt-actions) { justify-content: center; }
+}
+.cu-num { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.cu-error { color: #b42318; font-size: 12px; margin: 4px 0 0; }
+
+@media (max-width: 640px) {
+  .cu-filter-row { flex-direction: column; align-items: stretch; }
+  .cu-tabs { display: flex; }
+  .cu-tabs button { flex: 1; justify-content: center; }
+  .cu-dates { display: grid; grid-template-columns: auto 1fr; }
+  .cu-dates label { display: contents; }
+  .cu-dates input { width: 100%; min-width: 0; }
+  .cu-date-reset { grid-column: 2; justify-self: start; }
+  .cu-sort { width: 100%; }
 }
 </style>

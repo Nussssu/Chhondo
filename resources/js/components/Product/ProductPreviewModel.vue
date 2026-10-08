@@ -687,14 +687,31 @@ const updateBasePrice = (amount = null) => {
         : priceForAmount(product, amount);
 }
 
+let previewScrollLocked = false;
+let previousBodyOverflow = "";
+
+const releasePreviewScrollLock = () => {
+    if (!previewScrollLocked || typeof document === "undefined") return;
+    document.body.style.overflow = previousBodyOverflow;
+    previewScrollLocked = false;
+};
+
 watch(
     () => props.isOpen,
     (open) => {
-        if (typeof document !== "undefined") {
-            document.body.style.overflow = open ? "hidden" : "";
+        if (typeof document === "undefined") return;
+        if (open && !previewScrollLocked) {
+            previousBodyOverflow = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            previewScrollLocked = true;
+        } else if (!open) {
+            releasePreviewScrollLock();
         }
     },
+    { immediate: true },
 );
+
+onBeforeUnmount(releasePreviewScrollLock);
 
 watch(
     () => props.product,

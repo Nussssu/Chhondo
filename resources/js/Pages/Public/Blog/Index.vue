@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
 import { rebrand } from "@/utils/rebrand"
+import { on } from "@/utils/cms"
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, Link, router } from "@inertiajs/vue3"
 import { computed } from "vue"
@@ -64,6 +65,7 @@ function filterBy(slug) {
         </header>
 
         <!-- Category filter -->
+        <template v-if="on(texts.listing_show)">
         <nav v-if="categories.length" class="blog-filters">
           <button
             type="button"
@@ -148,6 +150,7 @@ function filterBy(slug) {
             <span v-else class="blog-page-btn is-disabled" v-html="link.label" />
           </template>
         </nav>
+        </template>
       </div>
     </section>
 

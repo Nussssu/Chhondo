@@ -69,11 +69,11 @@ const buildParams = (extra = {}) => {
   return params
 }
 
-const navigate = (extra) => {
+const navigate = (extra, preserveScroll = false) => {
   isLoading.value = true
   router.get("/shop", buildParams(extra), {
     preserveState: true,
-    preserveScroll: false,
+    preserveScroll,
     onFinish: () => { isLoading.value = false },
   })
 }
@@ -84,7 +84,7 @@ const onFilterChange = (filters) => {
 }
 
 const onPageChange = (pageNum) => {
-  navigate({ page: pageNum })
+  navigate({ page: pageNum }, true)
 }
 </script>
 

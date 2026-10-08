@@ -11,8 +11,9 @@ import PageHeader from '@/components/Admin/PageHeader.vue'
 import SettingsTabs from '@/components/Admin/SettingsTabs.vue'
 import { LAYOUT_TABS } from '@/settingsTabs'
 import { confirmDelete } from '@/utils/confirmDelete'
+import VisibilityToggle from '@/components/Admin/VisibilityToggle.vue'
 import {
-  Plus, Trash2, ChevronUp, ChevronDown, IndentIncrease, IndentDecrease, Link2, GripVertical,
+  Plus, Trash2, ChevronUp, ChevronDown, IndentIncrease, IndentDecrease, Link2, GripVertical, Copy,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -57,7 +58,8 @@ function nest(flat) {
 }
 
 const form = useForm({
-  settings: { ...props.settings },
+  // A section with no saved switch yet is on, as it has always been.
+  settings: { enabled: true, options_enabled: true, menu_enabled: true, mobile_links_enabled: true, ...props.settings },
   menu: flatten(props.menu),
 })
 
@@ -205,6 +207,19 @@ function clearCategories(item) {
   item.category_ids = []
 }
 
+/** Copy an item, with anything nested under it, right after the original. */
+function duplicateItem(index) {
+  const span = descendantCount(index)
+  const copies = form.menu
+    .slice(index, index + span + 1)
+    .map((row) => ({ ...JSON.parse(JSON.stringify(row)), id: null }))
+  form.menu.splice(index + span + 1, 0, ...copies)
+}
+
+function duplicateMobileLink(index) {
+  form.settings.mobile_links.splice(index + 1, 0, { ...form.settings.mobile_links[index] })
+}
+
 async function removeItem(index) {
   const item = form.menu[index]
   const span = descendantCount(index)
@@ -288,6 +303,7 @@ function submit() {
   <AdminLayout>
     <div class="page-content">
       <PageHeader title="Header" subtitle="The storefront menu and what the header bar shows">
+        <template #title><span class="layout-editor-title">Header <VisibilityToggle v-model="form.settings.enabled" switch-only aria-label="Show storefront header" /></span></template>
         <template #actions>
           <button type="button" class="btn btn-fig-primary btn-fig-sm" :disabled="form.processing" @click="submit">
             {{ form.processing ? 'Saving…' : 'Save header' }}
@@ -300,15 +316,17 @@ function submit() {
       <div class="hd-layout">
         <!-- ── Menu builder ────────────────────────────────────── -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-              <h6 class="mb-0">Menu</h6>
+          <!-- Wraps, so the two buttons drop below the note when the card is narrow
+               instead of running past its edge. -->
+          <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <div style="flex: 1 1 240px; min-width: 0">
+              <h6 class="mb-0 d-flex align-items-center gap-2">Menu <VisibilityToggle v-model="form.settings.menu_enabled" switch-only aria-label="Show navigation menu" /></h6>
               <p class="mb-0 text-muted small">
                 {{ itemCount }} item(s). Drag a row to reorder it, and use ⇥ to nest it under the one above —
                 up to {{ maxDepth + 1 }} levels deep.
               </p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
               <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="addCategoriesItem()">
                 <Plus :size="15" class="me-1" /> Categories dropdown
               </button>
@@ -350,11 +368,11 @@ function submit() {
 
                 <button type="button" class="hd-summary" @click="toggleRow(index)">
                   <span class="hd-label">{{ item.label || 'Untitled' }}</span>
-                  <span v-if="!item.is_active" class="hd-flag">Hidden</span>
                   <span class="hd-kind">{{ rowKind(item) }}</span>
                   <ChevronDown :size="14" class="hd-caret" />
                 </button>
 
+                <VisibilityToggle v-model="item.is_active" switch-only :aria-label="`Show ${item.label || 'menu item'}`" />
                 <div class="hd-actions">
                   <button
                     type="button"
@@ -385,6 +403,9 @@ function submit() {
                     @click="move(index, 1)"
                   >
                     <ChevronDown :size="14" />
+                  </button>
+                  <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateItem(index)">
+                    <Copy :size="14" />
                   </button>
                   <button type="button" class="table-icon-btn is-danger" title="Remove" @click="removeItem(index)">
                     <Trash2 :size="14" />
@@ -421,13 +442,6 @@ function submit() {
                     <option value="_blank">New tab</option>
                   </select>
                 </div>
-                <div class="hd-fields hd-fields--switch">
-                  <div class="form-check form-switch hd-switch">
-                    <input :id="`act${index}`" v-model="item.is_active" class="form-check-input" type="checkbox" role="switch" />
-                    <label class="form-check-label" :for="`act${index}`">Visible in the menu</label>
-                  </div>
-                </div>
-
                 <!-- Which categories this dropdown lists -->
                 <div v-if="item.type === 'categories'" class="hd-cats">
                   <div class="hd-cats-head">
@@ -510,26 +524,35 @@ function submit() {
           </div>
 
           <div class="card">
-            <div class="card-header"><h6 class="mb-0">Announcement bar</h6></div>
-            <div class="card-body">
-              <div class="form-check form-switch mb-2">
-                <input id="ann" v-model="form.settings.announcement_enabled" class="form-check-input" type="checkbox" role="switch" />
-                <label class="form-check-label" for="ann">Show a strip above the header</label>
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
+              <div>
+                <h6 class="mb-0">Announcement bar</h6>
+                <p class="mb-0 text-muted small">A strip above the header.</p>
               </div>
+              <VisibilityToggle v-model="form.settings.announcement_enabled" switch-only aria-label="Show announcement bar" />
+            </div>
+            <div class="card-body">
               <input v-model="form.settings.announcement_text" type="text" class="form-control" placeholder="e.g. ফ্রি ডেলিভারি ১৫০০৳+ অর্ডারে" />
               <input v-model="form.settings.announcement_url" type="text" class="form-control mt-2" placeholder="Link (optional)" />
             </div>
           </div>
 
+        </aside>
+      </div>
+
+      <div class="hd-widgets">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
               <div>
                 <h6 class="mb-0">Mobile menu links</h6>
                 <p class="mb-0 text-muted small">The "Help & Support" card in the mobile drawer.</p>
               </div>
-              <button type="button" class="btn btn-fig-secondary btn-fig-sm" @click="addMobileLink">
-                <Plus :size="14" />
-              </button>
+              <div class="d-flex align-items-center gap-2">
+                <VisibilityToggle v-model="form.settings.mobile_links_enabled" switch-only aria-label="Show mobile help links" />
+                <button type="button" class="btn btn-fig-secondary btn-fig-sm" title="Add link" @click="addMobileLink">
+                  <Plus :size="14" />
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div v-for="(link, mi) in form.settings.mobile_links ?? []" :key="mi" class="hd-mobile-link">
@@ -542,6 +565,10 @@ function submit() {
                   <option value="privacy">Privacy</option>
                   <option value="contact">Contact</option>
                 </select>
+                <VisibilityToggle :model-value="link.enabled !== false" switch-only :aria-label="`Show ${link.label || 'help link'}`" @update:model-value="link.enabled = $event" />
+                <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateMobileLink(mi)">
+                  <Copy :size="14" />
+                </button>
                 <button type="button" class="table-icon-btn is-danger" title="Remove" @click="form.settings.mobile_links.splice(mi, 1)">
                   <Trash2 :size="14" />
                 </button>
@@ -551,38 +578,39 @@ function submit() {
           </div>
 
           <div class="card">
-            <div class="card-header"><h6 class="mb-0">Header options</h6></div>
-            <div class="card-body">
-              <div class="form-check form-switch mb-3">
-                <input id="cats" v-model="form.settings.show_categories_menu" class="form-check-input" type="checkbox" role="switch" />
-                <label class="form-check-label" for="cats">Show categories dropdowns</label>
-              </div>
-
-              <div class="form-check form-switch mb-2">
-                <input id="srch" v-model="form.settings.show_search" class="form-check-input" type="checkbox" role="switch" />
-                <label class="form-check-label" for="srch">Search</label>
-              </div>
-              <div class="form-check form-switch mb-2">
-                <input id="wish" v-model="form.settings.show_wishlist" class="form-check-input" type="checkbox" role="switch" />
-                <label class="form-check-label" for="wish">Wishlist</label>
-              </div>
-              <div class="form-check form-switch">
-                <input id="acct" v-model="form.settings.show_account" class="form-check-input" type="checkbox" role="switch" />
-                <label class="form-check-label" for="acct">Account</label>
-              </div>
+            <div class="card-header d-flex justify-content-between align-items-center"><h6 class="mb-0">Header options</h6><VisibilityToggle v-model="form.settings.options_enabled" switch-only aria-label="Show header options" /></div>
+            <div class="card-body hd-options">
+              <div class="hd-option"><span>Categories dropdowns</span><VisibilityToggle v-model="form.settings.show_categories_menu" switch-only aria-label="Show categories dropdowns" /></div>
+              <div class="hd-option"><span>Search</span><VisibilityToggle v-model="form.settings.show_search" switch-only aria-label="Show header search" /></div>
+              <div class="hd-option"><span>Wishlist</span><VisibilityToggle v-model="form.settings.show_wishlist" switch-only aria-label="Show header wishlist" /></div>
+              <div class="hd-option"><span>Account</span><VisibilityToggle v-model="form.settings.show_account" switch-only aria-label="Show header account" /></div>
             </div>
           </div>
 
           <button type="button" class="btn btn-fig-primary w-100" :disabled="form.processing" @click="submit">
             {{ form.processing ? 'Saving…' : 'Save header' }}
           </button>
-        </aside>
       </div>
     </div>
   </AdminLayout>
 </template>
 
 <style scoped>
+.layout-editor-title { display: inline-flex; align-items: center; gap: 12px; }
+.hd-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.hd-layout > .card { min-width: 0; }
+.hd-layout > .card > .card-header, .hd-layout > .card > .card-body { padding: 12px; }
+.hd-side .card-header, .hd-side .card-body { padding: 12px; }
+.hd-widgets { display: grid; gap: var(--sp-4, 16px); margin-top: var(--sp-4, 16px); min-width: 0; }
+.hd-widgets .card-header, .hd-widgets .card-body { padding: 12px; }
+.hd-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+@media (min-width: 992px) {
+  .hd-widgets .hd-mobile-link { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 130px 40px 24px 24px; }
+  .hd-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 575px) {
+  .hd-options { grid-template-columns: 1fr; }
+}
 .hd-layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -591,13 +619,15 @@ function submit() {
 }
 
 @media (min-width: 992px) {
-  .hd-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+  .hd-layout { grid-template-columns: minmax(0, 1fr) 280px; }
+  .hd-layout > .card { position: sticky; top: 84px; align-self: start; }
 }
 
 .hd-side {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4, 16px);
+  min-width: 0;
 }
 
 /* ── Menu rows ─────────────────────────────────────────────
@@ -660,7 +690,12 @@ function submit() {
 
 .hd-kind {
   margin-left: auto;
-  flex-shrink: 0;
+  /* Gives way (with an ellipsis) on a phone instead of pushing out of the row. */
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: var(--fs-xs, 12px);
   color: var(--text-muted, #6d6560);
 }
@@ -708,11 +743,13 @@ function submit() {
 }
 
 .hd-mobile-link {
-  display: grid;
-  grid-template-columns: 1fr 1fr 110px auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 6px;
 }
+.hd-mobile-link > .form-control { flex: 1 1 100%; min-width: 0; }
+.hd-mobile-link > .form-select { flex: 1 1 100px; min-width: 0; width: auto; }
 
 /* ── Category picker on a dropdown item ──────────────────── */
 .hd-cats {

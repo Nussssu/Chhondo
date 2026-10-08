@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
-    <div class="page-content">
-      <div class="container-fluid p-4">
+    <div class="page-content purchases-page">
+      <div class="container-fluid p-0">
         <PageHeader title="Purchases" subtitle="Purchase orders and supplier payments">
           <template #actions>
             <a :href="exportUrl" class="btn btn-fig-secondary btn-fig-sm d-inline-flex align-items-center">
@@ -60,17 +60,15 @@
                   </option>
                 </select>
 
-                <input
-                  v-model="dateRange"
-                  type="text"
-                  class="form-control w-auto"
-                  placeholder="Date range"
-                  aria-label="Filter by date range"
-                  @change="applyFilters"
-                />
+                <div class="pu-date-range">
+                  <label for="pu-date-from">From</label>
+                  <input id="pu-date-from" v-model="dateFrom" type="date" class="form-control" :max="dateTo || undefined" @change="applyFilters" />
+                  <label for="pu-date-to">To</label>
+                  <input id="pu-date-to" v-model="dateTo" type="date" class="form-control" :min="dateFrom || undefined" @change="applyFilters" />
+                </div>
 
                 <button
-                  v-if="search || supplierId || dateRange"
+                  v-if="hasFilters"
                   type="button"
                   class="btn btn-fig-secondary btn-fig-sm d-inline-flex align-items-center"
                   @click="resetFilters"
@@ -90,21 +88,23 @@
               :empty-variant="hasFilters ? 'filtered' : 'empty'"
             >
               <template #cell-purchase_name="{ row }">
-                <div class="fw-semibold">{{ row.purchase_name }}</div>
-                <div class="text-muted small">{{ row.invoice_number }}</div>
+                <div class="pu-primary fw-semibold" :title="row.purchase_name">{{ row.purchase_name }}</div>
+                <div class="pu-secondary text-muted" :title="row.invoice_number">{{ row.invoice_number }}</div>
               </template>
 
               <template #cell-supplier="{ row }">
-                <div>{{ row.supplier?.supplier_name ?? '—' }}</div>
-                <div class="text-muted small">{{ row.supplier?.company_name }}</div>
+                <div class="pu-primary" :title="row.supplier?.supplier_name">{{ row.supplier?.supplier_name ?? '—' }}</div>
+                <div class="pu-secondary text-muted" :title="row.supplier?.company_name">{{ row.supplier?.company_name }}</div>
               </template>
 
               <template #cell-products="{ row }">
                 <div class="product-list-p">
-                  <div v-for="product in visibleProducts(row)" :key="product.product_id" class="small mb-2">
-                    <div class="text-truncate">{{ product.product_name || 'N/A' }}</div>
-                    <div v-if="product.option_name" class="fw-medium text-truncate">{{ product.option_name }}</div>
-                    <span class="badge bg-secondary">Qty: {{ product.quantity }}</span>
+                  <div v-for="product in visibleProducts(row)" :key="product.product_id" class="pu-product">
+                    <div class="pu-primary" :title="product.product_name">{{ product.product_name || 'N/A' }}</div>
+                    <div class="pu-product-details">
+                      <span v-if="product.option_name" class="pu-secondary text-muted" :title="product.option_name">{{ product.option_name }}</span>
+                      <span class="badge bg-secondary">Qty: {{ product.quantity }}</span>
+                    </div>
                   </div>
                   <button
                     v-if="(row.products_data?.length || 0) > PRODUCT_PREVIEW"
@@ -138,8 +138,8 @@
               </template>
 
               <template #cell-created_at="{ row }">
-                <div>{{ formatDate(row.created_at) }}</div>
-                <div class="text-muted small">{{ timeAgo(row.created_at) }}</div>
+                <div class="pu-primary">{{ formatDate(row.created_at) }}</div>
+                <div class="pu-secondary text-muted">{{ timeAgo(row.created_at) }}</div>
               </template>
 
               <template #cell-status="{ row }">
@@ -294,14 +294,14 @@ const props = defineProps({
 })
 
 const columns = [
-  { key: 'purchase_name',    label: 'Purchase', width: '16%' },
-  { key: 'supplier',         label: 'Supplier', width: '13%' },
-  { key: 'products',         label: 'Products', width: '18%' },
-  { key: 'purchasing_price', label: 'Total', align: 'right' },
-  { key: 'purchasing_paid',  label: 'Paid', align: 'right' },
-  { key: 'purchasing_due',   label: 'Due', align: 'right' },
-  { key: 'created_at',       label: 'Date', nowrap: true },
-  { key: 'status',           label: 'Status' },
+  { key: 'purchase_name',    label: 'Purchase', width: '14%' },
+  { key: 'supplier',         label: 'Supplier', width: '12%' },
+  { key: 'products',         label: 'Products' },
+  { key: 'purchasing_price', label: 'Total', width: '9%', align: 'right', nowrap: true },
+  { key: 'purchasing_paid',  label: 'Paid', width: '9%', align: 'right', nowrap: true },
+  { key: 'purchasing_due',   label: 'Due', width: '9%', align: 'right', nowrap: true },
+  { key: 'created_at',       label: 'Date', width: '11%', nowrap: true },
+  { key: 'status',           label: 'Status', width: '8%' },
 ]
 
 // ── Filters ────────────────────────────────────────────────
@@ -309,9 +309,12 @@ const columns = [
 // change; these go through Inertia and keep scroll position.
 const search = ref(props.currentFilters.search ?? '')
 const supplierId = ref(props.currentFilters.supplier_id ?? '')
-const dateRange = ref(props.currentFilters.date_range ?? '')
+const initialDates = (props.currentFilters.date_range ?? '').split(' to ')
+const dateFrom = ref(props.currentFilters.start_date ?? initialDates[0] ?? '')
+const dateTo = ref(props.currentFilters.end_date ?? initialDates[1] ?? '')
+const dateRange = computed(() => dateFrom.value && dateTo.value ? `${dateFrom.value} to ${dateTo.value}` : '')
 
-const hasFilters = computed(() => Boolean(search.value || supplierId.value || dateRange.value))
+const hasFilters = computed(() => Boolean(search.value || supplierId.value || dateFrom.value || dateTo.value))
 
 function applyFilters() {
   router.get(
@@ -320,6 +323,8 @@ function applyFilters() {
       search: search.value || undefined,
       supplier_id: supplierId.value || undefined,
       date_range: dateRange.value || undefined,
+      start_date: dateFrom.value || undefined,
+      end_date: dateTo.value || undefined,
     },
     { preserveState: true, preserveScroll: true, replace: true }
   )
@@ -328,7 +333,8 @@ function applyFilters() {
 function resetFilters() {
   search.value = ''
   supplierId.value = ''
-  dateRange.value = ''
+  dateFrom.value = ''
+  dateTo.value = ''
   applyFilters()
 }
 
@@ -344,6 +350,8 @@ const exportUrl = computed(() =>
     supplier_id: props.currentFilters.supplier_id || undefined,
     search: props.currentFilters.search || undefined,
     date_range: props.currentFilters.date_range || undefined,
+    start_date: props.currentFilters.start_date || undefined,
+    end_date: props.currentFilters.end_date || undefined,
   })
 )
 
@@ -504,19 +512,43 @@ async function deletePurchase(purchase) {
 onMounted(() => {
   if (typeof window.lucide !== 'undefined') window.lucide.createIcons()
 
-  if (typeof window.flatpickr !== 'undefined') {
-    window.flatpickr('#date_range', {
-      mode: 'range',
-      dateFormat: 'Y-m-d',
-      altInput: true,
-      altFormat: 'M d, Y',
-      altInputClass: 'form-control form-control-modern'
-    })
-  }
 })
 </script>
 
 <style scoped>
+.purchases-page { min-width: 0; }
+.purchases-page :deep(.card-body) { padding: 12px; }
+.purchases-page :deep(.dt-table) { width: 100%; table-layout: fixed; font-size: 12px; }
+.purchases-page :deep(.dt-table th),
+.purchases-page :deep(.dt-table td) {
+  padding: 10px 8px !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+.purchases-page :deep(.dt-table th) { font-size: 10px; letter-spacing: .025em; }
+.purchases-page :deep(.dt-actions-col) { width: 112px; }
+.purchases-page :deep(.dt-actions) { gap: 2px; flex-wrap: nowrap; white-space: nowrap; }
+.purchases-page :deep(.dt-actions),
+.purchases-page .pu-product-details { justify-content: flex-start !important; }
+.purchases-page :deep(.dt-actions) { margin-inline: 0 !important; }
+.purchases-page :deep(.tb), .purchases-page :deep(.tb-left) { flex-wrap: wrap; }
+.purchases-page :deep(.tb-left) { overflow-x: visible; }
+.pu-date-range { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.pu-date-range label { margin: 0; font-size: 11px; color: var(--text-muted); }
+.purchases-page :deep(.pu-date-range .form-control) { min-width: 0; width: 132px; padding: 6px 8px; font-size: 12px; }
+.purchases-page :deep(.dt-actions .table-icon-btn) { width: 22px; height: 24px; flex: 0 0 22px; }
+.pu-primary, .pu-secondary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; line-height: 1.4; }
+.pu-primary { font-size: 12px; }
+.pu-secondary { font-size: 10.5px; margin-top: 2px; }
+.pu-product { min-width: 0; margin-bottom: 6px; }
+.pu-product:last-of-type { margin-bottom: 0; }
+.pu-product-details { display: flex; align-items: center; gap: 5px; min-width: 0; margin-top: 2px; }
+.pu-product-details .pu-secondary { margin-top: 0; }
+.pu-product-details .badge { flex-shrink: 0; padding: 2px 4px; font-size: 9px; line-height: 14px; }
+.product-list-p > .btn { font-size: 10.5px; line-height: 16px; }
+@media (max-width: 767px) {
+  .purchases-page :deep(.dt-actions-col) { width: 100%; }
+}
 /* Summary strip — replaces the four .stats-card tiles */
 .pu-summary {
   display: flex;
@@ -528,7 +560,7 @@ onMounted(() => {
   border-radius: var(--r-md);
 }
 
-.pu-summary-item { display: flex; align-items: baseline; gap: var(--sp-2); }
+.pu-summary-item { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 
 .pu-summary-label {
   font-size: var(--fs-xs);
@@ -587,8 +619,7 @@ onMounted(() => {
 .form-control-modern, .form-select-modern { border: 2px solid #e5e7eb; border-radius: 10px; padding: 0.75rem 1rem; transition: all 0.3s ease; }
 .form-control-modern:focus, .form-select-modern:focus { border-color: #252f17; box-shadow: 0 0 0 3px rgba(37, 47, 23,0.1); outline: none; }
 .pay-btn { padding: 2px 10px; font-size: 0.75rem; line-height: 1.2; border-radius: 6px; }
-.product-list-p { width: 220px; max-width: 220px; }
-.product-list-p .text-truncate { max-width: 220px; }
+.product-list-p { width: 100%; min-width: 0; max-width: 100%; }
 .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .purchase-table tr:nth-child(even) { background: #dffcf4; }
 </style>

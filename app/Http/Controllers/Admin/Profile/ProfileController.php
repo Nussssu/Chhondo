@@ -96,7 +96,36 @@ class ProfileController extends Controller
         // customer info table.
         $userQuery = User::with(['address', 'roles'])
             ->withCount('orders')
+            // Lifetime spend and last order, for the table — the same orders
+            // the customer detail view totals.
+            ->withSum('orders as lifetime_spend', 'total_price')
+            ->withMax('orders as last_order_at', 'created_at')
             ->where('email', 'not like', '%@guest.com');
+
+        // Status: active or blocked.
+        if (in_array($request->status, ['active', 'blocked'], true)) {
+            $userQuery->where('is_block', $request->status === 'blocked');
+        }
+
+        // Joined between two dates (either end optional).
+        if ($request->filled('from')) {
+            $userQuery->whereDate('created_at', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $userQuery->whereDate('created_at', '<=', $request->date('to'));
+        }
+
+        // Sorting, by a known column only; newest customers first by default.
+        $sortable = [
+            'name'           => 'name',
+            'created_at'     => 'created_at',
+            'orders_count'   => 'orders_count',
+            'lifetime_spend' => 'lifetime_spend',
+            'last_order_at'  => 'last_order_at',
+        ];
+        $sortKey = $sortable[$request->input('sort')] ?? 'created_at';
+        $sortDir = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+        $userQuery->orderBy($sortKey, $sortDir)->orderBy('id', 'desc');
 
         // Apply search
         if ($request->has('search') && $request->search != '') {
@@ -116,7 +145,7 @@ class ProfileController extends Controller
         // Paginate the results
         $users = $userQuery->when($request->user_id, function ($query, $userId) {
             $query->where('id', $userId);
-        })->paginate(10)->withQueryString();
+        })->paginate(in_array((int) $request->per_page, [10, 20, 50, 100], true) ? (int) $request->per_page : 20)->withQueryString();
 
         // Expose role names as a simple string array so the table can gate the
         // Block/Delete actions (e.g. hide them for Admins).
@@ -126,7 +155,19 @@ class ProfileController extends Controller
         });
 
 
-        return Inertia::render('Admin/Users/Index', ['users' => $users]);
+        // Counts for the status filter, across every registered customer.
+        $base = User::where('email', 'not like', '%@guest.com');
+        $counts = [
+            'all'     => (clone $base)->count(),
+            'active'  => (clone $base)->where('is_block', false)->count(),
+            'blocked' => (clone $base)->where('is_block', true)->count(),
+        ];
+
+        return Inertia::render('Admin/Users/Index', [
+            'users'   => $users,
+            'counts'  => $counts,
+            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'dir', 'per_page']),
+        ]);
     }
 
 
@@ -194,7 +235,9 @@ class ProfileController extends Controller
                 'name'             => $user->name,
                 'email'            => $user->email,
                 'phone'            => $user->phone,
-                'image'            => $user->image ? '/' . ltrim($user->image, '/') : null,
+                'image'            => $user->image
+                    ? (preg_match('#^(https?:)?//#', $user->image) ? $user->image : '/' . ltrim($user->image, '/'))
+                    : null,
                 'ip_address'       => $user->ip_address,
                 'is_block'         => (bool) $user->is_block,
                 'date_of_birth'    => optional($user->date_of_birth)->format('d M Y'),
@@ -211,6 +254,52 @@ class ProfileController extends Controller
             'wishlist'  => $wishlist,
             'products'  => $products,
         ]);
+    }
+
+    /** Edit a customer's name, email and phone. */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->getRoleNames()->contains('Admin')) {
+            return redirect()->back()->with('error', 'Admin accounts are edited under Profile settings.');
+        }
+
+        $data = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => 'nullable|string|max:30',
+        ]);
+
+        $user->fill($data)->save();
+
+        return redirect()->back()->with('success', 'Customer updated.');
+    }
+
+    /**
+     * Email the customer a link to choose a new password — the same link the
+     * storefront's "forgot password" sends, so no password is ever handled
+     * by hand.
+     */
+    public function sendPasswordReset($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->getRoleNames()->contains('Admin')) {
+            return redirect()->back()->with('error', 'Admin passwords are changed under Profile settings.');
+        }
+
+        try {
+            $status = \Illuminate\Support\Facades\Password::sendResetLink(['email' => $user->email]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->back()->with('error', 'The reset email could not be sent. Check the mail settings.');
+        }
+
+        return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+            ? redirect()->back()->with('success', "Password reset link sent to {$user->email}.")
+            : redirect()->back()->with('error', __($status));
     }
 
     public function blockUser($id)

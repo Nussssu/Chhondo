@@ -14,11 +14,14 @@ class ProductReview extends Model
         'review',
         'images',
         'is_active',
+        'is_featured',
+        'admin_reply',
     ];
 
     protected $casts = [
         'images'    => 'array',
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
         'rating'    => 'integer',
     ];
 

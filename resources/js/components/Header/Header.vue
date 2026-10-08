@@ -52,7 +52,12 @@ const colors = computed(() => globalCategories.value.colors || []);
 // The menu is managed in the admin (Settings › Header & footer). The old
 // hardcoded list is the fallback only when nothing has been set up yet.
 const layout = computed(() => usePage().props.layout ?? {});
-const headerSettings = computed(() => layout.value.header ?? {});
+const headerSettings = computed(() => {
+    const settings = layout.value.header ?? {};
+    return settings.options_enabled === false
+        ? { ...settings, show_search: false, show_wishlist: false, show_account: false, show_categories_menu: false }
+        : settings;
+});
 
 /*
  * The menu is managed in the admin (Settings › Header & footer › Menu):
@@ -71,7 +76,7 @@ const toSubmenu = (list) =>
         submenu: toSubmenu(entry.children),
     }));
 
-const menuItems = computed(() => toSubmenu(layout.value.menu));
+const menuItems = computed(() => headerSettings.value.menu_enabled === false ? [] : toSubmenu(layout.value.menu));
 
 // The categories a dropdown item lists: its chosen ones, or all of them.
 const categoriesFor = (item) => {
@@ -81,7 +86,7 @@ const categoriesFor = (item) => {
 
 // The drawer expands sub items only, so a categories item carries them there.
 const mobileMenuItems = computed(() =>
-    menuItems.value.map((item) =>
+    menuItems.value.filter(item => item.type !== 'categories' || headerSettings.value.show_categories_menu !== false).map((item) =>
         item.type === "categories"
             ? {
                   ...item,
@@ -107,6 +112,18 @@ const toggleMobileMenu = () => {
         document.body.style.overflow = "";
     }
 };
+
+watch(() => usePage().url, () => {
+    if (!isMobileMenuOpen.value) return;
+    isMobileMenuOpen.value = false;
+    document.body.style.overflow = "";
+});
+watch(() => headerSettings.value.enabled, (enabled) => {
+    if (enabled === false && isMobileMenuOpen.value) {
+        isMobileMenuOpen.value = false;
+        document.body.style.overflow = "";
+    }
+});
 
 const isOpen = ref(false);
 
@@ -205,6 +222,9 @@ onMounted(() => {
 // Remove event listener when component is unmounted
 onUnmounted(() => {
     document.removeEventListener("click", handleClickOutside);
+    if (isMobileMenuOpen.value) {
+        document.body.style.overflow = "";
+    }
 });
 
 const openSearch = () => {
@@ -239,7 +259,7 @@ watch(
 </script>
 
 <template>
-    <header class="header-area header-sticky">
+    <header v-if="headerSettings.enabled !== false" class="header-area header-sticky">
         <!-- Announcement bar (Settings › Header & footer) -->
         <div v-if="headerSettings.announcement_enabled && headerSettings.announcement_text" class="header-announcement">
             <div class="container text-center">
@@ -375,6 +395,7 @@ watch(
                     <!-- Account lives in the bottom nav on phones; kept here for
                          tablets (768px+), where the bottom nav is hidden. -->
                     <button
+                        v-if="headerSettings.show_account !== false"
                         @click="goToAccount"
                         class="hidden md:inline-flex text-gray-600 hover:text-theme focus:outline-none"
                         :aria-label="authStore.isAuthenticated ? 'My Account' : 'Login'"

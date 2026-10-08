@@ -19,7 +19,7 @@ const t = computed(() => props.texts || {});
 
 // One bullet per line of "Points".
 const sections = computed(() =>
-  shown(t.value.sections).map((row) => ({
+  on(t.value.sections_show) === false ? [] : shown(t.value.sections).map((row) => ({
     title: row.title,
     lines: String(row.lines || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
   })),

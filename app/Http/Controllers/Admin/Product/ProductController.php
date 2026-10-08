@@ -108,6 +108,7 @@ class ProductController extends Controller
         $data = $this->productService->getProductCreationData();
 
         return Inertia::render('Admin/Products/Create', [
+            'embedded'         => request()->boolean('modal'),
             'attributes'       => $data['attributes'],
             'attributeOptions' => $data['attributeOptions'],
             'categories'       => $data['categories'],
@@ -232,6 +233,7 @@ class ProductController extends Controller
         // dd($savedProductAttributes);
         // ----------- Return View -----------
         return Inertia::render('Admin/Products/Edit', [
+            'embedded'              => request()->boolean('modal'),
             'product'               => $product,
             'tagValues'             => $tagValues,
             'specifications'        => $specifications,
@@ -441,6 +443,10 @@ class ProductController extends Controller
 
         if (! empty($validatedData['single']) || ! empty($validatedData['combo'])) {
             $this->productRepository->handleProductAttributes($product->id, $validatedData);
+        }
+
+        if ($request->boolean('_modal')) {
+            return redirect()->route('products.index')->with('success', 'Product updated successfully');
         }
 
         return redirect()->back()->with('success', 'Product updated successfully');

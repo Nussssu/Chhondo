@@ -71,9 +71,16 @@
       </div>
 
       <nav v-if="pageLinks.length > 3" class="pg-pager">
-        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="!prevUrl" @click="goToUrl(prevUrl)">Prev</button>
-        <span class="small text-muted">Page {{ products.current_page }} / {{ products.last_page }}</span>
-        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="!nextUrl" @click="goToUrl(nextUrl)">Next</button>
+        <button
+          v-for="link in pageLinks"
+          :key="link.label"
+          type="button"
+          class="btn btn-sm"
+          :class="link.active ? 'btn-fig-primary' : 'btn-outline-secondary'"
+          :disabled="!link.url || link.active"
+          :aria-current="link.active ? 'page' : undefined"
+          @click="goToUrl(link.url)"
+        >{{ link.label }}</button>
       </nav>
     </div>
   </div>
@@ -82,6 +89,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import axios from 'axios'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 import { Search, PackageSearch, Image as ImageIcon } from 'lucide-vue-next'
 import { rowState } from '@/utils/productPricing'
 import { sellableQuantity } from '@/utils/stock'
@@ -101,9 +109,7 @@ const loading = ref(false)
 const searchInput = ref(null)
 let searchTimeout = null
 
-const pageLinks = computed(() => products.value.links ?? [])
-const prevUrl = computed(() => products.value.prev_page_url)
-const nextUrl = computed(() => products.value.next_page_url)
+const pageLinks = computed(() => adminPaginationLinks(products.value))
 
 const basePrice = (product) => Number(product.price ?? 0)
 
@@ -285,5 +291,5 @@ defineExpose({ focusSearch })
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 56px 20px; color: #90a4ae; text-align: center;
 }
-.pg-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 0 4px; }
+.pg-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; padding: 16px 0 4px; }
 </style>

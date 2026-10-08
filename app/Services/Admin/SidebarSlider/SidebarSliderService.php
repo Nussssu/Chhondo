@@ -27,6 +27,11 @@ class SidebarSliderService implements SidebarSliderServiceInterface
         $this->sidebarSliderRepository->update($request, $id);
     }
 
+    public function reorder(array $ids): void
+    {
+        $this->sidebarSliderRepository->reorder($ids);
+    }
+
     public function delete($id)
     {
         $this->sidebarSliderRepository->delete($id);

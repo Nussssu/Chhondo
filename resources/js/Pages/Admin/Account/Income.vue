@@ -185,7 +185,7 @@
                 <div>
                   <nav>
                     <ul class="pagination">
-                      <li class="page-item" v-for="link in credits.meta.links" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
+                      <li class="page-item" v-for="link in adminPaginationLinks(credits.meta)" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
                         <a class="page-link" :href="link.url || '#'" v-html="link.label"></a>
                       </li>
                     </ul>
@@ -270,7 +270,7 @@
                 <div>
                   <nav>
                     <ul class="pagination">
-                      <li class="page-item" v-for="link in debits.meta.links" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
+                      <li class="page-item" v-for="link in adminPaginationLinks(debits.meta)" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
                         <a class="page-link" :href="link.url || '#'" v-html="link.label"></a>
                       </li>
                     </ul>
@@ -282,17 +282,21 @@
         </div>
       </div>
     </div>
+    <TransactionEntryModal v-if="entryType" :type="entryType" :account-types="accountTypes" :purposes="purposes" @close="entryType = null" />
   </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import TransactionEntryModal from './Partials/TransactionEntryModal.vue'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 
 const props = defineProps({
   credits: { type: Object, default: () => ({ data: [], meta: null }) },
   debits: { type: Object, default: () => ({ data: [], meta: null }) },
   accountTypes: { type: Array, default: () => [] },
+  purposes: { type: Array, default: () => [] },
   income: { type: Number, default: 0 },
   expense: { type: Number, default: 0 },
   balance: { type: Number, default: 0 },
@@ -300,6 +304,7 @@ const props = defineProps({
 })
 
 const selectedAction = ref('credit')
+const entryType = ref(null)
 
 const creditsSum = computed(() => {
   return (props.credits.data || []).reduce((sum, c) => sum + parseFloat(c.amount || 0), 0)
@@ -314,11 +319,7 @@ function toggleAction() {
 }
 
 function handleAddForm() {
-  if (selectedAction.value === 'credit') {
-    window.location.href = route('admin.account.add-credit')
-  } else {
-    window.location.href = route('admin.account.add-debit')
-  }
+  entryType.value = selectedAction.value
 }
 
 function exportTable() {

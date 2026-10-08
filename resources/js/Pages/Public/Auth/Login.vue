@@ -3,8 +3,8 @@
     <title>{{ texts.login_tab_title }}</title>
   </Head>
 
-  <AuthShowcaseLayout :reviews="reviews" :photos="photos" hide-footer>
-    <div class="auth-form">
+  <AuthShowcaseLayout :reviews="reviews" :photos="photos" :blocks="blocks" :show-photos="on(texts.collage_show)" hide-footer>
+    <div v-if="on(texts.login_show)" class="auth-form">
       <h1 class="auth-title">{{ texts.login_title }}</h1>
       <p class="auth-subtitle">{{ texts.login_subtitle }}</p>
 
@@ -72,6 +72,7 @@ import { Link, useForm, Head } from '@inertiajs/vue3'
 import { on } from '@/utils/cms'
 
 const props = defineProps({
+  blocks: { type: Array, default: () => [] },
   reviews: { type: Array, default: () => [] },
   // Content › Pages › Log in & Sign up.
   texts: { type: Object, default: () => ({}) },

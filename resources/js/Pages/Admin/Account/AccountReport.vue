@@ -188,7 +188,7 @@
       <div class="d-flex justify-content-center mt-4" v-if="transactions.meta">
         <nav aria-label="Page navigation">
           <ul class="pagination pagination-separated pagination-lg">
-            <li class="page-item" v-for="link in transactions.meta.links" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
+            <li class="page-item" v-for="link in adminPaginationLinks(transactions.meta)" :key="link.label" :class="{ active: link.active, disabled: !link.url }">
               <a class="page-link" :href="link.url || '#'" v-html="link.label"></a>
             </li>
           </ul>
@@ -201,6 +201,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 
 const props = defineProps({
   accountTypes: { type: Array, default: () => [] },

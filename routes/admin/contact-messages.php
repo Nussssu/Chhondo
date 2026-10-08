@@ -7,6 +7,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::prefix('contact-messages')->name('contact-messages.')->group(function () {
         Route::get('/', [ContactMessageController::class, 'index'])->name('index');
         Route::get('/unread-count', [ContactMessageController::class, 'unreadCount'])->name('unread-count');
+        Route::patch('/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('status');
         Route::get('/{id}', [ContactMessageController::class, 'show'])->name('show');
         Route::delete('/{id}', [ContactMessageController::class, 'destroy'])->name('destroy');
     });

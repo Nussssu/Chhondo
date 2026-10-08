@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
+import PageBlocks from "@/components/Page/PageBlocks.vue";
 
 const props = defineProps({
     reviews: { type: Array, default: () => [] },
@@ -8,6 +9,9 @@ const props = defineProps({
     hideFooter: { type: Boolean, default: false },
     // The four collage photos, from Content › Pages › Log in & Sign up.
     photos: { type: Array, default: () => [] },
+    // Section on/off switch for the collage in Content › Pages.
+    showPhotos: { type: Boolean, default: true },
+    blocks: { type: Array, default: () => [] },
 });
 
 // Fallback reviews so the panel is never empty (e.g. before any are added).
@@ -48,6 +52,13 @@ const reviews = computed(() =>
 const columns = computed(() => {
     const list = reviews.value;
     const card = (i) => ({ type: "card", review: list[i % list.length] });
+    // Switched off in Content › Pages: the collage hides, the review cards stay.
+    if (props.showPhotos === false) {
+        return [
+            { dir: "up", items: [card(0), card(1), card(0), card(1)] },
+            { dir: "down", items: [card(1), card(0), card(1), card(0)] },
+        ];
+    }
     const photo = (n) => ({ type: "photo", src: props.photos[n] || FIGMA_PHOTOS[n] });
     const colA = [card(0), photo(0), photo(1)];
     const colB = [photo(2), card(1), photo(3)];
@@ -101,6 +112,7 @@ const initial = (name) => (name ? name.charAt(0).toUpperCase() : "?");
                 </div>
             </section>
         </div>
+        <PageBlocks :blocks="blocks" />
     </AppLayout>
 </template>
 

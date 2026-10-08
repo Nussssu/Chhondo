@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <div class="page-content">
+    <div class="page-content products-admin-page">
       <PageHeader title="Products" :subtitle="`${props.product.length} products in the catalogue`">
         <template #actions>
           <button
@@ -11,9 +11,9 @@
           >
             <Share2 :size="16" class="me-1" /> Export for social media
           </button>
-          <a :href="route('products.create')" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center">
+          <button type="button" @click="productEditor = { productId: null }" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center">
             <Plus :size="16" class="me-1" /> Add product
-          </a>
+          </button>
         </template>
       </PageHeader>
 
@@ -78,12 +78,12 @@
 
             <template #cell-category="{ row }">
               <!-- Primary first, then the other shelves it sits on. -->
-              {{ categoryLabel(row) }}
+              <span class="product-category" :title="categoryLabel(row)">{{ categoryLabel(row) }}</span>
             </template>
 
             <template #cell-price="{ row }">
               <div v-for="line in priceLines(row)" :key="line.label ?? 'price'" class="price-line">
-                <span v-if="line.label" class="text-muted small">{{ line.label }}</span>
+                <span v-if="line.label" class="price-choice text-muted small">{{ line.label }}</span>
                 <span v-if="line.price > 0" class="fw-semibold">{{ money(line.price) }}</span>
                 <span v-else class="text-muted small">Not priced</span>
                 <s v-if="line.previous > line.price" class="text-muted small">{{ money(line.previous) }}</s>
@@ -115,9 +115,9 @@
             </template>
 
             <template #actions="{ row }">
-              <a :href="route('products.edit', row.id)" class="table-icon-btn is-primary" title="Edit product">
+              <button type="button" @click="productEditor = { productId: row.id }" class="table-icon-btn is-primary" title="Edit product">
                 <Pencil :size="14" />
-              </a>
+              </button>
               <a
                 :href="`${frontendUrl}/product/${row.slug}`"
                 class="table-icon-btn"
@@ -136,9 +136,9 @@
             </template>
 
             <template #empty-action>
-              <a :href="route('products.create')" class="btn btn-fig-primary btn-fig-sm">
+              <button type="button" @click="productEditor = { productId: null }" class="btn btn-fig-primary btn-fig-sm">
                 <Plus :size="16" class="me-1" /> Add product
-              </a>
+              </button>
             </template>
           </DataTable>
 
@@ -152,6 +152,7 @@
     </div>
 
     <SocialExportModal v-if="showSocialExport" :products="props.product" @close="showSocialExport = false" />
+    <ProductFormModal v-if="productEditor" :product-id="productEditor.productId" @close="productEditor = null" @complete="finishProductEditor" />
   </AdminLayout>
 </template>
 
@@ -167,6 +168,7 @@ import DataTable from '@/components/Admin/DataTable.vue'
 import StatusPill from '@/components/Admin/StatusPill.vue'
 import Pagination from '@/components/Admin/Pagination.vue'
 import SocialExportModal from './Partials/SocialExportModal.vue'
+import ProductFormModal from './Partials/ProductFormModal.vue'
 import { useClientTable } from '@/composables/useClientTable'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { toast } from '@/utils/toast'
@@ -179,14 +181,20 @@ const props = defineProps({
   frontendUrl: { type: String, default: '' },
 })
 
+const productEditor = ref(null)
+function finishProductEditor() {
+  productEditor.value = null
+  router.reload({ only: ['product', 'category'], preserveScroll: true })
+}
+
 const columns = [
-  { key: 'product_name',      label: 'Product', sortable: true },
-  { key: 'category',          label: 'Category' },
-  { key: 'price',             label: 'Price', sortable: true },
-  { key: 'status',            label: 'Status', sortable: true },
-  { key: 'stock_status',      label: 'Stock status', sortable: true },
+  { key: 'product_name',      label: 'Product', width: '22%', sortable: true },
+  { key: 'category',          label: 'Category', width: '14%' },
+  { key: 'price',             label: 'Price', width: '16%', sortable: true },
+  { key: 'status',            label: 'Status', width: '10%', sortable: true },
+  { key: 'stock_status',      label: 'Stock status', width: '12%', sortable: true },
   // Feeds the "New arrivals" widget on any page built in Content › Pages.
-  { key: 'is_new_arrival',    label: 'New arrival' },
+  { key: 'is_new_arrival',    label: 'New arrival', width: '8%' },
 ]
 
 // The controller returns every product as a plain array, so search, sort and
@@ -349,6 +357,23 @@ async function bulkPublish(publish) {
 </script>
 
 <style scoped>
+.products-admin-page :deep(.card-body) { padding: 12px; }
+.products-admin-page :deep(.dt-table) { table-layout: fixed; width: 100%; font-size: 12px; }
+.products-admin-page :deep(.dt-table th), .products-admin-page :deep(.dt-table td) { padding: 8px 6px; }
+.products-admin-page :deep(.dt-table th) { font-size: 10px; letter-spacing: .025em; }
+.products-admin-page :deep(.dt-check-col) { width: 32px; }
+.products-admin-page :deep(.dt-actions-col) { width: 112px; }
+.products-admin-page :deep(.dt-table thead th.dt-actions-col) { text-align: center; }
+.products-admin-page :deep(.dt-actions) { gap: 2px; flex-wrap: nowrap; white-space: nowrap; }
+.products-admin-page :deep(.dt-actions .table-icon-btn) { width: 22px; height: 24px; flex: 0 0 22px; }
+.products-admin-page :deep(.dt-table td .d-flex) { flex-wrap: nowrap; }
+.product-category { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@media (min-width: 768px) {
+  .products-admin-page :deep(.dt-actions) { justify-content: center; }
+}
+@media (max-width: 767px) {
+  .products-admin-page :deep(.dt-check-col), .products-admin-page :deep(.dt-actions-col) { width: 100%; }
+}
 /* Toggle cells: the pill is the control, so strip the button chrome. */
 .pill-btn {
   padding: 0;
@@ -411,9 +436,12 @@ async function bulkPublish(publish) {
 
 /* One line per blouse choice: label, price, then the struck-through one. */
 .price-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: var(--sp-2);
+  gap: 2px 4px;
   white-space: nowrap;
 }
+.price-choice { grid-column: 1 / -1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+.price-line + .price-line { margin-top: 4px; }
 </style>

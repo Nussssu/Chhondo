@@ -290,3 +290,112 @@ textarea {
   border-radius: 16px;
   border-color: #e4e1e0;
 }
+
+/* ── Tables fit the page ────────────────────────────────── */
+/* Wide tables used to scroll sideways inside their card. Cell text may now
+   wrap (long words and links break), action buttons wrap onto a second
+   line, and short tokens — status pills, badges, amounts — stay whole. */
+.dt-scroll td,
+.table-compact-wrapper td,
+.orders-table-wrapper td {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+}
+.dt-scroll td .badge,
+.dt-scroll td [class*="pill"],
+.dt-scroll td [class*="status"],
+.table-compact-wrapper td .badge,
+.table-compact-wrapper td [class*="pill"],
+.table-compact-wrapper td [class*="status"],
+.orders-table-wrapper td .badge,
+.orders-table-wrapper td [class*="pill"] {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.dt-scroll td .d-flex,
+.table-compact-wrapper td .d-flex,
+.orders-table-wrapper td .d-flex,
+.dt-scroll td [class*="actions"],
+.table-compact-wrapper td [class*="actions"] {
+  flex-wrap: wrap;
+}
+@media (max-width: 1500px) {
+  .dt-scroll th,
+  .dt-scroll td,
+  .table-compact-wrapper th,
+  .table-compact-wrapper td,
+  .orders-table-wrapper th,
+  .orders-table-wrapper td {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+@media (max-width: 1366px) {
+  .dt-scroll th,
+  .dt-scroll td,
+  .table-compact-wrapper th,
+  .table-compact-wrapper td,
+  .orders-table-wrapper th,
+  .orders-table-wrapper td {
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+}
+/* Order tables at laptop widths: the product chip and address shrink a
+   little (both already truncate with an ellipsis) so all columns fit. */
+@media (max-width: 1366px) {
+  .product-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .customer-info-item.customer-address span { max-width: 120px; }
+}
+
+/* ── Page background fills the window ─────────────────────
+   The cream sat on .page-wrapper alone, which ended at its content plus a
+   30px margin; below it the old theme's pale-blue body showed as a white
+   band — 30px on long pages, most of the screen on short ones. The page
+   area now always reaches the bottom of the window, the spacing is padding
+   (inside the cream) rather than margin, and the page behind takes the same
+   cream so elastic overscroll matches too. */
+html:has(.page-wrapper),
+body:has(.page-wrapper) {
+  background: var(--admin-cream);
+}
+.page-wrapper {
+  min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px);
+  margin-bottom: 0 !important;
+  padding-bottom: 30px;
+}
+
+/* ── Buttons: the label always stays inside ───────────────
+   Sizes were fixed heights, so a label that had to wrap (a long one in a
+   narrow column, or a button squeezed by its flex row — "Add item" broke
+   into two lines) ran out of the top and bottom. Each size now keeps its
+   height as a minimum and grows with a wrapped label; a button keeps the
+   width of its label rather than being squeezed, and only wraps when its
+   container is narrower than the label; icons keep their size. */
+.btn {
+  flex-shrink: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+.btn > svg,
+.btn > i,
+.btn > img,
+.btn > .spinner-border {
+  flex-shrink: 0;
+}
+.btn.btn-fig-sm { height: auto; min-height: 40px; padding-top: 7px;  padding-bottom: 7px; }
+.btn.btn-fig-md { height: auto; min-height: 48px; padding-top: 11px; padding-bottom: 11px; }
+.btn.btn-fig-lg { height: auto; min-height: 56px; padding-top: 13px; padding-bottom: 13px; }
+/* Text-only types stay unboxed. */
+.btn.btn-fig-link,
+.btn.btn-fig-black { min-height: 0; padding: 0; }
+
+/* Admin headings stay title-only; field help, errors and table data remain. */
+.page-wrapper .card-header :is(h1, h2, h3, h4, h5, h6) + p.text-muted,
+.page-wrapper .pe-help,
+.page-wrapper .pe-row-title .pg-block-summary {
+  display: none !important;
+}

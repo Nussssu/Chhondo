@@ -1,31 +1,68 @@
 <template>
-  <div class="d-flex align-items-center gap-2 text-dark text-decoration-none">
-    <a :href="route('users', { user_id: order.user_identifier })">
-      <img v-if="order.customer_info && order.customer_info.image" :src="asset(order.customer_info.image)" width="30" height="30" style="border-radius:100%" :alt="order.customer_name">
-      <img v-else :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'Unknown')}&size=25&background=random`" width="30" height="30" style="border-radius:100%" :alt="order.customer_name">
+  <div class="ocust">
+    <a :href="route('users', { user_id: order.user_identifier })" class="ocust-name" :title="order.customer_name">
+      {{ limit(order.customer_name, 18) }}
     </a>
-    <div>
-      <div class="customer-info-item fw-bold">
-        <CircleUserRound :size="13" />
-        {{ limit(order.customer_name, 15) }}
-      </div>
-      <a :href="`tel:${order.phone_number}`" class="customer-info-item">
-        <Phone :size="11" />
-        {{ order.phone_number }}
-      </a>
-      <div class="customer-info-item customer-address" :title="order.address">
-        <MapPin :size="11" />
-        <span>{{ order.address }}</span>
-      </div>
+    <a v-if="!compact" :href="`tel:${order.phone_number}`" class="ocust-phone">{{ order.phone_number }}</a>
+    <div v-if="!compact" class="ocust-addr" :title="order.address">
+      <span>{{ order.address }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { asset, limit } from '@/utils/orderFormatting'
-import { CircleUserRound, Phone, MapPin } from 'lucide-vue-next'
+import { limit } from '@/utils/orderFormatting'
 
 defineProps({
   order: { type: Object, required: true },
+  compact: { type: Boolean, default: false },
 })
 </script>
+
+<style scoped>
+/* Text-only customer cell: the avatar photo cost ~38px plus an external
+   image request per row. Its link to the customer list moved onto the name,
+   so no navigation is lost. */
+.ocust {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.ocust-name {
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ocust-name:hover {
+  color: var(--admin-green-600);
+  text-decoration: underline;
+}
+
+.ocust-phone {
+  color: var(--admin-green-600);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ocust-phone:hover { text-decoration: underline; }
+
+.ocust-addr {
+  color: var(--text-muted);
+  min-width: 0;
+}
+
+.ocust-addr span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

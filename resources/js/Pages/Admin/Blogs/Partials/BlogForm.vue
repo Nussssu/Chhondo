@@ -24,7 +24,11 @@ const props = defineProps({
   // null → create
   blog: { type: Object, default: null },
   categories: { type: Array, default: () => [] },
+  // Shown inside the "Add post" popup on the post list rather than as a page.
+  inModal: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['saved', 'dirty'])
 
 const isEdit = computed(() => Boolean(props.blog?.id))
 
@@ -208,15 +212,22 @@ function submit() {
   if (isEdit.value) {
     form.put(route('blogs.update', props.blog.id), { preserveScroll: true })
   } else {
-    form.post(route('blogs.store'), { preserveScroll: true })
+    form.post(route('blogs.store'), {
+      preserveScroll: true,
+      onSuccess: () => { if (props.inModal) emit('saved') },
+    })
   }
 }
+
+// Lets the popup ask before throwing away unsaved writing.
+watch(() => form.isDirty, (dirty) => emit('dirty', dirty))
 </script>
 
 <template>
-  <AdminLayout>
-    <div class="page-content blog-editor">
+  <component :is="inModal ? 'div' : AdminLayout">
+    <div :class="inModal ? 'blog-editor is-modal' : 'page-content blog-editor'">
       <PageHeader
+        v-if="!inModal"
         :title="isEdit ? 'Edit post' : 'New post'"
         :subtitle="isEdit ? blog.title : 'Write and publish a blog post'"
       >
@@ -467,7 +478,7 @@ function submit() {
         @select="onLibrarySelect"
       />
     </div>
-  </AdminLayout>
+  </component>
 </template>
 
 <style scoped>

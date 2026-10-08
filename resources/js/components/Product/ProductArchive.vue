@@ -146,7 +146,7 @@ const visiblePages = computed(() => {
   return pages
 })
 const goToPage = (page) => {
-  if (page < 1 || page > props.lastPage || page === props.currentPage) return
+  if (props.loading || page < 1 || page > props.lastPage || page === props.currentPage) return
   emit("page-change", page)
 }
 
@@ -316,20 +316,20 @@ const openPreview = (product) => {
               </div>
 
               <!-- Pagination -->
-              <nav v-if="!loading && lastPage > 1" class="pagination-wrap" aria-label="Pagination">
-                <button class="pagination-arrow" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)" aria-label="Previous page">
+              <nav v-if="lastPage > 1" class="pagination-wrap" aria-label="Pagination" :aria-busy="loading">
+                <button class="pagination-arrow" :disabled="loading || currentPage === 1" @click="goToPage(currentPage - 1)" aria-label="Previous page">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <template v-for="(p, idx) in visiblePages" :key="idx">
                   <span v-if="p === '...'" class="pagination-ellipsis">…</span>
-                  <button v-else class="pagination-page" :class="{ 'is-active': p === currentPage }" @click="goToPage(p)" :aria-current="p === currentPage ? 'page' : undefined">{{ p }}</button>
+                  <button v-else class="pagination-page" :disabled="loading" :class="{ 'is-active': p === currentPage }" @click="goToPage(p)" :aria-current="p === currentPage ? 'page' : undefined">{{ p }}</button>
                 </template>
-                <button class="pagination-arrow" :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)" aria-label="Next page">
+                <button class="pagination-arrow" :disabled="loading || currentPage === lastPage" @click="goToPage(currentPage + 1)" aria-label="Next page">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
               </nav>
 
-              <p v-if="!loading && total > 0" class="pagination-info">
+              <p v-if="total > 0" class="pagination-info">
                 পৃষ্ঠা {{ bnDigits(currentPage) }} / {{ bnDigits(lastPage) }} · মোট {{ bnDigits(total) }}টি শাড়ি
               </p>
             </main>

@@ -1,17 +1,21 @@
 <script setup>
 import { Swiper, SwiperSlide } from "swiper/vue";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import { Navigation, Pagination, Autoplay, EffectFade, Keyboard } from "swiper/modules";
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
-import { ref } from "vue";
+import "swiper/css/effect-fade";
+import { computed, ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import { variantSrcset } from "@/utils/responsiveImage";
 import { rich } from "@/utils/cms";
 
-const modules = [Navigation, Pagination, Autoplay];
+const modules = [Navigation, Pagination, Autoplay, EffectFade, Keyboard];
 
-defineProps({
+const props = defineProps({
+    slideshowEnabled: { type: Boolean, default: false },
+    autoplayEnabled: { type: Boolean, default: true },
+    slideSeconds: { type: [String, Number], default: 5 },
     sliders: {
         type: Array,
         required: true,
@@ -30,6 +34,43 @@ defineProps({
         default: null,
     },
 });
+
+/**
+ * The slides: the hero image first, then the extra images added under it in
+ * the admin, in their order. With no extra images there is nothing to rotate
+ * and the hero renders as the single image it always was.
+ */
+const slides = computed(() => {
+    if (!props.sliders.length) return [];
+    const hero = props.desktopImage
+        ? [{
+            id: "hero",
+            plain: true,
+            image_path: props.desktopImage,
+            mobile_or_desktop_image: props.mobileImage || props.desktopImage,
+            title: "উৎসবের আমেজে বাঙালিয়ানা সাজ",
+        }]
+        : [];
+    return [...hero, ...props.sliders];
+});
+
+// Added images always change on their own; the old on/off switch no longer
+// applies (it is not in the admin any more).
+const autoplay = computed(() => slides.value.length > 1
+    ? {
+        delay: Math.max(1, Math.min(120, Number(props.slideSeconds) || 5)) * 1000,
+        disableOnInteraction: false,
+        // Hovering a banner holds it, so its link can be read and clicked.
+        pauseOnMouseEnter: true,
+    }
+    : false);
+
+// A banner's link: a site page opens in place (Inertia), anything else as a
+// plain link, in a new tab when the admin asked for one.
+const isInternal = (url) => typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
+const linkAttrs = (slide) => slide.link_new_tab
+    ? { href: slide.link_url, target: "_blank", rel: "noopener noreferrer" }
+    : { href: slide.link_url };
 
 /**
  * The banner is the largest thing painted, so it sets the LCP. Banners are
@@ -55,21 +96,21 @@ const failed = ref(new Set());
 const onError = (id) => { failed.value = new Set(failed.value).add(id); };
 
 const desktopSrcset = (slide) =>
-    failed.value.has(slide.id) ? undefined : variantSrcset(slide.image_path);
+    slide.plain || failed.value.has(slide.id) ? undefined : variantSrcset(slide.image_path);
 
 // Falls back to the bare URL so the <source> still applies on mobile even
 // when no variants can be built for it — dropping the attribute entirely
 // would let the desktop crop through instead.
 const mobileSrcset = (slide) => {
     const url = slide.mobile_or_desktop_image || slide.image_path;
-    if (failed.value.has(slide.id)) return url;
+    if (slide.plain || failed.value.has(slide.id)) return url;
     return variantSrcset(url) ?? url;
 };
 </script>
 
 <template>
     <div class="swiper-container w-full min-h-auto mx-auto relative">
-        <div v-if="desktopImage" class="hero-slide">
+        <div v-if="desktopImage && slides.length < 2" class="hero-slide">
             <picture>
                 <source
                     v-if="mobileImage"
@@ -94,12 +135,23 @@ const mobileSrcset = (slide) => {
             :modules="modules"
             :slides-per-view="1"
             :space-between="30"
-            :loop="sliders.length > 1"
+            :loop="slides.length > 1"
+            effect="fade"
+            :fade-effect="{ crossFade: true }"
+            :speed="800"
+            :keyboard="{ enabled: true }"
+            :navigation="slides.length > 1 ? { prevEl: '.hero-nav--prev', nextEl: '.hero-nav--next' } : false"
             :pagination="{ clickable: true }"
-            :autoplay="{ delay: 5000, disableOnInteraction: false }"
+            :autoplay="autoplay"
         >
-            <swiper-slide v-for="(slide, index) in sliders" :key="slide.id">
-                <div class="hero-slide">
+            <swiper-slide v-for="(slide, index) in slides" :key="slide.id">
+                <component
+                    :is="slide.link_url ? (isInternal(slide.link_url) && !slide.link_new_tab ? Link : 'a') : 'div'"
+                    v-bind="slide.link_url ? linkAttrs(slide) : {}"
+                    class="hero-slide"
+                    :class="{ 'is-link': slide.link_url }"
+                    :aria-label="slide.link_url ? (slide.title || 'Open banner') : undefined"
+                >
                     <picture>
                         <!-- Phones get the square crop, falling back to the
                              desktop image when no mobile one was uploaded. -->
@@ -122,9 +174,19 @@ const mobileSrcset = (slide) => {
                             @error="onError(slide.id)"
                         />
                     </picture>
-                </div>
+                </component>
             </swiper-slide>
         </swiper>
+
+        <!-- Previous / next, on wider screens; phones swipe. -->
+        <template v-if="slides.length > 1">
+            <button type="button" class="hero-nav hero-nav--prev" aria-label="Previous banner">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="hero-nav hero-nav--next" aria-label="Next banner">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </template>
 
         <!-- Figma: a blurred dark fade along the bottom, the copy on the left
              and the button on the right, both on the container edge. -->
@@ -280,18 +342,42 @@ const mobileSrcset = (slide) => {
     opacity: 1;
 }
 
-:deep(.swiper-slide) {
-    opacity: 0 !important;
-    transition: opacity 0.3s ease;
-}
-
-:deep(.swiper-slide-active) {
-    opacity: 1 !important;
-}
+/* Slides crossfade (Swiper's fade effect sets each slide's opacity). */
 
 /* Until Swiper starts — the server-rendered page, before scripts load — no
    slide is marked active yet, so show the first rather than an empty banner. */
-:deep(.swiper:not(.swiper-initialized) .swiper-slide:first-child) {
-    opacity: 1 !important;
+:deep(.swiper:not(.swiper-initialized) .swiper-slide:not(:first-child)) {
+    display: none;
+}
+
+.hero-slide.is-link { display: block; cursor: pointer; }
+
+/* Previous / next arrows: above the fade and the overlay copy. */
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .78);
+    color: #1a1817;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .25s ease, background-color .2s ease;
+}
+.hero-nav--prev { left: 20px; }
+.hero-nav--next { right: 20px; }
+.swiper-container:hover .hero-nav,
+.hero-nav:focus-visible { opacity: 1; }
+.hero-nav:hover { background: #fff; }
+.hero-nav:global(.swiper-button-disabled) { opacity: .35; cursor: default; }
+@media (max-width: 767px), (hover: none) {
+    .hero-nav { display: none; }
 }
 </style>

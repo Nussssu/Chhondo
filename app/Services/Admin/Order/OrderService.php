@@ -77,9 +77,10 @@ class OrderService implements OrderServiceInterface
             if (! empty($data['coupon_id']) && ! empty($data['code'])) {
                 $coupon = Coupon::where('id', $data['coupon_id'])
                     ->where('code', $data['code'])
-                    ->whereColumn('used_count', '<', 'usage_limit')
                     ->first();
-                if ($coupon) {
+                // A blank usage_limit means unlimited, which whereColumn
+                // never matched, so such a coupon's uses went uncounted.
+                if ($coupon && (is_null($coupon->usage_limit) || $coupon->used_count < $coupon->usage_limit)) {
                     $coupon->increment('used_count');
                 }
             }

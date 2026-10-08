@@ -42,7 +42,7 @@
       <div class="mt-2" v-if="products.links">
         <nav>
           <ul class="pagination">
-            <li v-for="link in products.links" :key="link.label" class="page-item" :class="{ active: link.active, disabled: !link.url }">
+            <li v-for="link in adminPaginationLinks(products)" :key="link.label" class="page-item" :class="{ active: link.active, disabled: !link.url }">
               <a class="page-link" href="#" v-html="link.label" @click.prevent="link.url && goToUrl(link.url)"></a>
             </li>
           </ul>
@@ -55,6 +55,7 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { adminPaginationLinks } from '@/utils/adminPagination'
 import { toast } from '@/utils/toast'
 // Shared with the POS till so both price a variant identically.
 import { rowState as priceFor } from '@/utils/productPricing'

@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
+import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, Link } from "@inertiajs/vue3"
 import { computed } from "vue"
 import { rich, plain, on, shown } from "@/utils/cms"
@@ -8,6 +9,7 @@ const props = defineProps({
   // Everything on this page is managed in Content › Pages › About us.
   texts: { type: Object, default: () => ({}) },
   content: String,
+  blocks: { type: Array, default: () => [] },
 })
 
 const t = computed(() => props.texts || {})
@@ -125,6 +127,7 @@ const values = computed(() => shown(t.value.values))
         </div>
       </div>
     </section>
+    <PageBlocks :blocks="blocks" />
   </AppLayout>
 </template>
 

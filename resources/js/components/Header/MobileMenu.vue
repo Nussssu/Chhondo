@@ -8,13 +8,16 @@ import {
     PhSignOut,
     PhHeadset,
     PhHeart,
-    PhNotebook,
     PhX,
 } from "@phosphor-icons/vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import { useAuthStore } from "@/Store/authStore";
 
 const authStore = useAuthStore();
+const headerSettings = computed(() => {
+    const settings = usePage().props.layout?.header ?? {};
+    return settings.options_enabled === false ? { ...settings, show_account: false, show_wishlist: false } : settings;
+});
 
 const props = defineProps({
     menuItems: {
@@ -55,15 +58,34 @@ watch(
 
 // Managed in the admin: Settings › Header & footer › Header.
 const ICONS = {
-    blog: PhNotebook,
     track: PhMapPin,
     refund: PhArrowCounterClockwise,
     privacy: PhShieldCheck,
     contact: PhHeadset,
 };
 
+function isBlogLink(link) {
+    if (link.icon === 'blog') return true;
+    const label = String(link.label ?? link.title ?? '').trim().toLowerCase();
+    if (label === 'blog' || label === 'ব্লগ') return true;
+    try {
+        return /^\/blog(?:\/|$)/.test(new URL(link.url ?? link.href ?? '/', 'http://localhost').pathname);
+    } catch {
+        return false;
+    }
+}
+
+function withoutBlog(items) {
+    return items.filter(item => !isBlogLink(item)).map(item => ({
+        ...item,
+        submenu: withoutBlog(item.submenu ?? []),
+    }));
+}
+
+const visibleMenuItems = computed(() => withoutBlog(props.menuItems));
+
 const quickLinks = computed(() =>
-    (usePage().props.layout?.header?.mobile_links ?? []).map((link) => ({
+    (usePage().props.layout?.header?.mobile_links_enabled === false ? [] : usePage().props.layout?.header?.mobile_links ?? []).filter(link => link.enabled !== false && !isBlogLink(link)).map((link) => ({
         // Labels and links: Settings › Header & footer › Header.
         label: link.label,
         href: link.url,
@@ -103,7 +125,7 @@ const quickLinks = computed(() =>
             <!-- Scrollable body -->
             <div class="mm-body">
                 <!-- Account card -->
-                <div class="mm-account">
+                <div v-if="headerSettings.show_account !== false" class="mm-account">
                     <template v-if="authStore.isAuthenticated">
                         <Link
                             href="/account"
@@ -154,7 +176,7 @@ const quickLinks = computed(() =>
                 <!-- Main navigation -->
                 <p class="mm-section-label">শপ</p>
                 <ul class="mm-list">
-                    <li v-for="item in props.menuItems" :key="item.id">
+                    <li v-for="item in visibleMenuItems" :key="item.id">
                         <div
                             class="mm-row"
                             :class="{ 'mm-row--open': isSubmenuOpen(item.id) }"
@@ -282,8 +304,8 @@ const quickLinks = computed(() =>
                 </ul>
 
                 <!-- Quick links -->
-                <p class="mm-section-label">সহায়তা</p>
-                <div class="mm-card">
+                <p v-if="quickLinks.length" class="mm-section-label">সহায়তা</p>
+                <div v-if="quickLinks.length" class="mm-card">
                     <Link
                         v-for="link in quickLinks"
                         :key="link.href"
@@ -299,7 +321,7 @@ const quickLinks = computed(() =>
                     </Link>
 
                     <Link
-                        v-if="authStore.isAuthenticated"
+                        v-if="authStore.isAuthenticated && headerSettings.show_wishlist !== false"
                         href="/account/wishlist"
                         class="mm-quick"
                         @click="toggleMobileMenu"

@@ -3,9 +3,9 @@
     <div class="page-content">
       <PageHeader title="Blog posts" :subtitle="subtitle">
         <template #actions>
-          <a :href="route('blogs.create')" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center">
+          <button type="button" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center" @click="openCreate">
             <Plus :size="16" class="me-1" /> Add post
-          </a>
+          </button>
         </template>
       </PageHeader>
 
@@ -60,34 +60,64 @@
             </template>
 
             <template #empty-action>
-              <a :href="route('blogs.create')" class="btn btn-fig-primary btn-fig-sm">
+              <button type="button" class="btn btn-fig-primary btn-fig-sm" @click="openCreate">
                 <Plus :size="16" class="me-1" /> Add post
-              </a>
+              </button>
             </template>
           </DataTable>
 
           <Pagination v-model:page="page" :per-page="pageSize" :total-items="total" />
         </div>
       </div>
+
+      <!-- Add post: the full post editor, in a popup -->
+      <FormModal
+        v-if="creating"
+        title="New post"
+        subtitle="Write and publish a blog post"
+        size="xl"
+        :show-footer="false"
+        :dirty="createDirty"
+        @close="creating = false"
+      >
+        <BlogForm
+          in-modal
+          :categories="blog_category"
+          @dirty="createDirty = $event"
+          @saved="creating = false"
+        />
+      </FormModal>
     </div>
   </AdminLayout>
 </template>
 
 <script setup>
-import { computed, toRef } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/components/Admin/PageHeader.vue'
 import Toolbar from '@/components/Admin/Toolbar.vue'
 import DataTable from '@/components/Admin/DataTable.vue'
 import Pagination from '@/components/Admin/Pagination.vue'
+import FormModal from '@/components/Admin/FormModal.vue'
+import BlogForm from './Partials/BlogForm.vue'
 import { useClientTable } from '@/composables/useClientTable'
 import { confirmDelete } from '@/utils/confirmDelete'
 import { Plus, Pencil, Trash2, Copy } from 'lucide-vue-next'
 
 const props = defineProps({
   blogs: { type: Array, default: () => [] },
+  // For the category picker in the Add post popup.
+  blog_category: { type: Array, default: () => [] },
 })
+
+const creating = ref(false)
+const createDirty = ref(false)
+
+function openCreate() {
+  createDirty.value = false
+  creating.value = true
+}
 
 const columns = [
   { key: 'title',             label: 'Title', sortable: true },

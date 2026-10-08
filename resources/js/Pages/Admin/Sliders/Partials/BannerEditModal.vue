@@ -26,6 +26,11 @@ const form = useForm({
   image_path_library_path: '',
   mobile_image_path: null,
   mobile_image_path_library_path: '',
+  // Carousel details
+  title: props.banner?.title ?? '',
+  link_url: props.banner?.link_url ?? '',
+  link_new_tab: Boolean(props.banner?.link_new_tab),
+  is_active: props.banner ? props.banner.is_active !== false : true,
 })
 
 // Which slot the library picker is currently filling: 'desktop' | 'mobile'.
@@ -52,10 +57,10 @@ function clear(slot) {
   preview.value[slot] = null
 }
 
-// Nothing to send until at least one slot has been chosen.
-const dirty = computed(() => Boolean(preview.value.desktop || preview.value.mobile))
+// Nothing to send until an image or a detail has changed.
+const dirty = computed(() => Boolean(preview.value.desktop || preview.value.mobile) || form.isDirty)
 
-// A new banner needs its desktop image; an edit may change only the mobile one.
+// A new banner needs its desktop image; an edit may change anything on its own.
 const canSubmit = computed(() => (isEdit.value ? dirty.value : Boolean(preview.value.desktop)))
 
 function submit() {
@@ -73,7 +78,7 @@ function submit() {
 
 <template>
   <FormModal
-    :title="isEdit ? 'Replace banner images' : 'Add a banner'"
+    :title="isEdit ? 'Edit banner' : 'Add a banner'"
     size="lg"
     :busy="form.processing"
     :dirty="dirty"
@@ -141,6 +146,36 @@ function submit() {
           <p v-if="form.errors.mobile_image_path" class="invalid-note">{{ form.errors.mobile_image_path }}</p>
         </div>
       </div>
+
+      <!-- ── Carousel details ─────────────────────────────────── -->
+      <div class="bn-details">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="bn-title">Alt text</label>
+            <input id="bn-title" v-model="form.title" type="text" class="form-control" maxlength="150" placeholder="e.g. Puja collection banner" />
+            <p class="bn-hint mt-1 mb-0">Describes the image for screen readers and search engines.</p>
+            <p v-if="form.errors.title" class="invalid-note">{{ form.errors.title }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="bn-link">Link (optional)</label>
+            <input id="bn-link" v-model="form.link_url" type="text" class="form-control" maxlength="500" placeholder="/shop or https://…" />
+            <p class="bn-hint mt-1 mb-0">Where a click on this banner goes. Leave empty for no link.</p>
+            <p v-if="form.errors.link_url" class="invalid-note">{{ form.errors.link_url }}</p>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch mb-0">
+              <input id="bn-newtab" v-model="form.link_new_tab" class="form-check-input" type="checkbox" role="switch" :disabled="!form.link_url" />
+              <label class="form-check-label" for="bn-newtab">Open the link in a new tab</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch mb-0">
+              <input id="bn-active" v-model="form.is_active" class="form-check-input" type="checkbox" role="switch" />
+              <label class="form-check-label" for="bn-active">Active — shown in the homepage carousel</label>
+            </div>
+          </div>
+        </div>
+      </div>
     </form>
 
     <template #footer>
@@ -153,7 +188,7 @@ function submit() {
         class="btn btn-fig-primary btn-fig-sm"
         :disabled="form.processing || !canSubmit"
       >
-        {{ form.processing ? 'Saving…' : (isEdit ? 'Save images' : 'Add banner') }}
+        {{ form.processing ? 'Saving…' : (isEdit ? 'Save banner' : 'Add banner') }}
       </button>
     </template>
   </FormModal>
@@ -230,6 +265,12 @@ function submit() {
 
 .bn-empty--wide   { aspect-ratio: 1900 / 560; }
 .bn-empty--square { aspect-ratio: 1 / 1; max-width: 220px; }
+
+.bn-details {
+  margin-top: var(--sp-4, 16px);
+  padding-top: var(--sp-4, 16px);
+  border-top: 1px solid var(--line);
+}
 
 .invalid-note { margin: 6px 0 0; font-size: var(--fs-sm); color: var(--st-danger); }
 </style>

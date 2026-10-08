@@ -48,7 +48,7 @@
         absolute, which is what admin_root.blade.php has always done.
     --}}
     @php $faviconPath = getMedia('favicon'); @endphp
-    <link rel="icon" href="{{ $faviconPath ? asset($faviconPath) : asset('favicon.ico') }}">
+    <link rel="icon" href="{{ $faviconPath ? asset($faviconPath) : asset('favicon.svg') }}" type="image/svg+xml">
 
     @inertiaHead
     @php

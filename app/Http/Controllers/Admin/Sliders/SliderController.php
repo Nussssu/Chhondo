@@ -42,6 +42,19 @@ class SliderController extends Controller
         }
     }
 
+    /** Save the carousel order: banner ids, first to last. */
+    public function reorderBanners(Request $request)
+    {
+        $data = $request->validate([
+            'ids'   => 'required|array',
+            'ids.*' => 'integer|exists:sidebar_sliders,id',
+        ]);
+
+        $this->sidebarSliderService->reorder($data['ids']);
+
+        return redirect()->back()->with('success', 'Banner order saved');
+    }
+
     public function destroyBanner($id)
     {
         try {

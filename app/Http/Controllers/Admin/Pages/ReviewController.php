@@ -7,6 +7,7 @@ use App\Models\ProductReview;
 use App\Models\Review;
 use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 
 class ReviewController extends Controller
@@ -15,34 +16,118 @@ class ReviewController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $reviews = Review::orderBy('sort_order')->latest()->get();
+        $type = $request->input('type', '');
+        $summaryRows = collect();
+        $rows = collect();
 
-        // Reviews submitted by customers from the product detail page. Pending
-        // ones (is_active = false) are listed first so they are easy to action.
-        $productReviews = ProductReview::with('product:id,product_name,slug,featured_image')
-            ->orderBy('is_active')
-            ->latest()
-            ->get()
-            ->map(fn (ProductReview $r) => [
-                'id'           => $r->id,
-                'product_id'   => $r->product_id,
-                'product_name' => $r->product?->product_name,
-                'product_slug' => $r->product?->slug,
-                'name'         => $r->name,
-                'contact'      => $r->contact,
-                'rating'       => (int) $r->rating,
-                'review'       => $r->review,
-                'images'       => $r->images ?? [],
-                'is_active'    => (bool) $r->is_active,
-                'created_at'   => $r->created_at?->toDateTimeString(),
-            ]);
+        if ($type !== 'product') {
+            $summaryQuery = Review::query();
+            $this->applyHomepageReviewDateFilter($summaryQuery, $request);
+            $summaryRows = $summaryRows->concat($summaryQuery->get(['rating', 'is_active']));
+
+            $homepageQuery = Review::query();
+            $this->applyHomepageReviewFilters($homepageQuery, $request);
+            $rows = $rows->concat($homepageQuery->get()->map(fn (Review $review) => [
+                'id'            => $review->id,
+                'review_type'   => 'homepage',
+                'product_name'  => 'Homepage testimonial',
+                'product_image' => $review->image,
+                'name'          => $review->name,
+                'contact'       => $review->city,
+                'rating'        => (int) $review->rating,
+                'review'        => $review->review,
+                'image'         => $review->image,
+                'images'        => [],
+                'is_active'     => (bool) $review->is_active,
+                'is_featured'   => false,
+                'admin_reply'   => null,
+                'sort_order'    => $review->sort_order,
+                'created_at'    => $review->created_at?->toDateTimeString(),
+            ]));
+        }
+
+        if ($type !== 'homepage') {
+            $summaryQuery = ProductReview::query();
+            $this->applyProductReviewDateFilter($summaryQuery, $request);
+            $summaryRows = $summaryRows->concat($summaryQuery->get(['rating', 'is_active']));
+
+            $productQuery = ProductReview::with('product:id,product_name,slug,featured_image');
+            $this->applyProductReviewFilters($productQuery, $request);
+            $rows = $rows->concat($productQuery->get()->map(fn (ProductReview $review) => [
+                'id'            => $review->id,
+                'review_type'   => 'product',
+                'product_id'    => $review->product_id,
+                'product_name'  => $review->product?->product_name,
+                'product_slug'  => $review->product?->slug,
+                'product_image' => $review->product?->featured_image,
+                'name'          => $review->name,
+                'contact'       => $review->contact,
+                'rating'        => (int) $review->rating,
+                'review'        => $review->review,
+                'images'        => $review->images ?? [],
+                'is_active'     => (bool) $review->is_active,
+                'is_featured'   => (bool) $review->is_featured,
+                'admin_reply'   => $review->admin_reply,
+                'created_at'    => $review->created_at?->toDateTimeString(),
+            ]));
+        }
+
+        $rows = $rows->sortByDesc('created_at')->values();
+        $perPage = max(10, min(100, (int) $request->input('pagination', 20)));
+        $page = max(1, (int) $request->input('page', 1));
+        $reviews = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        $summary = [
+            'total'     => $summaryRows->count(),
+            'published' => $summaryRows->where('is_active', true)->count(),
+            'pending'   => $summaryRows->where('is_active', false)->count(),
+            'average'   => round((float) ($summaryRows->avg('rating') ?? 0), 1),
+        ];
 
         return Inertia::render('Admin/Pages/Reviews', [
-            'reviews'        => $reviews,
-            'productReviews' => $productReviews,
+            'reviews' => $reviews,
+            'summary' => $summary,
         ]);
+    }
+
+    public function updateHomepageReviewStatus(Request $request, Review $review)
+    {
+        $data = $request->validate(['is_active' => 'required|boolean']);
+        $review->update(['is_active' => $data['is_active']]);
+
+        return redirect()->back()->with('success', $data['is_active'] ? 'Homepage review published.' : 'Homepage review hidden.');
+    }
+
+    public function updateProductReviewStatus(Request $request, ProductReview $productReview)
+    {
+        $data = $request->validate(['is_active' => 'required|boolean']);
+        $productReview->update(['is_active' => $data['is_active']]);
+
+        return redirect()->back()->with('success', $data['is_active'] ? 'Review published.' : 'Review hidden.');
+    }
+
+    public function updateProductReviewFeatured(Request $request, ProductReview $productReview)
+    {
+        $data = $request->validate(['is_featured' => 'required|boolean']);
+        $productReview->update(['is_featured' => $data['is_featured']]);
+
+        return redirect()->back()->with('success', $data['is_featured'] ? 'Review featured.' : 'Review unfeatured.');
+    }
+
+    public function updateProductReviewReply(Request $request, ProductReview $productReview)
+    {
+        $data = $request->validate(['admin_reply' => 'nullable|string|max:2000']);
+        $productReview->update(['admin_reply' => $data['admin_reply'] ?: null]);
+
+        return redirect()->back()->with('success', 'Review reply saved.');
     }
 
     public function store(Request $request)
@@ -144,6 +229,33 @@ class ReviewController extends Controller
         return redirect()->back()->with('success', 'Product review deleted successfully.');
     }
 
+    private function applyProductReviewFilters($query, Request $request): void
+    {
+        $this->applyProductReviewDateFilter($query, $request);
+
+        $query
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->input('search');
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('name', 'like', "%{$search}%")
+                        ->orWhere('contact', 'like', "%{$search}%")
+                        ->orWhere('review', 'like', "%{$search}%")
+                        ->orWhereHas('product', fn ($product) => $product->where('product_name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($request->input('status') === 'published', fn ($query) => $query->where('is_active', true))
+            ->when($request->input('status') === 'pending', fn ($query) => $query->where('is_active', false))
+            ->when($request->input('status') === 'featured', fn ($query) => $query->where('is_featured', true))
+            ->when($request->filled('rating'), fn ($query) => $query->where('rating', (int) $request->input('rating')));
+    }
+
+    private function applyProductReviewDateFilter($query, Request $request): void
+    {
+        $query
+            ->when($request->filled('date_from'), fn ($query) => $query->whereDate('created_at', '>=', $request->input('date_from')))
+            ->when($request->filled('date_to'), fn ($query) => $query->whereDate('created_at', '<=', $request->input('date_to')));
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
@@ -156,5 +268,31 @@ class ReviewController extends Controller
             'image'      => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'image_library_path' => 'nullable|string',
         ]);
+    }
+
+    private function applyHomepageReviewFilters($query, Request $request): void
+    {
+        $this->applyHomepageReviewDateFilter($query, $request);
+
+        $query
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->input('search');
+                $query->where(function ($nested) use ($search) {
+                    $nested->where('name', 'like', "%{$search}%")
+                        ->orWhere('city', 'like', "%{$search}%")
+                        ->orWhere('review', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->input('status') === 'published', fn ($query) => $query->where('is_active', true))
+            ->when($request->input('status') === 'pending', fn ($query) => $query->where('is_active', false))
+            ->when($request->input('status') === 'featured', fn ($query) => $query->whereRaw('1 = 0'))
+            ->when($request->filled('rating'), fn ($query) => $query->where('rating', (int) $request->input('rating')));
+    }
+
+    private function applyHomepageReviewDateFilter($query, Request $request): void
+    {
+        $query
+            ->when($request->filled('date_from'), fn ($query) => $query->whereDate('created_at', '>=', $request->input('date_from')))
+            ->when($request->filled('date_to'), fn ($query) => $query->whereDate('created_at', '<=', $request->input('date_to')));
     }
 }

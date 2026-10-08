@@ -41,4 +41,8 @@ return [
         'webhook_token' => env('STEADFAST_BEARER_TOKEN'),
     ],
 
+    'fraud_check' => [
+        'ca_bundle' => env('FRAUD_CHECK_CA_BUNDLE'),
+    ],
+
 ];

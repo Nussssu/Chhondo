@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\ContactMessage;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -32,6 +33,14 @@ class ContactMessageController extends Controller
         $message->update(['is_read' => true]);
 
         return response()->json(['id' => $message->id, 'is_read' => true]);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $data = $request->validate(['status' => 'required|in:new,contacted,qualified,converted']);
+        ContactMessage::findOrFail($id)->update($data);
+
+        return response()->json(['status' => $data['status']]);
     }
 
     /**

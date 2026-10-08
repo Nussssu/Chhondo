@@ -24,6 +24,11 @@ class PageBlockRenderer
         $out = [];
 
         foreach ($blocks as $block) {
+            // Switched off in the editor: not part of the page.
+            if (! empty($block['hidden'])) {
+                continue;
+            }
+
             $type = $block['type'] ?? null;
 
             if (! in_array($type, self::TYPES, true)) {

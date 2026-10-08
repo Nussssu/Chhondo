@@ -6,7 +6,6 @@
         <div class="row mb-4 align-items-center">
           <div class="col">
             <h2 class="mb-0">Purchase Products</h2>
-            <p class="text-muted">Manage product attributes</p>
           </div>
           <div class="col-auto">
             <button type="submit" form="purchaseProductsForm" class="btn btn-fig-primary btn-fig-md" id="submitBtn">

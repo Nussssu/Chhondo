@@ -1,101 +1,17 @@
 <template>
   <AdminLayout>
     <div class="page-content">
-      <PageHeader title="Categories" subtitle="Group your products, and nest a category under a parent" />
+      <PageHeader title="Categories" subtitle="Group your products, and nest a category under a parent">
+        <template #actions>
+          <button type="button" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center" @click="creating = true">
+            <Plus :size="16" class="me-1" /> Add category
+          </button>
+        </template>
+      </PageHeader>
 
       <div class="row g-3 mt-0">
-        <!-- Add form: always open, so adding several in a row costs no clicks -->
-        <div class="col-lg-4 col-xl-3">
-          <div class="card cat-form-card">
-            <div class="card-header">
-              <h6 class="mb-0">Add new category</h6>
-            </div>
-            <div class="card-body">
-              <form @submit.prevent="submitCreate">
-                <div class="mb-3">
-                  <label class="form-label" for="cat-name">Name</label>
-                  <input
-                    id="cat-name"
-                    v-model="createForm.name"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': createForm.errors.name }"
-                    placeholder="e.g. Jamdani"
-                  >
-                  <div class="invalid-feedback">{{ createForm.errors.name }}</div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="cat-title">Page heading</label>
-                  <input
-                    id="cat-title"
-                    v-model="createForm.title"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': createForm.errors.title }"
-                    :placeholder="`আমাদের সব ${createForm.name || '…'}`"
-                  >
-                  <div class="invalid-feedback">{{ createForm.errors.title }}</div>
-                  <small class="cat-hint">Shown at the top of this category's page. Blank uses the wording above.</small>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="cat-subtitle">Page subtitle</label>
-                  <textarea
-                    id="cat-subtitle"
-                    v-model="createForm.subtitle"
-                    class="form-control"
-                    rows="2"
-                    :class="{ 'is-invalid': createForm.errors.subtitle }"
-                    placeholder="প্রিমিয়াম কোয়ালিটির শাড়ি আর আধুনিকতার মেলবন্ধনে, নিজেকে সাজান ঐতিহ্যবাহী কারুশিল্পে।"
-                  ></textarea>
-                  <div class="invalid-feedback">{{ createForm.errors.subtitle }}</div>
-                  <small class="cat-hint">Leave blank to use the site's default line.</small>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="cat-parent">Parent category</label>
-                  <select
-                    id="cat-parent"
-                    v-model="createForm.parent_id"
-                    class="form-select"
-                    :class="{ 'is-invalid': createForm.errors.parent_id }"
-                  >
-                    <option :value="null">None (top level)</option>
-                    <option v-for="option in parentOptions" :key="option.id" :value="option.id">
-                      {{ option.label }}
-                    </option>
-                  </select>
-                  <div class="invalid-feedback">{{ createForm.errors.parent_id }}</div>
-                  <small class="cat-hint">Leave as “None” for a main category.</small>
-                </div>
-
-                <div class="mb-3 form-check">
-                  <input id="cat-show-in-filter" v-model="createForm.show_in_filter" class="form-check-input" type="checkbox">
-                  <label class="form-check-label" for="cat-show-in-filter">Show in the storefront filter</label>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Image</label>
-                  <button type="button" class="btn btn-outline-secondary btn-fig-sm d-block" @click="openPicker('create')">
-                    {{ createPreview ? 'Change image' : 'Choose from Media Library' }}
-                  </button>
-                  <div v-if="createPreview" class="cat-thumb mt-2">
-                    <img :src="createPreview" alt="">
-                    <button type="button" class="cat-thumb-clear" title="Remove" @click="clearCreateImage">&times;</button>
-                  </div>
-                </div>
-
-                <button type="submit" class="btn btn-fig-primary btn-fig-md w-100" :disabled="createForm.processing">
-                  <Plus :size="15" class="me-1" /> Add category
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
         <!-- Listing -->
-        <div class="col-lg-8 col-xl-9">
+        <div class="col-12">
           <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
               <div>
@@ -194,7 +110,7 @@
                     </tr>
                     <tr v-if="!categories.length">
                       <td colspan="7" class="text-center text-muted py-4">
-                        No categories yet — add your first one on the left.
+                        No categories yet — use Add category to create your first one.
                       </td>
                     </tr>
                   </tbody>
@@ -204,6 +120,88 @@
           </div>
         </div>
       </div>
+
+      <FormModal v-if="creating" title="Add category" size="lg" :show-footer="false" :busy="createForm.processing" @close="creating = false">
+        <form class="cat-create-form" @submit.prevent="submitCreate">
+                <div class="mb-3">
+                  <label class="form-label" for="cat-name">Name</label>
+                  <input
+                    id="cat-name"
+                    v-model="createForm.name"
+                    type="text"
+                    class="form-control"
+                    :class="{ 'is-invalid': createForm.errors.name }"
+                    placeholder="e.g. Jamdani"
+                  >
+                  <div class="invalid-feedback">{{ createForm.errors.name }}</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="cat-title">Page heading</label>
+                  <input
+                    id="cat-title"
+                    v-model="createForm.title"
+                    type="text"
+                    class="form-control"
+                    :class="{ 'is-invalid': createForm.errors.title }"
+                    :placeholder="`আমাদের সব ${createForm.name || '…'}`"
+                  >
+                  <div class="invalid-feedback">{{ createForm.errors.title }}</div>
+                  <small class="cat-hint">Shown at the top of this category's page. Blank uses the wording above.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="cat-subtitle">Page subtitle</label>
+                  <textarea
+                    id="cat-subtitle"
+                    v-model="createForm.subtitle"
+                    class="form-control"
+                    rows="2"
+                    :class="{ 'is-invalid': createForm.errors.subtitle }"
+                    placeholder="প্রিমিয়াম কোয়ালিটির শাড়ি আর আধুনিকতার মেলবন্ধনে, নিজেকে সাজান ঐতিহ্যবাহী কারুশিল্পে।"
+                  ></textarea>
+                  <div class="invalid-feedback">{{ createForm.errors.subtitle }}</div>
+                  <small class="cat-hint">Leave blank to use the site's default line.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="cat-parent">Parent category</label>
+                  <select
+                    id="cat-parent"
+                    v-model="createForm.parent_id"
+                    class="form-select"
+                    :class="{ 'is-invalid': createForm.errors.parent_id }"
+                  >
+                    <option :value="null">None (top level)</option>
+                    <option v-for="option in parentOptions" :key="option.id" :value="option.id">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div class="invalid-feedback">{{ createForm.errors.parent_id }}</div>
+                  <small class="cat-hint">Leave as “None” for a main category.</small>
+                </div>
+
+                <div class="mb-3 form-check">
+                  <input id="cat-show-in-filter" v-model="createForm.show_in_filter" class="form-check-input" type="checkbox">
+                  <label class="form-check-label" for="cat-show-in-filter">Show in the storefront filter</label>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Image</label>
+                  <button type="button" class="btn btn-outline-secondary btn-fig-sm d-block" @click="openPicker('create')">
+                    {{ createPreview ? 'Change image' : 'Choose from Media Library' }}
+                  </button>
+                  <div v-if="createPreview" class="cat-thumb mt-2">
+                    <img :src="createPreview" alt="">
+                    <button type="button" class="cat-thumb-clear" title="Remove" @click="clearCreateImage">&times;</button>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-fig-primary btn-fig-md w-100" :disabled="createForm.processing">
+                  <Plus :size="15" class="me-1" /> Add category
+                </button>
+              </form>
+      </FormModal>
 
       <!-- Editing stays in a popup -->
       <FormModal v-if="editingId" title="Edit category" :show-footer="false" @close="resetEdit">
@@ -355,6 +353,7 @@ const parentOptions = computed(() =>
 
 /* ---------- create ---------- */
 
+const creating = ref(false)
 const createPreview = ref(null)
 
 const createForm = useForm({
@@ -374,6 +373,7 @@ function submitCreate() {
     onSuccess: () => {
       createForm.reset()
       createPreview.value = null
+      creating.value = false
     },
   })
 }
@@ -597,7 +597,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.cat-form-card { position: sticky; top: 84px; }
+.cat-form-card { position: static; }
+.cat-create-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.cat-create-form > .mb-3 { margin-bottom: 0 !important; min-width: 0; }
+.cat-create-form > button[type='submit'] { justify-self: end; width: auto !important; min-width: 160px; }
+@media (min-width: 768px) {
+  .cat-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cat-create-form > :nth-child(3),
+  .cat-create-form > button[type='submit'] { grid-column: 1 / -1; }
+}
 
 /* Sequence column: the grip drags, the arrows do the same job from a keyboard. */
 .cat-seq { display: flex; align-items: center; gap: 2px; }

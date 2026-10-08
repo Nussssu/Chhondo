@@ -4,6 +4,7 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { toast } from "@steveyuowo/vue-hot-toast";
+import { on } from "@/utils/cms";
 
 // Props from Inertia (server passes orderData and invoice from trackOrder method)
 const props = defineProps({
@@ -66,7 +67,7 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                 </div>
 
                 <!-- Search Card -->
-                <div class="track-card p-5 md:p-6 mb-6">
+                <div v-if="on(texts.search_show)" class="track-card p-5 md:p-6 mb-6">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-grow">
                             <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
@@ -108,7 +109,7 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                 </div>
 
                 <!-- Order Details -->
-                <div v-if="orderData" class="flex flex-col gap-5">
+                <div v-if="orderData && on(texts.result_show)" class="flex flex-col gap-5">
 
                     <!-- Summary Card -->
                     <div class="track-card p-5 md:p-7 rounded-2xl">

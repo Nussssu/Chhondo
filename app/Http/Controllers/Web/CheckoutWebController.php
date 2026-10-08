@@ -323,16 +323,10 @@ class CheckoutWebController extends Controller
             return [null, 0.0];
         }
 
-        $coupon = \App\Models\Coupon::where('code', $code)
-            ->where('expiry_date', '>=', now()->toDateString())
-            ->where(function ($q) {
-                // A blank usage_limit means unlimited; whereColumn against null
-                // is never true, which silently disabled such coupons.
-                $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
-            })
-            ->first();
+        // Same rule as the storefront check: within its dates and uses.
+        $coupon = \App\Models\Coupon::findByTypedCode($code);
 
-        if ($coupon === null) {
+        if ($coupon === null || ! $coupon->isUsable()) {
             return [null, 0.0];
         }
 

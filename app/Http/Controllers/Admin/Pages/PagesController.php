@@ -83,6 +83,16 @@ class PagesController extends Controller
         ]);
     }
 
+    public function updateVisibility(Request $request, string $type)
+    {
+        $meta = Page::meta($type);
+        abort_if(! $meta || ! $meta['editable'], 404);
+        $data = $request->validate(['is_published' => 'required|boolean']);
+        Page::updateOrCreate(['type' => $type], ['is_published' => $data['is_published']]);
+
+        return redirect()->back()->with('success', 'Page visibility updated.');
+    }
+
     /**
      * Create a page of the operator's own.
      *
@@ -210,7 +220,7 @@ class PagesController extends Controller
                     ->all(),
             ],
             'banners' => $meta['banners']
-                ? SidebarSlider::latest('id')->get(['id', 'image_path', 'mobile_image_path'])
+                ? SidebarSlider::ordered()->get(['id', 'image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active'])
                 : [],
             // Options for the product-section widget.
             'categories' => $this->resolver->categoryOptions(),
@@ -263,6 +273,7 @@ class PagesController extends Controller
     {
         $defined = Page::PAGE_TEXTS[$type] ?? [];
         $out = [];
+        $cleared = [];
 
         foreach ($defined as $key => $field) {
             if (! array_key_exists($key, $texts)) {
@@ -270,6 +281,12 @@ class PagesController extends Controller
             }
 
             $value = $texts[$key];
+
+            if (($field['type'] ?? '') === 'number') {
+                $number = filter_var($value, FILTER_VALIDATE_INT);
+                $out[$key] = (string) max($field['min'] ?? 1, min($field['max'] ?? 120, $number === false ? (int) $field['default'] : $number));
+                continue;
+            }
 
             if (($field['type'] ?? 'text') === 'toggle') {
                 // Stored as '1' / '0' so it travels like any other text value.
@@ -279,6 +296,9 @@ class PagesController extends Controller
 
             if (($field['type'] ?? 'text') !== 'repeater') {
                 $out[$key] = is_string($value) ? $value : '';
+                if ($out[$key] === '' && filled($field['default'] ?? null)) {
+                    $cleared[] = $key;
+                }
                 continue;
             }
 
@@ -299,6 +319,10 @@ class PagesController extends Controller
                 ->all();
 
             $out[$key] = $rows;
+        }
+
+        if ($cleared !== []) {
+            $out['_cleared_fields'] = $cleared;
         }
 
         return $out;
@@ -373,6 +397,8 @@ class PagesController extends Controller
             'blocks'              => 'array',
             'blocks.*.id'         => 'nullable|string|max:64',
             'blocks.*.type'       => ['required', Rule::in(PageBlockRenderer::TYPES)],
+            // Switched off in the editor: kept, but not shown on the site.
+            'blocks.*.hidden'     => 'nullable|boolean',
             'blocks.*.title'      => 'nullable|string|max:255',
             'blocks.*.text'       => 'nullable|string',
             'blocks.*.level'      => 'nullable|integer|min:1|max:3',
