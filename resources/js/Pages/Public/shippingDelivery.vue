@@ -48,9 +48,8 @@ const otherBlocks = computed(() =>
   </Head>
 
   <AppLayout>
-    <!-- Figma: a 156px header block and an intro that keeps its line break -->
+    <!-- The standard policy header (as Privacy / Terms): title, then the body -->
     <PolicyLayout
-      class="policy--refund"
       :title="intro.title || plain(t.tab_title)"
       :subtitle="intro.subtitle"
       :sections="sections"

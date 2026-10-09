@@ -30,13 +30,6 @@ class PageController extends Controller
             ->get()
             ->each(fn (Product $product) => $product->hideInternalFields(listing: true));
 
-        $featureProducts = Product::where('status', 'Published')
-            ->where('feature', 1)
-            ->with(['category', 'campaigns'])
-            ->take(10)
-            ->get()
-            ->each(fn (Product $product) => $product->hideInternalFields(listing: true));
-
         $categories = Category::where('status', 'Active')
             ->get();
 
@@ -48,7 +41,7 @@ class PageController extends Controller
         $reviews = $this->authReviews();
 
         return Inertia::render('Public/Home', array_merge(
-            compact('products', 'featureProducts', 'categories', 'sliders', 'campaigns', 'reviews'),
+            compact('products', 'categories', 'sliders', 'campaigns', 'reviews'),
             ['blocks' => $this->pageBlocks('home'), 'intro' => $this->pageIntro('home'), 'texts' => $this->pageTexts('home')]
         ));
     }
@@ -157,6 +150,11 @@ class PageController extends Controller
             // falls back to its own generated wording.
             'categoryTitle'     => $category?->title,
             'categorySubtitle'  => $category?->subtitle,
+            // This category's own search title and description.
+            'seo'               => [
+                'title'       => $category?->meta_title ?: null,
+                'description' => $category?->meta_description ?: null,
+            ],
             // The shop's wording (breadcrumb, heading pattern, subtitle) is
             // shared by every category page.
             'texts'             => $this->pageTexts('shop'),
@@ -411,6 +409,10 @@ class PageController extends Controller
     /** The wording a page shows outside its body copy. */
     private function pageTexts(string $type): array
     {
+        // Every built-in page loads its wording here, so its search title and
+        // description (Content › Pages › SEO) travel with it to the layout.
+        Inertia::share('seo', Page::seoFor($type));
+
         return Page::textsFor($type);
     }
 
@@ -540,6 +542,10 @@ class PageController extends Controller
         return Inertia::render('Public/Account/TrackOrder', [
             'orderData' => $this->resolveTrackedOrder($request),
             'invoice'   => $request->input('invoice', ''),
+            // Wording from Content › Pages › Track order (the "মাই অ্যাকাউন্ট" sections).
+            'texts'     => $this->pageTexts('track_order'),
+            // A logged-in page: it keeps its own tab title, not the guest page's SEO.
+            'seo'       => ['title' => null, 'description' => null],
         ]);
     }
 

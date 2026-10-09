@@ -165,6 +165,35 @@
                 </div>
 
                 <div class="mb-3">
+                  <label class="form-label" for="cat-meta-title">Meta title (SEO)</label>
+                  <input
+                    id="cat-meta-title"
+                    v-model="createForm.meta_title"
+                    type="text"
+                    maxlength="255"
+                    class="form-control"
+                    :class="{ 'is-invalid': createForm.errors.meta_title }"
+                    :placeholder="createForm.name"
+                  >
+                  <div class="invalid-feedback">{{ createForm.errors.meta_title }}</div>
+                  <small class="cat-hint">Shown in the browser tab and in Google results. Blank uses the category name.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="cat-meta-desc">Meta description (SEO)</label>
+                  <textarea
+                    id="cat-meta-desc"
+                    v-model="createForm.meta_description"
+                    maxlength="500"
+                    rows="2"
+                    class="form-control"
+                    :class="{ 'is-invalid': createForm.errors.meta_description }"
+                  ></textarea>
+                  <div class="invalid-feedback">{{ createForm.errors.meta_description }}</div>
+                  <small class="cat-hint">The summary under the title in Google results — about 150–160 characters.</small>
+                </div>
+
+                <div class="mb-3">
                   <label class="form-label" for="cat-parent">Parent category</label>
                   <select
                     id="cat-parent"
@@ -268,6 +297,35 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label" for="edit-meta-title">Meta title (SEO)</label>
+            <input
+              id="edit-meta-title"
+              v-model="editForm.meta_title"
+              type="text"
+              maxlength="255"
+              class="form-control"
+              :class="{ 'is-invalid': editForm.errors.meta_title }"
+              :placeholder="editForm.name"
+            >
+            <div class="invalid-feedback">{{ editForm.errors.meta_title }}</div>
+            <small class="cat-hint">Shown in the browser tab and in Google results. Blank uses the category name.</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="edit-meta-desc">Meta description (SEO)</label>
+            <textarea
+              id="edit-meta-desc"
+              v-model="editForm.meta_description"
+              maxlength="500"
+              rows="2"
+              class="form-control"
+              :class="{ 'is-invalid': editForm.errors.meta_description }"
+            ></textarea>
+            <div class="invalid-feedback">{{ editForm.errors.meta_description }}</div>
+            <small class="cat-hint">The summary under the title in Google results — about 150–160 characters.</small>
+          </div>
+
+          <div class="mb-3">
             <label class="form-label" for="edit-parent">Parent category</label>
             <select
               id="edit-parent"
@@ -360,6 +418,8 @@ const createForm = useForm({
   name: '',
   title: '',
   subtitle: '',
+  meta_title: '',
+  meta_description: '',
   parent_id: null,
   // Sent explicitly rather than relying on a checkbox being present, so
   // unticking it reaches the server as false instead of as nothing.
@@ -394,6 +454,8 @@ const editForm = useForm({
   slug: '',
   title: '',
   subtitle: '',
+  meta_title: '',
+  meta_description: '',
   parent_id: null,
   show_in_filter: true,
   image_library_path: null,
@@ -424,6 +486,8 @@ function edit(item) {
   editForm.slug = item.slug ?? ''
   editForm.title = item.title ?? ''
   editForm.subtitle = item.subtitle ?? ''
+  editForm.meta_title = item.meta_title ?? ''
+  editForm.meta_description = item.meta_description ?? ''
   editForm.parent_id = item.parent_id ?? null
   editForm.show_in_filter = item.show_in_filter ?? true
   editForm.image_library_path = null

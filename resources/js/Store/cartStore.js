@@ -24,16 +24,34 @@ export const useCartStore = defineStore("cartStore", () => {
    * back if the server refuses.
    */
   const items = ref(page.props.cartItems || []);
-  watch(() => page.props.cartItems, (next) => { items.value = next || []; });
+  const queued = {};
+  const inFlight = {};
+  let confirmedItems = items.value.map(item => ({ ...item }));
+  let requests = Promise.resolve();
+  let quantityFailed = false;
+  const reconcileCart = (next = confirmedItems) => {
+    confirmedItems = next.map(item => ({ ...item }));
+    items.value = next.map(item => {
+      const delta = (queued[item.id]?.delta || 0) + (inFlight[item.id]?.delta || 0);
+      const quantity = Number(item.quantity) + delta;
+      return { ...item, quantity, final_price: Number(item.individual_price) * quantity };
+    });
+  };
+  watch(() => page.props.cartItems, (next) => { reconcileCart(next || []); });
 
   const cartItems = computed(() => items.value);
   const cartCount = computed(() => items.value.reduce((n, item) => n + (Number(item.quantity) || 0), 0));
 
   /** POST a cart route for JSON and take the cart it sends back. */
-  const send = async (url, data) => {
-    const { data: res } = await axios.post(url, withGuestId(data), { headers: { Accept: "application/json" } });
-    if (Array.isArray(res?.cartItems)) items.value = res.cartItems;
-    return res;
+  const send = (url, data, acknowledged = () => {}) => {
+    const operation = requests.catch(() => {}).then(async () => {
+      const { data: res } = await axios.post(url, withGuestId(data), { headers: { Accept: "application/json" } });
+      acknowledged();
+      if (Array.isArray(res?.cartItems)) reconcileCart(res.cartItems);
+      return res;
+    });
+    requests = operation;
+    return operation;
   };
 
   /** The server's reason, or a fallback. */
@@ -69,7 +87,7 @@ export const useCartStore = defineStore("cartStore", () => {
 
   const toggleCart = () => { isCartOpen.value = !isCartOpen.value; };
 
-  const goToCheckout = () => {
+  const goToCheckout = async () => {
     // A cart outlives the stock it was filled from. Checkout refuses these too,
     // but naming the item here is the difference between "fix this line" and a
     // rejection on the last page of the flow.
@@ -87,6 +105,7 @@ export const useCartStore = defineStore("cartStore", () => {
       return;
     }
 
+    if (!await flushCartUpdates()) return;
     setOrderType(false);
     isCartOpen.value = false;
     router.get("/checkout");
@@ -153,6 +172,8 @@ export const useCartStore = defineStore("cartStore", () => {
   };
 
   const removeItem = (cartId) => {
+    clearTimeout(queued[cartId]?.timer);
+    delete queued[cartId];
     const before = items.value;
     // Gone from the list at once; back if the server refuses.
     items.value = before.filter((item) => item.id !== cartId);
@@ -163,6 +184,10 @@ export const useCartStore = defineStore("cartStore", () => {
   };
 
   const clearCart = () => {
+    for (const cartId of Object.keys(queued)) {
+      clearTimeout(queued[cartId].timer);
+      delete queued[cartId];
+    }
     const before = items.value;
     items.value = [];
     send("/cart/clear").catch(() => {
@@ -186,13 +211,15 @@ export const useCartStore = defineStore("cartStore", () => {
 
       // The new quantity shows at once; rapid clicks are sent as one change.
       line.quantity = next;
+      line.final_price = Number(line.individual_price) * next;
       items.value = [...items.value];
+      quantityFailed = false;
 
       const pending = (queued[cartId] ||= { delta: 0, timer: null, attributeValues });
       pending.delta += quantityArg;
       pending.attributeValues = attributeValues;
       clearTimeout(pending.timer);
-      pending.timer = setTimeout(() => flushQuantity(cartId), 250);
+      pending.timer = setTimeout(() => flushQuantity(cartId), 150);
       return;
     }
 
@@ -205,23 +232,42 @@ export const useCartStore = defineStore("cartStore", () => {
     }
   };
 
-  // Quantity changes waiting to be sent, per cart line.
-  const queued = {};
-
   const flushQuantity = (cartId) => {
+    if (inFlight[cartId]) return inFlight[cartId].promise;
     const pending = queued[cartId];
+    clearTimeout(pending?.timer);
     delete queued[cartId];
-    if (!pending || !pending.delta) return;
+    if (!pending || !pending.delta) return Promise.resolve();
 
-    send("/cart/update", {
+    const flight = { delta: pending.delta, promise: null };
+    inFlight[cartId] = flight;
+    flight.promise = send("/cart/update", {
       cart_id: cartId,
       quantity: pending.delta,
       attribute_values: pending.attributeValues,
-    }).catch((error) => {
+    }, () => { delete inFlight[cartId]; }).catch((error) => {
+      delete inFlight[cartId];
+      clearTimeout(queued[cartId]?.timer);
+      delete queued[cartId];
+      quantityFailed = true;
+      reconcileCart();
       toast.error(reason(error, "পরিমাণ আপডেট করা যায়নি।"));
-      // Put back what the server holds.
-      router.reload({ only: ["cartItems", "cartCount"] });
+    }).finally(() => {
+      if (queued[cartId]) flushQuantity(cartId);
     });
+    return flight.promise;
+  };
+
+  // Checkout reads persisted cart quantities; flush pending clicks first.
+  const flushCartUpdates = async () => {
+    do {
+      const updates = Object.keys(queued).map(cartId => flushQuantity(cartId));
+      updates.push(...Object.values(inFlight).map(flight => flight.promise));
+      await Promise.all(updates);
+    } while (Object.keys(queued).length || Object.keys(inFlight).length);
+    const failed = quantityFailed;
+    quantityFailed = false;
+    return !failed;
   };
 
   watch(() => page.url, () => { isCartOpen.value = false; });
@@ -231,7 +277,7 @@ export const useCartStore = defineStore("cartStore", () => {
     subtotal, total, user_id, incomplete_order_id,
     isCartOpen, is_direct_order,
     toggleCart, goToCheckout, setOrderType, cartOrder, directOrder,
-    addToCart, removeItem, clearCart, fetchCartItems, updateCartItemQuantity,
+    addToCart, removeItem, clearCart, fetchCartItems, updateCartItemQuantity, flushCartUpdates,
     getGuestId, withGuestId,
   };
 });

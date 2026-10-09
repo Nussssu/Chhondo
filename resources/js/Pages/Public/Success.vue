@@ -18,6 +18,10 @@ const props = defineProps({
   checkoutMessage: String,
 })
 
+// Each line has a small on/off in Content › Pages › Order success; a line
+// with no saved switch shows, as it always did.
+const show = (key) => on(props.texts[`${key}_show`] ?? "1")
+
 /** Taka, grouped, and without the float noise of adding prices in the template. */
 const money = (value) =>
   '৳' + Number(value || 0).toLocaleString('en-BD', {
@@ -144,16 +148,16 @@ const getStatusClass = (status) => {
       <div class="success-card">
         <div class="success-content">
           <div class="success-head">
-            <h1 id="order-success-title" class="success-title">{{ texts.title }}</h1>
+            <h1 v-if="show('title')" id="order-success-title" class="success-title">{{ texts.title }}</h1>
             <p v-if="on(texts.text_show)" class="success-desc">{{ texts.text }}</p>
           </div>
 
           <!-- Invoice, customer, total and status -->
           <div class="success-box">
-            <p class="success-line success-line--invoice"><span>{{ texts.invoice_label }}</span> <strong>{{ order.invoice_number }}</strong></p>
-            <p class="success-line"><span>{{ texts.customer_label }}</span> <strong>{{ order.customer_name || '—' }}</strong></p>
-            <p class="success-line"><span>{{ texts.total_label }}</span> <strong>{{ money(totals.grand) }}</strong></p>
-            <p class="success-line success-line--status">
+            <p v-if="show('invoice_label')" class="success-line success-line--invoice"><span>{{ texts.invoice_label }}</span> <strong>{{ order.invoice_number }}</strong></p>
+            <p v-if="show('customer_label')" class="success-line"><span>{{ texts.customer_label }}</span> <strong>{{ order.customer_name || '—' }}</strong></p>
+            <p v-if="show('total_label')" class="success-line"><span>{{ texts.total_label }}</span> <strong>{{ money(totals.grand) }}</strong></p>
+            <p v-if="show('status_label')" class="success-line success-line--status">
               <span>{{ texts.status_label }}</span>
               <span :class="getStatusClass(order.order_status)" class="status-label">
                 {{ statusLabel(order.order_status) }}

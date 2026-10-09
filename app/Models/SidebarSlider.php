@@ -9,12 +9,14 @@ class SidebarSlider extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active'];
+    protected $fillable = ['image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active', 'heading', 'subtext', 'cta_label', 'cta_url', 'show_subtext', 'show_cta'];
 
     protected $casts = [
         'sort_order'   => 'integer',
         'link_new_tab' => 'boolean',
         'is_active'    => 'boolean',
+        'show_subtext' => 'boolean',
+        'show_cta'     => 'boolean',
     ];
 
     /** Carousel order: the admin's sequence, newest first among equals. */

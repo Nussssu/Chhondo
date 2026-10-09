@@ -1,6 +1,6 @@
 <script setup>
-import { watch, provide, reactive } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { watch, provide, reactive, computed } from "vue";
+import { usePage, Head } from "@inertiajs/vue3";
 import Header from "@/components/Header/Header.vue";
 import Footer from "@/components/Footer.vue";
 import MobileBottomNav from "@/components/MobileBottomNav.vue";
@@ -124,9 +124,20 @@ watch(
     },
     { deep: true, immediate: true }
 );
+
+// Search title / description for the current page; empty when none was set.
+const seo = computed(() => usePage().props.seo ?? {});
 </script>
 
 <template>
+    <!-- The page's search title and description, set in the admin
+         (Content › Pages › SEO, or a category's SEO fields). -->
+    <Head v-if="seo.title || seo.description">
+        <title v-if="seo.title">{{ seo.title }}</title>
+        <meta v-if="seo.description" head-key="description" name="description" :content="seo.description" />
+        <meta v-if="seo.title" head-key="og:title" property="og:title" :content="seo.title" />
+        <meta v-if="seo.description" head-key="og:description" property="og:description" :content="seo.description" />
+    </Head>
     <div class="app-layout">
         <!-- The toaster teleports to <body>; see ClientOnly. -->
         <ClientOnly><Toaster /></ClientOnly>

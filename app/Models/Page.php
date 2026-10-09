@@ -78,6 +78,17 @@ class Page extends Model
      * component ships with filling every gap. A page always gets a complete
      * set, so the storefront never has to repeat the defaults.
      */
+    /** A page's search title and description; null where none was set. */
+    public static function seoFor(string $type): array
+    {
+        $page = self::where('type', $type)->first(['meta_title', 'meta_description']);
+
+        return [
+            'title'       => $page?->meta_title ?: null,
+            'description' => $page?->meta_description ?: null,
+        ];
+    }
+
     public static function textsFor(string $type): array
     {
         $defined = self::PAGE_TEXTS[$type] ?? [];
@@ -206,9 +217,12 @@ class Page extends Model
             'breadcrumb' => 'ব্রেডক্রাম্ব',
         ],
         'track_order' => [
-            'page' => 'পেজ',
             'search' => 'অর্ডার খুঁজুন',
             'result' => 'অর্ডারের বিস্তারিত',
+            // My Account › Track Order (/account/track-order), in its order.
+            'acc_header' => 'হেডার',
+            'acc_search' => 'অর্ডার খুঁজুন',
+            'acc_result' => 'অর্ডারের বিস্তারিত',
         ],
         'shop' => [
             'page' => 'পেজ',
@@ -798,17 +812,6 @@ class Page extends Model
             ],
         ],
         'track_order' => [
-            'page_show' => [
-                'section' => 'page',
-                'type' => 'toggle',
-                'label' => 'Show this section',
-                'default' => '1',
-            ],
-            'tab_title' => [
-                'section' => 'page',
-                'label' => 'Browser tab title',
-                'default' => 'অর্ডার ট্র্যাক',
-            ],
             'search_placeholder' => [
                 'section' => 'search',
                 'label' => 'Search box placeholder',
@@ -840,26 +843,108 @@ class Page extends Model
                 'label' => 'Message when no order matches',
                 'default' => 'Order not found.',
             ],
-            't13' => [
-                'section' => 'result',
-                'label' => 'Invoice prefix',
-                'default' => 'Invoice #',
+            // My Account › Track Order — the same wording that page showed.
+            'acc_title' => [
+                'section' => 'acc_header',
+                'label' => 'Title',
+                'default' => 'Track Order',
             ],
+            'acc_subtitle' => [
+                'section' => 'acc_header',
+                'label' => 'Line under the title',
+                'default' => 'অর্ডার ট্র্যাক',
+            ],
+            'acc_tab_title' => [
+                'section' => 'acc_header',
+                'label' => 'Browser tab title',
+                'default' => 'Track Order',
+            ],
+            'acc_search_heading' => [
+                'section' => 'acc_search',
+                'label' => 'Card heading',
+                'default' => 'Track Your Order',
+            ],
+            'acc_search_text' => [
+                'section' => 'acc_search',
+                'label' => 'Line under the heading',
+                'default' => 'Enter your order ID to see real-time status',
+            ],
+            'acc_search_placeholder' => [
+                'section' => 'acc_search',
+                'label' => 'Search box placeholder',
+                'default' => 'e.g. CHK-2025-0481',
+            ],
+            'acc_search_button' => [
+                'section' => 'acc_search',
+                'label' => 'Button',
+                'default' => 'Track',
+            ],
+            'acc_search_loading' => [
+                'section' => 'acc_search',
+                'label' => 'Button while searching',
+                'default' => 'Searching...',
+            ],
+            'acc_search_empty' => [
+                'section' => 'acc_search',
+                'label' => 'Message when the box is empty',
+                'default' => 'Please enter a valid order ID.',
+            ],
+            'acc_search_not_found' => [
+                'section' => 'acc_search',
+                'label' => 'Message when no order matches',
+                'default' => 'Order not found.',
+            ],
+            'acc_order_id_label' => [
+                'section' => 'acc_result',
+                'label' => 'Order ID label',
+                'default' => 'ORDER ID',
+            ],
+            'acc_placed_on' => [
+                'section' => 'acc_result',
+                'label' => 'Date prefix',
+                'default' => 'Placed on',
+            ],
+            'acc_no_address' => [
+                'section' => 'acc_result',
+                'label' => 'When there is no address',
+                'default' => 'কোনো ঠিকানা নেই',
+            ],
+            'acc_progress_title' => [
+                'section' => 'acc_result',
+                'label' => 'Progress heading',
+                'default' => 'Shipment Progress',
+            ],
+            'acc_qty_label' => [
+                'section' => 'acc_result',
+                'label' => 'Quantity label',
+                'default' => 'Qty:',
+            ],
+            'acc_total_label' => [
+                'section' => 'acc_result',
+                'label' => 'Total label',
+                'default' => 'Total',
+            ],
+            'acc_payment_label' => [
+                'section' => 'acc_result',
+                'label' => 'Payment label',
+                'default' => 'পেমেন্ট',
+            ],
+            // অর্ডারের বিস্তারিত — in the order the card shows them on the page.
             'result_show' => [
                 'section' => 'result',
                 'type' => 'toggle',
                 'label' => 'Show this section',
                 'default' => '1',
             ],
-            't14' => [
-                'section' => 'result',
-                'label' => 'Item count word',
-                'default' => 'item',
-            ],
             't2' => [
                 'section' => 'result',
                 'label' => 'Order card heading',
                 'default' => 'Order Details',
+            ],
+            't13' => [
+                'section' => 'result',
+                'label' => 'Invoice prefix',
+                'default' => 'Invoice #',
             ],
             't3' => [
                 'section' => 'result',
@@ -870,6 +955,18 @@ class Page extends Model
                 'section' => 'result',
                 'label' => 'Total label',
                 'default' => 'Total Amount',
+            ],
+            'result_boxes' => [
+                'section' => 'result',
+                'type' => 'repeater',
+                'label' => 'More boxes',
+                'help' => 'Add a box with a label and a line of text; it shows beside Customer and Total.',
+                'fields' => [
+                    'label' => ['label' => 'Label'],
+                    'value' => ['label' => 'Text'],
+                    'show' => ['label' => 'Show', 'type' => 'toggle'],
+                ],
+                'default' => [],
             ],
             't5' => [
                 'section' => 'result',
@@ -906,10 +1003,77 @@ class Page extends Model
                 'label' => 'Price label (phone)',
                 'default' => 'Price:',
             ],
+            't14' => [
+                'section' => 'result',
+                'label' => 'Item count word',
+                'default' => 'item',
+            ],
             't12' => [
                 'section' => 'result',
                 'label' => 'Grand total label',
                 'default' => 'Grand Total',
+            ],
+            't15' => [
+                'section' => 'result',
+                'label' => 'Payment label (under the grand total)',
+                'default' => 'Payment:',
+            ],
+            // The small on/off beside each box above ("pair" = the box it switches).
+            't2_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't2',
+                'label' => 'Show the order card heading', 'default' => '1',
+            ],
+            't13_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't13',
+                'label' => 'Show the invoice line', 'default' => '1',
+            ],
+            't3_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't3',
+                'label' => 'Show the customer box', 'default' => '1',
+            ],
+            't4_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't4',
+                'label' => 'Show the total box', 'default' => '1',
+            ],
+            't5_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't5',
+                'label' => 'Show the items heading', 'default' => '1',
+            ],
+            't6_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't6',
+                'label' => 'Show the product column', 'default' => '1',
+            ],
+            't7_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't7',
+                'label' => 'Show the quantity column', 'default' => '1',
+            ],
+            't8_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't8',
+                'label' => 'Show the price column', 'default' => '1',
+            ],
+            't9_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't9',
+                'label' => 'Show the total column', 'default' => '1',
+            ],
+            't10_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't10',
+                'label' => 'Show the quantity on phones', 'default' => '1',
+            ],
+            't11_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't11',
+                'label' => 'Show the price on phones', 'default' => '1',
+            ],
+            't14_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't14',
+                'label' => 'Show the item count', 'default' => '1',
+            ],
+            't12_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't12',
+                'label' => 'Show the grand total', 'default' => '1',
+            ],
+            't15_show' => [
+                'section' => 'result', 'type' => 'toggle', 'pair' => 't15',
+                'label' => 'Show the payment line', 'default' => '1',
             ],
         ],
         'order_success' => [
@@ -932,6 +1096,7 @@ class Page extends Model
             'text_show' => [
                 'section' => 'page',
                 'type' => 'toggle',
+                'pair' => 'text',
                 'label' => 'Show the text',
                 'default' => '1',
             ],
@@ -964,6 +1129,8 @@ class Page extends Model
             'button_show' => [
                 'section' => 'page',
                 'type' => 'toggle',
+                // The same button: one switch shown beside its text and its link.
+                'pair' => ['button_label', 'button_url'],
                 'label' => 'Show the button',
                 'default' => '1',
             ],
@@ -976,6 +1143,27 @@ class Page extends Model
                 'section' => 'page',
                 'label' => 'Button link',
                 'default' => '/',
+            ],
+            // A small on/off beside each line above.
+            'title_show' => [
+                'section' => 'page', 'type' => 'toggle', 'pair' => 'title',
+                'label' => 'Show the heading', 'default' => '1',
+            ],
+            'invoice_label_show' => [
+                'section' => 'page', 'type' => 'toggle', 'pair' => 'invoice_label',
+                'label' => 'Show the invoice line', 'default' => '1',
+            ],
+            'customer_label_show' => [
+                'section' => 'page', 'type' => 'toggle', 'pair' => 'customer_label',
+                'label' => 'Show the customer line', 'default' => '1',
+            ],
+            'total_label_show' => [
+                'section' => 'page', 'type' => 'toggle', 'pair' => 'total_label',
+                'label' => 'Show the total line', 'default' => '1',
+            ],
+            'status_label_show' => [
+                'section' => 'page', 'type' => 'toggle', 'pair' => 'status_label',
+                'label' => 'Show the status line', 'default' => '1',
             ],
         ],
         'blog' => [
@@ -1470,7 +1658,7 @@ Customers',
             'tab_title' => [
                 'section' => 'page',
                 'label' => 'Browser tab title',
-                'default' => 'রিফান্ড ও রিটার্ন পলিসি',
+                'default' => 'ডেলিভারি তথ্য',
             ],
             'sections' => [
                 'section' => 'sections',
@@ -1491,38 +1679,14 @@ Customers',
                         'type' => 'toggle',
                     ],
                 ],
+                // Delivery: its paragraphs, with no heading, in the body.
                 'default' => [
                     [
-                        'title' => '১. পণ্য পরিবর্তন বা ফেরত/ রিটার্ন পলিসি:',
-                        'lines' => 'শুধুমাত্র ভুল পণ্য বা ত্রুটিপূর্ণ শাড়ি ডেলিভারি পেলে তা পরিবর্তনের সুযোগ রয়েছে।
-এক্ষেত্রে পার্সেল হাতে পাওয়ার ২৪ ঘণ্টার মধ্যে আমাদের ইনবক্স বা হেল্পলাইনে জানাতে হবে।
-ফেরত দেওয়ার সময় শাড়িটি অবশ্যই অব্যবহৃত, পরিষ্কার, এবং আসল প্যাকেজিংয়ে থাকতে হবে।
-ব্যবহার করা হয়েছে বা ধোয়া হয়েছে এমন শাড়ি পরিবর্তন বা ফেরতযোগ্য নয়।',
-                        'show' => '1',
-                    ],
-                    [
-                        'title' => '২. পরিবর্তনের প্রক্রিয়া:',
-                        'lines' => 'ত্রুটিপূর্ণ শাড়িটি আমাদের কাছে আসার পর তা যাচাই করে নতুন একটি পণ্য পাঠিয়ে দেওয়া হবে।
-একই ডিজাইনের শাড়ি যদি স্টকে না থাকে, তবে আপনার পছন্দ অনুযায়ী সমমূল্যের অন্য কোনো শাড়ি বিকল্প হিসেবে দেওয়া হতে পারে।',
-                        'show' => '1',
-                    ],
-                    [
-                        'title' => '৩. মূল্য ফেরত নীতি / রিফান্ড পলিসি:',
-                        'lines' => 'সাধারণত আমরা কোনো রিফান্ড বা মূল্য ফেরত অফার করি না।
-তবে অর্ডার কনফার্ম হওয়ার পর যদি কোনো অনাকাঙ্ক্ষিত কারণে তা ডেলিভারি দেওয়া সম্ভব না হয়, কেবল তখনই মূল্য ফেরত দেওয়া হবে।
-রিফান্ডের সম্পূর্ণ প্রক্রিয়াটি সম্পন্ন হতে ৭-১০ কর্মদিবস পর্যন্ত সময় লাগতে পারে।',
-                        'show' => '1',
-                    ],
-                    [
-                        'title' => '৪. ডেলিভারির সময় ক্ষতি:',
-                        'lines' => 'কুরিয়ারের মাধ্যমে পাঠানোর সময় শাড়ি বা পার্সেল ক্ষতিগ্রস্ত হলে, ডেলিভারি বুঝে নেওয়ার সময়ই তা কুরিয়ার প্রতিনিধিকে জানাতে হবে।
-পরিবহন বা কুরিয়ারের কারণে হওয়া কোনো ক্ষতির জন্য ব্র্যান্ড সরাসরি দায়বদ্ধ থাকবে না।',
-                        'show' => '1',
-                    ],
-                    [
-                        'title' => '৫. নীতিমালার পরিবর্তন:',
-                        'lines' => 'যেকোনো সময় এই নীতিমালা আপডেট বা পরিবর্তনের অধিকার আমাদের রয়েছে।
-ওয়েবসাইটে প্রকাশের সঙ্গে সঙ্গেই যেকোনো নতুন নিয়ম কার্যকর বলে গণ্য হবে।',
+                        'title' => '',
+                        'lines' => "ছন্দ থেকে অর্ডার করার পর আপনার পণ্য ৩-৫ কার্যদিবসের মধ্যে ডেলিভারি করা হয় (বাংলাদেশের ভেতরে)।
+ঢাকা শহরের ভেতরে হোম ডেলিভারি এবং বাইরে কুরিয়ার সার্ভিসের মাধ্যমে পাঠানো হয়।
+অর্ডার কনফার্ম হওয়ার পর ট্র্যাকিং তথ্য আপনাকে জানানো হবে।
+পণ্যের নিরাপদ ও সময়মতো পৌঁছানো নিশ্চিত করাই আমাদের অঙ্গীকার।",
                         'show' => '1',
                     ],
                 ],

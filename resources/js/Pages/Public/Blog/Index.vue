@@ -44,9 +44,12 @@ function filterBy(slug) {
 <template>
   <Head>
     <title>{{ texts.tab_title }}</title>
+    <!-- One description tag: the page's SEO one (Content › Pages › SEO) when
+         set, otherwise this page's own meta description field. -->
     <meta
+      head-key="description"
       name="description"
-      :content="texts.meta_description"
+      :content="$page.props.seo?.description || texts.meta_description"
     />
   </Head>
 

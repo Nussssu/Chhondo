@@ -399,3 +399,54 @@ body:has(.page-wrapper) {
 .page-wrapper .pe-row-title .pg-block-summary {
   display: none !important;
 }
+
+/* Pages editors: paint a continuous rail behind the fixed navigation, even
+   below its viewport-sized scroll area. The fixed save bar stays untouched. */
+@media screen {
+  html:has(.pg-editor), body:has(.pg-editor), #app:has(.pg-editor) {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--admin-cream, #FAF5E9);
+  }
+  .wrapper:has(.pg-editor) {
+    --page-editor-rail-width: 250px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--admin-cream, #FAF5E9);
+  }
+  .wrapper:has(.pg-editor)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--page-editor-rail-width);
+    background: var(--admin-forest, #1a2110);
+    pointer-events: none;
+  }
+  .wrapper:has(.pg-editor) .sidebar-wrapper {
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--admin-forest, #1a2110) !important;
+  }
+  .wrapper:has(.pg-editor) .sidebar-wrapper :is(.simplebar-wrapper, .simplebar-content-wrapper, .simplebar-content) {
+    background: var(--admin-forest, #1a2110);
+  }
+  .page-wrapper:has(.pg-editor) {
+    height: auto;
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
+    background: var(--admin-cream, #FAF5E9) !important;
+  }
+}
+@media screen and (max-width: 1440px) {
+  .wrapper:has(.pg-editor) { --page-editor-rail-width: 200px; }
+}
+@media screen and (min-width: 992px) {
+  .wrapper.toggled:has(.pg-editor) { --page-editor-rail-width: 68px; }
+}
+@media screen and (max-width: 991px) {
+  .wrapper:has(.pg-editor)::before { display: none; }
+}

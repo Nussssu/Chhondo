@@ -244,33 +244,43 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasRole('Super Admin') ? true : null;
         });
 
-        try {
-            $siteInfo       = SiteInfo::first();
-            $colorsData     = [
-                'main'          => $siteInfo->mainColor   ?? '#ffb700',
-                'secondary'     => $siteInfo->secondColor ?? '#d89b02',
-                'cart_bg'       => $siteInfo->cart_bg          ?? '#d89b02',
-                'order_now_bg'  => $siteInfo->order_now_bg     ?? '#d89b02',
-                'call_now_bg'   => $siteInfo->call_now_bg      ?? '#ff0000',
-                'whatsapp_bg'   => $siteInfo->whatsapp_bg      ?? 'green',
-            ];
-            // Shared with the storefront only — the header dropdown and the
-            // /categories page both read this. An unpublished category has no
-            // business appearing in either, and the drag-order set in the admin
-            // is what decides the sequence.
-            $categoriesData = Category::where('status', 'Active')
-                ->orderBy('serial')
-                ->orderBy('name')
-                ->get()
-                ->toArray();
-        } catch (\Exception $e) {
-            $colorsData     = ['main' => '#ffb700', 'secondary' => '#d89b02', 'cart_bg' => '#d89b02', 'order_now_bg' => '#d89b02', 'call_now_bg' => '#ff0000', 'whatsapp_bg' => 'green'];
-            $categoriesData = [];
-        }
+        // Resolve only for a rendered page, not cart/coupon JSON requests.
+        // Reuse within this request without caching stale admin edits.
+        $globalData = function () {
+            $request = request();
+            if ($request->attributes->has('_shared_storefront_globals')) {
+                return $request->attributes->get('_shared_storefront_globals');
+            }
+            try {
+                $siteInfo       = SiteInfo::first();
+                $colorsData     = [
+                    'main'          => $siteInfo->mainColor   ?? '#ffb700',
+                    'secondary'     => $siteInfo->secondColor ?? '#d89b02',
+                    'cart_bg'       => $siteInfo->cart_bg          ?? '#d89b02',
+                    'order_now_bg'  => $siteInfo->order_now_bg     ?? '#d89b02',
+                    'call_now_bg'   => $siteInfo->call_now_bg      ?? '#ff0000',
+                    'whatsapp_bg'   => $siteInfo->whatsapp_bg      ?? 'green',
+                ];
+                // Shared with the storefront only — the header dropdown and the
+                // /categories page both read this. An unpublished category has no
+                // business appearing in either, and the drag-order set in the admin
+                // is what decides the sequence.
+                $categoriesData = Category::where('status', 'Active')
+                    ->orderBy('serial')
+                    ->orderBy('name')
+                    ->get()
+                    ->toArray();
+            } catch (\Exception $e) {
+                $colorsData     = ['main' => '#ffb700', 'secondary' => '#d89b02', 'cart_bg' => '#d89b02', 'order_now_bg' => '#d89b02', 'call_now_bg' => '#ff0000', 'whatsapp_bg' => 'green'];
+                $categoriesData = [];
+            }
 
-        $globalData = ['categories' => $categoriesData, 'colors' => $colorsData];
+            $data = ['categories' => $categoriesData, 'colors' => $colorsData];
+            $request->attributes->set('_shared_storefront_globals', $data);
+            return $data;
+        };
 
         Inertia::share('globalCategories', $globalData);
-        View::share('globalCategories', $globalData);
+        View::composer('*', fn ($view) => $view->with('globalCategories', $globalData()));
     }
 }

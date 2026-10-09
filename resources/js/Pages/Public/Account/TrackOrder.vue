@@ -1,28 +1,28 @@
 <template>
-  <Head><title>Track Order</title></Head>
+  <Head><title>{{ tx('acc_tab_title', 'Track Order') }}</title></Head>
 
   <AccountLayout>
     <div class="track-page" @copy="onCopy">
       <div class="section-header">
         <span class="section-header-icon"><img :src="'/assets/images/account/track-heading.svg'" alt="" /></span>
         <div>
-          <p class="section-header-title">Track Order</p>
-          <p class="section-header-subtitle">অর্ডার ট্র্যাক</p>
+          <p class="section-header-title">{{ tx('acc_title', 'Track Order') }}</p>
+          <p class="section-header-subtitle">{{ tx('acc_subtitle', 'অর্ডার ট্র্যাক') }}</p>
         </div>
       </div>
 
       <section class="track-card track-search-card">
         <div class="track-card-heading">
-          <h2>Track Your Order</h2>
-          <p>Enter your order ID to see real-time status</p>
+          <h2>{{ tx('acc_search_heading', 'Track Your Order') }}</h2>
+          <p>{{ tx('acc_search_text', 'Enter your order ID to see real-time status') }}</p>
         </div>
 
         <div class="track-search-row">
-          <input v-model="invoiceNumber" type="text" placeholder="e.g. CHK-2025-0481" class="track-search-input" @keyup.enter="trackOrder" />
+          <input v-model="invoiceNumber" type="text" :placeholder="tx('acc_search_placeholder', 'e.g. CHK-2025-0481')" class="track-search-input" @keyup.enter="trackOrder" />
           <button type="button" class="track-search-btn" :disabled="loading" @click="trackOrder">
             <img v-if="!loading" :src="'/assets/images/account/track-button.svg'" alt="" />
             <span v-else class="track-spinner" aria-hidden="true" />
-            {{ loading ? 'Searching...' : 'Track' }}
+            {{ loading ? tx('acc_search_loading', 'Searching...') : tx('acc_search_button', 'Track') }}
           </button>
         </div>
 
@@ -33,20 +33,20 @@
         <section class="track-card track-summary-card">
           <div class="track-summary-header">
             <div class="track-summary-copy">
-              <p class="track-summary-label">ORDER ID</p>
+              <p class="track-summary-label">{{ tx('acc_order_id_label', 'ORDER ID') }}</p>
               <p class="track-summary-value">{{ orderData.invoice_number }}</p>
-              <p class="track-summary-meta">Placed on {{ formatDate(orderData.created_at) }}</p>
+              <p class="track-summary-meta">{{ tx('acc_placed_on', 'Placed on') }} {{ formatDate(orderData.created_at) }}</p>
             </div>
             <span class="order-status-pill" :style="badgeStyle(orderData.order_status)">{{ statusLabel(orderData.order_status) }}</span>
           </div>
           <p class="track-summary-address">
             <img :src="'/assets/images/account/track-location.svg'" alt="" />
-            <span>{{ orderData.address || 'কোনো ঠিকানা নেই' }}</span>
+            <span>{{ orderData.address || tx('acc_no_address', 'কোনো ঠিকানা নেই') }}</span>
           </p>
         </section>
 
         <section v-if="!isExceptionStatus(orderData.order_status)" class="track-card track-progress-card">
-          <h2 class="track-section-title">Shipment Progress</h2>
+          <h2 class="track-section-title">{{ tx('acc_progress_title', 'Shipment Progress') }}</h2>
           <OrderStepper variant="vertical" :current-step-index="getOrderStepIndex(orderData.order_status) ?? 0" :placed-at="orderData.created_at" :updated-at="orderData.updated_at" />
         </section>
 
@@ -56,16 +56,16 @@
               <img :src="item.product?.featured_image || '/placeholder.svg'" :alt="item.product?.product_name || ''" class="order-item-thumb" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
               <div class="order-item-info">
                 <p class="order-item-name">{{ item.product?.product_name || 'পণ্য' }}</p>
-                <p class="order-item-qty">Qty: {{ item.quantity }}</p>
+                <p class="order-item-qty">{{ tx('acc_qty_label', 'Qty:') }} {{ item.quantity }}</p>
               </div>
               <p class="order-item-price"><span>৳</span>{{ formatMoney(item.price) }}</p>
             </div>
           </div>
           <div class="track-total-row">
-            <span>Total</span>
+            <span>{{ tx('acc_total_label', 'Total') }}</span>
             <span class="track-total-price"><span>৳</span>{{ formatMoney(orderData.total_price) }}</span>
           </div>
-          <div v-if="orderData.payment_summary" class="track-payment-row"><span>পেমেন্ট</span><span>{{ orderData.payment_summary }}</span></div>
+          <div v-if="orderData.payment_summary" class="track-payment-row"><span>{{ tx('acc_payment_label', 'পেমেন্ট') }}</span><span>{{ orderData.payment_summary }}</span></div>
         </section>
       </div>
     </div>
@@ -80,27 +80,44 @@ import { Head, router, usePage } from "@inertiajs/vue3";
 import { toast } from "@steveyuowo/vue-hot-toast";
 import { getOrderStepIndex, getOrderStatusBadge, isExceptionStatus } from "@/utils/orderStatus";
 
-const props = defineProps({ orderData: { type: Object, default: null }, invoice: { type: String, default: "" } });
+const props = defineProps({
+  orderData: { type: Object, default: null },
+  invoice: { type: String, default: "" },
+  // Wording from Content › Pages › Track order (the "মাই অ্যাকাউন্ট" sections).
+  texts: { type: Object, default: () => ({}) },
+});
+
+// A saved wording, or the one this page always showed.
+const tx = (key, fallback) => props.texts?.[key] || fallback;
 const page = usePage();
 const invoiceNumber = ref(props.invoice || "");
 const orderData = ref(props.orderData || null);
 const loading = ref(false);
-const errorMessage = ref("");
+// Opened with a number that matches no order (a shared link, a refresh):
+// say so straight away.
+const errorMessage = ref(props.invoice && !props.orderData ? tx('acc_search_not_found', 'Order not found.') : "");
 
 watch(() => page.props.orderData, (value) => {
   orderData.value = value;
-  errorMessage.value = (!value && invoiceNumber.value) ? "Order not found." : "";
+  errorMessage.value = (!value && invoiceNumber.value) ? tx('acc_search_not_found', 'Order not found.') : "";
 });
 
 const trackOrder = () => {
   const invoice = invoiceNumber.value.trim();
-  if (!invoice) { errorMessage.value = "Please enter a valid order ID."; return; }
+  if (!invoice) { errorMessage.value = tx('acc_search_empty', 'Please enter a valid order ID.'); return; }
   invoiceNumber.value = invoice;
   loading.value = true;
   errorMessage.value = "";
   router.get("/account/track-order", { invoice }, {
     preserveState: true,
     preserveScroll: true,
+    // The watcher only fires when the result changes, so a second wrong
+    // number in a row showed nothing; say so on every search that misses.
+    onSuccess: (visit) => {
+      const found = visit.props.orderData;
+      orderData.value = found || null;
+      errorMessage.value = found ? "" : tx('acc_search_not_found', 'Order not found.');
+    },
     onFinish: () => { loading.value = false; },
   });
 };

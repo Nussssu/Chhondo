@@ -100,13 +100,13 @@ class SidebarSliderRepository implements SidebarSliderRepositoryInterface
     /** Alt text, link and on/off — only the ones the request carries. */
     private function fillDetails(SidebarSlider $slider, $request): void
     {
-        foreach (['title', 'link_url'] as $field) {
+        foreach (['title', 'link_url', 'heading', 'subtext', 'cta_label', 'cta_url'] as $field) {
             if ($request->has($field)) {
                 $slider->{$field} = trim((string) $request->input($field)) ?: null;
             }
         }
 
-        foreach (['link_new_tab', 'is_active'] as $field) {
+        foreach (['link_new_tab', 'is_active', 'show_subtext', 'show_cta'] as $field) {
             if ($request->has($field)) {
                 $slider->{$field} = $request->boolean($field);
             }

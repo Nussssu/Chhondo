@@ -54,6 +54,11 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
+        // Cart/coupon JSON calls do not render a page. Avoid rebuilding the
+        // header, cart pricing, permissions and site content a second time.
+        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+            return parent::share($request);
+        }
         // Resolve identifier: logged-in user id or session guest_id
         if ($request->user()) {
             $identifier = (string) $request->user()->id;
@@ -97,7 +102,7 @@ class HandleInertiaRequests extends Middleware
         $contactInfo = [];
         try {
             // Use collection first() to avoid calling a static first() that may require arguments
-            $siteInfo = SiteInfo::all()->first();
+            $siteInfo = SiteInfo::first();
             if ($siteInfo) {
                 $mediaRow  = DB::table('media')->first();
                 $mediaArr  = $mediaRow ? (array) $mediaRow : [];

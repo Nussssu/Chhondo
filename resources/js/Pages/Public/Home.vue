@@ -209,8 +209,7 @@ const closePreview = () => {
         >
           <img :src="item.src" :alt="item.alt" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
         </Link>
-        <!-- Phones: a second run of the same photos, so the marquee loops
-             without a seam. Hidden on wider screens. -->
+        <!-- A second identical run keeps the marquee seamless at every width. -->
         <Link
           v-for="(item, index) in imageStrip"
           :key="`clone-${item.id}`"
@@ -220,7 +219,7 @@ const closePreview = () => {
           aria-hidden="true"
           tabindex="-1"
         >
-          <img :src="item.src" alt="" loading="lazy" decoding="async" />
+          <img :src="item.src" alt="" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
         </Link>
       </div>
     </section>
@@ -418,11 +417,12 @@ const closePreview = () => {
 .chhondo-image-strip__track {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
   width: max-content;
-  margin-inline: 50%;
-  transform: translateX(-50%);
+  margin-inline: 0;
+  --strip-loop-gap: 12px;
+  animation: chhondo-strip-marquee 36s linear infinite;
 }
 .chhondo-image-strip__item {
   display: block;
@@ -432,10 +432,21 @@ const closePreview = () => {
   border-radius: 16px;
   overflow: hidden;
 }
-.chhondo-image-strip__item--clone { display: none; }
-.chhondo-image-strip__item:nth-child(even) {
+.chhondo-image-strip__item.is-tall {
   width: clamp(172px, 24.95vw, 479px);
   aspect-ratio: 479 / 599;
+}
+.chhondo-image-strip:hover .chhondo-image-strip__track,
+.chhondo-image-strip:active .chhondo-image-strip__track,
+.chhondo-image-strip:focus-within .chhondo-image-strip__track { animation-play-state: paused; }
+@keyframes chhondo-strip-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - var(--strip-loop-gap))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chhondo-image-strip { overflow-x: auto; }
+  .chhondo-image-strip__track { animation: none; transform: none; }
+  .chhondo-image-strip__item--clone { display: none; }
 }
 .chhondo-image-strip img,
 .chhondo-story img,
@@ -621,17 +632,14 @@ const closePreview = () => {
   }
   .chhondo-image-strip__track {
     gap: 12px;
+    --strip-loop-gap: 6px;
     margin-inline: 0;
     padding-inline: 0;
     transform: none;
     justify-content: flex-start;
-    animation: chhondo-strip-marquee 36s linear infinite;
   }
-  .chhondo-image-strip:hover .chhondo-image-strip__track,
-  .chhondo-image-strip:active .chhondo-image-strip__track { animation-play-state: paused; }
-  .chhondo-image-strip__item--clone { display: block; }
   .chhondo-image-strip__item,
-  .chhondo-image-strip__item:nth-child(even) {
+  .chhondo-image-strip__item.is-tall {
     width: 240px;
     aspect-ratio: 417 / 522;
     flex: 0 0 auto;
@@ -640,16 +648,6 @@ const closePreview = () => {
   .chhondo-image-strip__item.is-tall {
     width: 276px;
     aspect-ratio: 479 / 599;
-  }
-  @keyframes chhondo-strip-marquee {
-    from { transform: translateX(0); }
-    /* One full run of photos plus one gap: the clones then sit exactly
-       where the originals started. */
-    to { transform: translateX(calc(-50% - 6px)); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .chhondo-image-strip { overflow-x: auto; }
-    .chhondo-image-strip__track { animation: none; }
   }
   .chhondo-story,
   .chhondo-story--light { padding: 40px 0 48px; }

@@ -5,7 +5,7 @@ import { Navigation, Pagination, Autoplay, EffectFade, Keyboard } from "swiper/m
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/effect-fade";
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import { Link } from "@inertiajs/vue3";
 import { variantSrcset } from "@/utils/responsiveImage";
 import { rich } from "@/utils/cms";
@@ -54,9 +54,7 @@ const slides = computed(() => {
     return [...hero, ...props.sliders];
 });
 
-// Added images always change on their own; the old on/off switch no longer
-// applies (it is not in the admin any more).
-const autoplay = computed(() => slides.value.length > 1
+const autoplay = computed(() => props.autoplayEnabled && slides.value.length > 1
     ? {
         delay: Math.max(1, Math.min(120, Number(props.slideSeconds) || 5)) * 1000,
         disableOnInteraction: false,
@@ -64,6 +62,33 @@ const autoplay = computed(() => slides.value.length > 1
         pauseOnMouseEnter: true,
     }
     : false);
+
+const activeSlideIndex = ref(0);
+const swiperInstance = shallowRef(null);
+const currentOverlay = computed(() => {
+    const slide = slides.value[activeSlideIndex.value] || slides.value[0];
+    if (!slide || slide.plain) return props.overlay;
+    return {
+        title: slide.heading || "",
+        eyebrow: slide.show_subtext !== false ? slide.subtext : null,
+        ctaLabel: slide.show_cta !== false ? slide.cta_label : null,
+        ctaUrl: slide.cta_url || "/shop",
+    };
+});
+
+function syncAutoplay() {
+    const swiper = swiperInstance.value;
+    if (!swiper?.autoplay || swiper.destroyed) return;
+    swiper.autoplay.stop();
+    if (!swiper.params.autoplay || typeof swiper.params.autoplay !== "object") swiper.params.autoplay = {};
+    if (autoplay.value) {
+        Object.assign(swiper.params.autoplay, autoplay.value, { enabled: true });
+        swiper.autoplay.start();
+    } else {
+        swiper.params.autoplay.enabled = false;
+    }
+}
+watch([() => props.autoplayEnabled, () => props.slideSeconds, () => slides.value.length], syncAutoplay);
 
 // A banner's link: a site page opens in place (Inertia), anything else as a
 // plain link, in a new tab when the admin asked for one.
@@ -143,6 +168,8 @@ const mobileSrcset = (slide) => {
             :navigation="slides.length > 1 ? { prevEl: '.hero-nav--prev', nextEl: '.hero-nav--next' } : false"
             :pagination="{ clickable: true }"
             :autoplay="autoplay"
+            @swiper="swiperInstance = $event; activeSlideIndex = $event.realIndex || 0"
+            @slide-change="activeSlideIndex = $event.realIndex || 0"
         >
             <swiper-slide v-for="(slide, index) in slides" :key="slide.id">
                 <component
@@ -190,17 +217,17 @@ const mobileSrcset = (slide) => {
 
         <!-- Figma: a blurred dark fade along the bottom, the copy on the left
              and the button on the right, both on the container edge. -->
-        <div v-if="overlay" class="hero-overlay">
+        <div v-if="currentOverlay && (currentOverlay.title || currentOverlay.eyebrow || currentOverlay.ctaLabel)" class="hero-overlay">
             <div class="hero-fade" aria-hidden="true"></div>
             <div class="container hero-copy-row">
                 <div class="hero-copy">
-                    <p v-if="overlay.eyebrow" class="hero-eyebrow">{{ overlay.eyebrow }}</p>
-                    <h1 class="hero-title" v-html="rich(overlay.title)"></h1>
+                    <p v-if="currentOverlay.eyebrow" class="hero-eyebrow">{{ currentOverlay.eyebrow }}</p>
+                    <h1 v-if="currentOverlay.title" class="hero-title" v-html="rich(currentOverlay.title)"></h1>
                 </div>
-                <Link v-if="overlay.ctaLabel" :href="overlay.ctaUrl || '/shop'" class="hero-cta">
-                    <span>{{ overlay.ctaLabel }}</span>
+                <component :is="isInternal(currentOverlay.ctaUrl) ? Link : 'a'" v-if="currentOverlay.ctaLabel" :href="currentOverlay.ctaUrl || '/shop'" class="hero-cta">
+                    <span>{{ currentOverlay.ctaLabel }}</span>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </Link>
+                </component>
             </div>
         </div>
     </div>

@@ -66,7 +66,7 @@ const blockSections = computed(() => {
         <!-- Figma copy -->
         <template v-if="sections">
           <div v-for="(section, i) in sections" :key="i" class="policy-section">
-            <h2 class="policy-section-title">{{ section.title }}</h2>
+            <h2 v-if="section.title" class="policy-section-title">{{ section.title }}</h2>
             <ul class="policy-list">
               <li v-for="(line, n) in section.lines" :key="n">{{ line }}</li>
             </ul>

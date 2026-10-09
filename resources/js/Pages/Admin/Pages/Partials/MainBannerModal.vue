@@ -17,12 +17,14 @@ const props = defineProps({
   desktop: { type: String, default: '' },
   mobile: { type: String, default: '' },
   saving: { type: Boolean, default: false },
+  copy: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['close', 'save'])
 
 const images = ref({ desktop: props.desktop || '', mobile: props.mobile || '' })
-const dirty = computed(() => images.value.desktop !== (props.desktop || '') || images.value.mobile !== (props.mobile || ''))
+const copy = ref({ ...props.copy })
+const dirty = computed(() => images.value.desktop !== (props.desktop || '') || images.value.mobile !== (props.mobile || '') || JSON.stringify(copy.value) !== JSON.stringify(props.copy))
 
 const SLOTS = [
   { key: 'desktop', label: 'Desktop banner', hint: 'Shown on tablets and computers. Best at 1920 × 848 px.', shape: 'wide' },
@@ -57,7 +59,7 @@ async function onUpload(slot, event) {
 }
 
 function save() {
-  emit('save', { ...images.value })
+  emit('save', { ...images.value, copy: { ...copy.value } })
 }
 </script>
 
@@ -91,6 +93,26 @@ function save() {
             <RotateCcw :size="14" class="me-1" /> Reset to original
           </button>
         </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-12">
+        <label class="form-label" for="main-banner-heading">Heading</label>
+        <textarea id="main-banner-heading" v-model="copy.heading" class="form-control" rows="2" maxlength="1000"></textarea>
+        <p class="mb-hint mt-1 mb-0">Use *stars* for gold words and Enter for a new line.</p>
+      </div>
+      <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between mb-1"><label class="form-label mb-0" for="main-banner-subtext">Small line</label><input v-model="copy.show_subtext" class="form-check-input" type="checkbox" role="switch" aria-label="Show main banner small line" /></div>
+        <input id="main-banner-subtext" v-model="copy.subtext" class="form-control" maxlength="255" />
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex align-items-center justify-content-between mb-1"><label class="form-label mb-0" for="main-banner-cta-label">Button text</label><input v-model="copy.show_cta" class="form-check-input" type="checkbox" role="switch" aria-label="Show main banner CTA button" /></div>
+        <input id="main-banner-cta-label" v-model="copy.cta_label" class="form-control" maxlength="150" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="main-banner-cta-url">Button link</label>
+        <input id="main-banner-cta-url" v-model="copy.cta_url" class="form-control" maxlength="500" placeholder="/shop or https://…" />
       </div>
     </div>
 

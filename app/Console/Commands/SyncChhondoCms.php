@@ -42,9 +42,11 @@ class SyncChhondoCms extends Command
             'title'    => 'রিফান্ড ও রিটার্ন পলিসি',
             'subtitle' => "আপনার সন্তুষ্টিই আমাদের সর্বোচ্চ চাওয়া। তবে যেহেতু আমাদের প্রতিটি পণ্য হাতে তৈরি (যেমন- হ্যান্ডপেইন্ট বা ব্লকপ্রিন্ট করা),\nতাই শাড়ি পরিবর্তন ও ফেরতের ক্ষেত্রে নিচের নিয়মগুলো প্রযোজ্য হবে।",
         ],
+        // Delivery wording from charukothon.com/shipping-and-delivery.
         'shipping_delivery' => [
-            'title'    => 'রিফান্ড ও রিটার্ন পলিসি',
-            'subtitle' => "আপনার সন্তুষ্টিই আমাদের সর্বোচ্চ চাওয়া। তবে যেহেতু আমাদের প্রতিটি পণ্য হাতে তৈরি (যেমন- হ্যান্ডপেইন্ট বা ব্লকপ্রিন্ট করা),\nতাই শাড়ি পরিবর্তন ও ফেরতের ক্ষেত্রে নিচের নিয়মগুলো প্রযোজ্য হবে।",
+            'title'    => 'Shipping And Delivery',
+            // Its paragraphs sit in the body (the নীতিমালা list), not under the title.
+            'subtitle' => null,
         ],
         'policies' => ['title' => 'প্রাইভেসি পলিসি', 'subtitle' => null],
         'terms'    => ['title' => 'শর্তাবলি', 'subtitle' => null],

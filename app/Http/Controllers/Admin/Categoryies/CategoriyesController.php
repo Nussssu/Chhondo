@@ -104,6 +104,9 @@ class CategoriyesController extends Controller
             // back to the wording the storefront generates from the name.
             'title' => 'nullable|string|max:255',
             'subtitle' => 'nullable|string|max:500',
+            // What search engines show for this category's page.
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
             'parent_id' => $this->parentRule(null),
             // Whether shoppers are offered this category in the archive filter.
             'show_in_filter' => 'nullable|boolean',
@@ -139,6 +142,9 @@ class CategoriyesController extends Controller
             'slug' => 'nullable|string|max:255|unique:categories,slug,' . $category->id,
             'title' => 'nullable|string|max:255',
             'subtitle' => 'nullable|string|max:500',
+            // What search engines show for this category's page.
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
             'parent_id' => $this->parentRule($category->id),
             'show_in_filter' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',

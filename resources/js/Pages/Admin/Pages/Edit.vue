@@ -175,7 +175,7 @@ const collapsed = ref(new Set(form.blocks.filter(block => widgetSlot(block)).map
 // keys start with "_" so they never clash with a section's.
 const closedSections = ref(new Set([
   ...(props.page.text_sections ?? []).map((s) => s.key),
-  '_settings', '_header', '_fields',
+  '_settings', '_seo', '_header', '_fields',
 ]))
 const isOpen = (key) => !closedSections.value.has(key)
 
@@ -310,17 +310,39 @@ function sectionFields(section) {
     f.key !== main
     && !['hero_slideshow_enabled', 'hero_autoplay_enabled', 'hero_slide_seconds'].includes(f.key)
     && !(bannerList && f.type === 'banner')
+    && !(bannerList && ['hero_title', 'hero_eyebrow', 'hero_eyebrow_show', 'hero_cta_show', 'hero_cta_label', 'hero_cta_url'].includes(f.key))
+    // A paired switch sits beside its box's label, not on a row of its own.
+    && !f.pair
   )
+}
+
+/** The small on/off that belongs to a field, if it has one. */
+function pairSwitch(section, field) {
+  return section.fields.find((f) => [].concat(f.pair ?? []).includes(field.key)) ?? null
 }
 
 /* ------------------------------------------------------- main banner -- */
 
 const mainBannerOpen = ref(false)
+const mainBannerCopy = computed(() => ({
+  heading: form.texts.hero_title ?? '',
+  subtext: form.texts.hero_eyebrow ?? '',
+  cta_label: form.texts.hero_cta_label ?? '',
+  cta_url: form.texts.hero_cta_url ?? '/shop',
+  show_subtext: isOn(form.texts.hero_eyebrow_show),
+  show_cta: isOn(form.texts.hero_cta_show),
+}))
 
 /** Save the main banner's images: they are page fields, so the page saves. */
-function saveMainBanner({ desktop, mobile }) {
+function saveMainBanner({ desktop, mobile, copy }) {
   form.texts.hero_image_desktop = desktop
   form.texts.hero_image_mobile = mobile
+  form.texts.hero_title = copy.heading ?? ''
+  form.texts.hero_eyebrow = copy.subtext ?? ''
+  form.texts.hero_cta_label = copy.cta_label ?? ''
+  form.texts.hero_cta_url = copy.cta_url ?? ''
+  form.texts.hero_eyebrow_show = copy.show_subtext ? '1' : '0'
+  form.texts.hero_cta_show = copy.show_cta ? '1' : '0'
   form.put(route('admin.pages.update', props.page.type), {
     preserveScroll: true,
     onSuccess: () => { mainBannerOpen.value = false },
@@ -675,7 +697,65 @@ function submit() {
       </PageHeader>
 
       <div class="pg-layout" :class="{ 'has-preview': showPreview }">
-        <div class="pg-main">
+        <div class="pg-main" :class="`pe-page-${page.type}`">
+          <!-- Track order runs two storefront pages; each gets its own heading. -->
+          <template v-if="page.type === 'track_order'">
+            <div class="pe-group pe-r-group-customer">
+              <div>
+                <h5 class="pe-group-title">Customer Order Tracking <span>(কাস্টমার অর্ডার ট্র্যাকিং)</span></h5>
+              </div>
+              <a href="/account/track-order" target="_blank" class="pe-group-link"><ExternalLink :size="14" /> View page</a>
+            </div>
+            <div class="pe-group pe-r-group-guest">
+              <div>
+                <h5 class="pe-group-title">Guest Order Tracking <span>(গেস্ট অর্ডার ট্র্যাকিং)</span></h5>
+              </div>
+              <a href="/track-order" target="_blank" class="pe-group-link"><ExternalLink :size="14" /> View page</a>
+            </div>
+          </template>
+          <!-- ── SEO (built-in pages; a page you created has it under Page settings) -->
+          <div v-if="page.editable && !page.is_custom" class="card pe-row pe-r-seo">
+            <div class="card-header pe-row-head">
+              <button type="button" class="pe-row-title" :aria-expanded="isOpen('_seo')" @click="toggleSection('_seo')">
+                <h6 class="mb-0">SEO</h6>
+              </button>
+              <button type="button" class="pe-chev" :class="{ 'is-open': isOpen('_seo') }" aria-label="Expand section" @click="toggleSection('_seo')">
+                <ChevronDown :size="18" />
+              </button>
+            </div>
+            <div v-show="isOpen('_seo')" class="card-body">
+              <label class="form-label" for="pg-seo-title">Meta title (SEO)</label>
+              <input
+                id="pg-seo-title"
+                v-model="form.meta_title"
+                type="text"
+                maxlength="255"
+                class="form-control"
+                :class="{ 'is-invalid': form.errors.meta_title }"
+                :placeholder="form.texts.tab_title || page.label"
+              />
+              <div class="invalid-feedback">{{ form.errors.meta_title }}</div>
+              <small class="text-muted d-block mt-1">
+                Shown in the browser tab and in Google results. Leave empty to use the page's browser tab title.
+              </small>
+
+              <label class="form-label mt-3" for="pg-seo-desc">Meta description (SEO)</label>
+              <textarea
+                id="pg-seo-desc"
+                v-model="form.meta_description"
+                maxlength="500"
+                rows="3"
+                class="form-control"
+                :class="{ 'is-invalid': form.errors.meta_description }"
+              ></textarea>
+              <div class="invalid-feedback">{{ form.errors.meta_description }}</div>
+              <small class="text-muted d-block mt-1">
+                The short summary under the title in Google results — about 150–160 characters
+                ({{ (form.meta_description || '').length }} now). Leave empty for none.
+              </small>
+            </div>
+          </div>
+
           <!-- ── Page settings (pages you created) ────────────────── -->
           <div v-if="page.is_custom" class="card pe-row">
             <div class="card-header pe-row-head">
@@ -746,10 +826,10 @@ function submit() {
           </div>
 
           <!-- ── Page header ─────────────────────────────────────── -->
-          <div v-if="page.editable && page.has_header" class="card pe-row">
+          <div v-if="page.editable && page.has_header" class="card pe-row pe-r-header">
             <div class="card-header pe-row-head">
               <button type="button" class="pe-row-title" :aria-expanded="isOpen('_header')" @click="toggleSection('_header')">
-                <h6 class="mb-0">Page header</h6>
+                <h6 class="mb-0">{{ page.type === 'track_order' ? 'পেজের শিরোনাম (Track Your Order)' : 'Page header' }}</h6>
               </button>
               <button type="button" class="pe-chev" :class="{ 'is-open': isOpen('_header') }" aria-label="Expand section" @click="toggleSection('_header')">
                 <ChevronDown :size="18" />
@@ -779,7 +859,7 @@ function submit() {
             v-for="section in page.text_sections ?? []"
             :key="section.key"
             class="card pe-row pg-textsec"
-            :class="{ 'is-collapsed': closedSections.has(section.key), 'is-off': hasSwitch(section) && !sectionOn(section) }"
+            :class="[`pe-r-sec-${section.key}`, { 'is-collapsed': closedSections.has(section.key), 'is-off': hasSwitch(section) && !sectionOn(section) }]"
           >
             <div class="card-header pe-row-head">
               <button
@@ -828,7 +908,16 @@ function submit() {
                       :aria-label="`Show ${widgetLabel(block)}`"
                       @update:model-value="block.hidden = !$event"
                     />
-                    <button type="button" class="btn btn-fig-secondary btn-fig-sm" :aria-expanded="!collapsed.has(block.id)" @click="goToWidget(block)">{{ collapsed.has(block.id) ? 'Edit' : 'Collapse' }}</button>
+                    <button
+                      type="button"
+                      class="table-icon-btn is-primary"
+                      :title="collapsed.has(block.id) ? 'Edit' : 'Collapse'"
+                      :aria-label="collapsed.has(block.id) ? 'Edit' : 'Collapse'"
+                      :aria-expanded="!collapsed.has(block.id)"
+                      @click="goToWidget(block)"
+                    >
+                      <Pencil :size="14" />
+                    </button>
                     <button type="button" class="table-icon-btn" title="Duplicate" @click="duplicateSlotWidget(block)">
                       <Copy :size="14" />
                     </button>
@@ -861,7 +950,20 @@ function submit() {
                   class="pg-text-field"
                   :class="{ 'is-wide': field.type === 'textarea' || field.type === 'image' || field.type === 'banner' }"
                 >
-                  <label class="form-label" :for="`pt-${field.key}`">{{ field.label }}</label>
+                  <div v-if="pairSwitch(section, field)" class="pe-label-row">
+                    <label class="form-label mb-0" :for="`pt-${field.key}`">{{ field.label }}</label>
+                    <label class="form-check form-switch mb-0 pe-mini-switch" :title="isOn(form.texts[pairSwitch(section, field).key]) ? 'Shown on the site' : 'Hidden on the site'">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        :aria-label="pairSwitch(section, field).label"
+                        :checked="isOn(form.texts[pairSwitch(section, field).key])"
+                        @change="form.texts[pairSwitch(section, field).key] = $event.target.checked ? '1' : '0'"
+                      />
+                    </label>
+                  </div>
+                  <label v-else class="form-label" :for="`pt-${field.key}`">{{ field.label }}</label>
 
                   <!-- Repeater: a list the operator can grow, prune and reorder -->
                   <div v-if="field.type === 'repeater'" class="pg-rep">
@@ -1033,7 +1135,7 @@ function submit() {
                 <label class="form-label mb-1">Hero banners</label>
                 <p class="pe-help">
                   The main banner shows first. Add more and they follow it in this order, changing
-                  automatically; with only the main banner, the hero stays as it is.
+                  using the timer below when enabled. With the timer off, visitors can swipe or use the slide controls.
                 </p>
                 <!-- Every hero banner, in display order: the main one first -->
               <div class="bc-list">
@@ -1057,7 +1159,7 @@ function submit() {
                   <img :src="banner.mobile_image_path || banner.image_path" alt="" class="bc-thumb bc-thumb--m" loading="lazy" :title="banner.mobile_image_path ? 'Mobile image' : 'No mobile image — the desktop one is used'" />
                   <div class="bc-meta">
                     <span class="bc-title">
-                      {{ banner.title || `Banner ${bi + 2}` }}
+                      {{ banner.heading || banner.title || `Banner ${bi + 2}` }}
                       <span v-if="banner.is_active === false" class="pe-hidden">Hidden</span>
                     </span>
                     <span class="bc-link">{{ banner.link_url ? `→ ${banner.link_url}${banner.link_new_tab ? ' (new tab)' : ''}` : 'No link' }}</span>
@@ -1092,11 +1194,13 @@ function submit() {
                 <button type="button" class="pe-add" @click="bannerModal = 'new'">
                   <Plus :size="15" /> Add banner
                 </button>
-                <div v-if="banners.some((b) => b.is_active !== false)" class="hs-speed">
+                <div class="hs-speed">
+                  <div class="pg-banner-option mb-2"><label class="form-label mb-0" for="hero-autoplay-toggle">Auto-play / timer</label><VisibilityToggle id="hero-autoplay-toggle" switch-only :model-value="isOn(form.texts.hero_autoplay_enabled)" aria-label="Automatically rotate Home banners" @update:model-value="form.texts.hero_autoplay_enabled = $event ? '1' : '0'" /></div>
                   <label for="hero-slide-seconds" class="form-label">Change image every (seconds)</label>
                   <input
                     id="hero-slide-seconds"
                     :value="form.texts.hero_slide_seconds || '5'"
+                    :disabled="!isOn(form.texts.hero_autoplay_enabled)"
                     type="number"
                     min="1"
                     max="120"
@@ -1651,6 +1755,7 @@ function submit() {
       :desktop="form.texts.hero_image_desktop || ''"
       :mobile="form.texts.hero_image_mobile || ''"
       :saving="form.processing"
+      :copy="mainBannerCopy"
       @close="mainBannerOpen = false"
       @save="saveMainBanner"
     />
@@ -1951,7 +2056,7 @@ function submit() {
 /* ── Sticky save bar ─────────────────────────────────────── */
 .pg-savebar {
   position: fixed;
-  left: var(--sidebar-width, 260px);
+  left: 250px;
   right: 0;
   bottom: 0;
   z-index: 20;
@@ -2510,4 +2615,42 @@ function submit() {
   font-size: 11px;
   font-weight: 600;
 }
+
+/* A field's own small on/off, beside its label. */
+.pe-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: .5rem; }
+.pe-mini-switch { padding-left: 0; min-height: 0; display: inline-flex; }
+.pe-mini-switch .form-check-input { float: none; margin: 0; width: 30px; height: 16px; cursor: pointer; }
+
+/* Track order: two groups, each in its page's own top-to-bottom order.
+   Customer Order Tracking (My Account) first, then Guest Order Tracking
+   (/track-order) with its widgets, browser tab / copy message and SEO.
+   Other pages keep their order. */
+.pe-page-track_order > * { order: 9; }
+.pe-page-track_order > .pe-r-group-customer { order: 1; }
+.pe-page-track_order > .pe-r-sec-acc_header { order: 2; }
+.pe-page-track_order > .pe-r-sec-acc_search { order: 3; }
+.pe-page-track_order > .pe-r-sec-acc_result { order: 4; }
+.pe-page-track_order > .pe-r-group-guest { order: 5; }
+.pe-page-track_order > .pe-r-header { order: 6; }
+.pe-page-track_order > .pe-r-sec-search { order: 7; }
+.pe-page-track_order > .pe-r-sec-result { order: 8; }
+.pe-page-track_order > .pe-r-sec-page { order: 10; }
+.pe-page-track_order > .pe-r-seo { order: 0; } /* SEO first, as on every page */
+
+.pe-group {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+.pe-group.pe-r-group-guest { margin-top: 24px; }
+.pe-group-title { margin: 0; font-weight: 700; color: var(--admin-green-600, #252f17); }
+.pe-group-title span { font-weight: 500; color: var(--text-muted, #6d6560); }
+.pe-group-link {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  color: var(--admin-green-600, #252f17); font-weight: 600; font-size: .875em; white-space: nowrap;
+}
+.pe-group-link:hover { text-decoration: underline; }
 </style>

@@ -4,7 +4,11 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { toast } from "@steveyuowo/vue-hot-toast";
-import { on } from "@/utils/cms";
+import { on, shown } from "@/utils/cms";
+
+// Each part of the order card has its own on/off in Content › Pages ›
+// Track order; a part with no saved switch shows, as it always did.
+const show = (key) => on(props.texts[`${key}_show`] ?? "1");
 
 // Props from Inertia (server passes orderData and invoice from trackOrder method)
 const props = defineProps({
@@ -20,7 +24,9 @@ const page          = usePage();
 const invoiceNumber = ref(props.invoice || "");
 const orderData     = ref(props.orderData || null);
 const loading       = ref(false);
-const errorMessage  = ref("");
+// Opened with a number that matches no order (a shared link, a refresh):
+// say so straight away.
+const errorMessage  = ref(props.invoice && !props.orderData ? props.texts.search_not_found : "");
 
 // Sync when Inertia navigates back with results
 watch(() => page.props.orderData, (val) => {
@@ -43,17 +49,25 @@ const trackOrder = () => {
     router.get("/track-order", { invoice: invoiceNumber.value }, {
         preserveState:  true,
         preserveScroll: true,
+        // The watcher only fires when the result changes, so a second wrong
+        // number in a row (no order before, no order after) showed nothing.
+        // Say so on every search that finds no order.
+        onSuccess: (visit) => {
+            const found = visit.props.orderData;
+            orderData.value = found || null;
+            errorMessage.value = found ? "" : props.texts.search_not_found;
+        },
         onFinish: () => { loading.value = false; },
     });
 };
 
 // Copying anything here (the order ID, say) confirms with a small toast.
-const onCopy = () => toast.success("কপি হয়েছে!");
+const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয়েছে!");
 </script>
 
 <template>
     <Head>
-        <title>{{ texts.tab_title }}</title>
+        <title>{{ texts.tab_title || 'অর্ডার ট্র্যাক' }}</title>
     </Head>
 
     <AppLayout>
@@ -115,8 +129,8 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                     <div class="track-card p-5 md:p-7 rounded-2xl">
                         <div class="flex items-start justify-between flex-wrap gap-3 pb-5 mb-5 border-b border-[#f2e3cf]">
                             <div>
-                                <h2 class="body-2-sb text-[#3E3C3A]">{{ texts.t2 }}</h2>
-                                <p class="text-xs text-[#9ca3af] mt-0.5 tracking-wide">{{ texts.t13 }}{{ orderData.invoice_number }}</p>
+                                <h2 v-if="show('t2')" class="body-2-sb text-[#3E3C3A]">{{ texts.t2 }}</h2>
+                                <p v-if="show('t13')" class="text-xs text-[#9ca3af] mt-0.5 tracking-wide">{{ texts.t13 }}{{ orderData.invoice_number }}</p>
                             </div>
                             <span :class="['status-badge', 'badge-' + orderData.order_status?.toLowerCase().replace(/\s+/g, '_')]">
                                 {{ orderData.order_status }}
@@ -124,7 +138,7 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div class="info-row">
+                            <div v-if="show('t3')" class="info-row">
                                 <div class="info-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -135,7 +149,7 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                                     <p class="info-value">{{ orderData.customer_name ?? 'N/A' }}</p>
                                 </div>
                             </div>
-                            <div class="info-row">
+                            <div v-if="show('t4')" class="info-row">
                                 <div class="info-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
@@ -146,13 +160,25 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                                     <p class="info-value font-semibold text-theme">৳ {{ orderData.total_price }}</p>
                                 </div>
                             </div>
+                            <!-- Extra boxes added in the admin -->
+                            <div v-for="(box, i) in shown(texts.result_boxes)" :key="`box-${i}`" class="info-row">
+                                <div class="info-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="info-label">{{ box.label }}</p>
+                                    <p class="info-value">{{ box.value }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Order Items -->
                     <template v-if="orderData.items.length > 0">
                         <div class="track-card rounded-2xl overflow-hidden">
-                            <div class="px-5 md:px-7 py-4 border-b border-[#f2e3cf]">
+                            <div v-if="show('t5')" class="px-5 md:px-7 py-4 border-b border-[#f2e3cf]">
                                 <h3 class="body-2-sb text-[#3E3C3A]">{{ texts.t5 }}</h3>
                             </div>
 
@@ -161,23 +187,23 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                                 <table class="w-full">
                                     <thead>
                                         <tr class="bg-[#FEF8F0]">
-                                            <th class="px-7 py-3 text-left text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t6 }}</th>
-                                            <th class="px-4 py-3 text-center text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t7 }}</th>
-                                            <th class="px-4 py-3 text-center text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t8 }}</th>
-                                            <th class="px-7 py-3 text-right text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t9 }}</th>
+                                            <th v-if="show('t6')" class="px-7 py-3 text-left text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t6 }}</th>
+                                            <th v-if="show('t7')" class="px-4 py-3 text-center text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t7 }}</th>
+                                            <th v-if="show('t8')" class="px-4 py-3 text-center text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t8 }}</th>
+                                            <th v-if="show('t9')" class="px-7 py-3 text-right text-xs font-semibold text-[#6d6560] uppercase tracking-wider">{{ texts.t9 }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-[#f2e3cf]">
                                         <tr v-for="(item, index) in orderData.items" :key="index" class="hover:bg-[#fffdf9] transition-colors">
-                                            <td class="px-7 py-4">
+                                            <td v-if="show('t6')" class="px-7 py-4">
                                                 <div class="flex items-center gap-3">
                                                     <img :src="item.product.featured_image || '/placeholder.svg'" alt="Product Image" class="w-14 h-14 object-cover rounded-xl border border-[#f2e3cf] flex-shrink-0" loading="lazy" decoding="async" width="56" height="56" @error="$event.target.src = '/placeholder.svg'" />
                                                     <span class="text-sm font-medium text-[#3E3C3A]">{{ item.product.product_name }}</span>
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-4 text-center text-sm text-[#6d6560]">{{ item.quantity }}</td>
-                                            <td class="px-4 py-4 text-center text-sm text-[#6d6560]">৳ {{ item.price }}</td>
-                                            <td class="px-7 py-4 text-right text-sm font-semibold text-theme">৳ {{ (item.price * item.quantity).toFixed(2) }}</td>
+                                            <td v-if="show('t7')" class="px-4 py-4 text-center text-sm text-[#6d6560]">{{ item.quantity }}</td>
+                                            <td v-if="show('t8')" class="px-4 py-4 text-center text-sm text-[#6d6560]">৳ {{ item.price }}</td>
+                                            <td v-if="show('t9')" class="px-7 py-4 text-right text-sm font-semibold text-theme">৳ {{ (item.price * item.quantity).toFixed(2) }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -190,8 +216,8 @@ const onCopy = () => toast.success("কপি হয়েছে!");
                                     <div class="flex-grow min-w-0">
                                         <p class="text-sm font-medium text-[#3E3C3A] leading-snug">{{ item.product.product_name }}</p>
                                         <div class="flex flex-wrap gap-x-4 mt-1.5">
-                                            <span class="text-xs text-[#9ca3af]">{{ texts.t10 }}<span class="text-[#3E3C3A] font-medium">{{ item.quantity }}</span></span>
-                                            <span class="text-xs text-[#9ca3af]">{{ texts.t11 }}<span class="text-[#3E3C3A] font-medium">৳ {{ item.price }}</span></span>
+                                            <span v-if="show('t10')" class="text-xs text-[#9ca3af]">{{ texts.t10 }}<span class="text-[#3E3C3A] font-medium">{{ item.quantity }}</span></span>
+                                            <span v-if="show('t11')" class="text-xs text-[#9ca3af]">{{ texts.t11 }}<span class="text-[#3E3C3A] font-medium">৳ {{ item.price }}</span></span>
                                         </div>
                                         <p class="mt-1.5 text-sm font-semibold text-theme">৳ {{ (item.price * item.quantity).toFixed(2) }}</p>
                                     </div>
@@ -200,11 +226,11 @@ const onCopy = () => toast.success("কপি হয়েছে!");
 
                             <!-- Total Footer -->
                             <div class="px-5 md:px-7 py-4 bg-[#FEF8F0] border-t border-[#f2e3cf] flex items-center justify-between">
-                                <p class="text-sm text-[#6d6560]">{{ orderData.items.length }} {{ texts.t14 }}{{ orderData.items.length !== 1 ? 's' : '' }}</p>
-                                <div class="text-right">
+                                <p v-if="show('t14')" class="text-sm text-[#6d6560]">{{ orderData.items.length }} {{ texts.t14 }}{{ orderData.items.length !== 1 ? 's' : '' }}</p>
+                                <div v-if="show('t12')" class="text-right ms-auto">
                                     <p class="text-xs text-[#9ca3af] uppercase tracking-wider font-medium">{{ texts.t12 }}</p>
                                     <p class="text-xl font-bold text-theme">৳ {{ orderData.total_price }}</p>
-                                    <p v-if="orderData.payment_summary" class="mt-0.5 text-xs text-[#6d6560]">Payment: {{ orderData.payment_summary }}</p>
+                                    <p v-if="orderData.payment_summary && show('t15')" class="mt-0.5 text-xs text-[#6d6560]">{{ texts.t15 ?? 'Payment:' }} {{ orderData.payment_summary }}</p>
                                 </div>
                             </div>
                         </div>

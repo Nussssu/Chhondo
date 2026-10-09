@@ -504,8 +504,13 @@ const createIncompleteOrder = async () => {
   // Incomplete order tracking removed — handled server-side
 }
 
-const placeOrder = () => {
-  if (!validateForm()) return
+const placeOrder = async () => {
+  if (isPlacingOrder.value || !validateForm()) return
+  isPlacingOrder.value = true
+  if (!cartStore.is_direct_order && !await cartStore.flushCartUpdates()) {
+    isPlacingOrder.value = false
+    return
+  }
 
   // GA4 tracking
   if (typeof window !== "undefined") {

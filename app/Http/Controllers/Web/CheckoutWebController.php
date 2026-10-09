@@ -265,8 +265,12 @@ class CheckoutWebController extends Controller
 
         // Cash on delivery is confirmed the moment it is placed. An online
         // order waits for the money before its confirmation goes out.
-        app(\App\Services\Sms\OrderSmsNotifier::class)->send($order);
-        app(\App\Services\Mail\OrderMailNotifier::class)->sendPlaced($order);
+        try {
+            \App\Jobs\SendOrderConfirmation::dispatch($order->id);
+        } catch (\Throwable $e) {
+            // The order is saved; notification failure must not cause a retry.
+            Log::error('Order confirmation could not be queued: '.$e->getMessage());
+        }
 
         return redirect()->route('order.success', $order->invoice_number);
     }

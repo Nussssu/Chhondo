@@ -220,7 +220,7 @@ class PagesController extends Controller
                     ->all(),
             ],
             'banners' => $meta['banners']
-                ? SidebarSlider::ordered()->get(['id', 'image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active'])
+                ? SidebarSlider::ordered()->get(['id', 'image_path', 'mobile_image_path', 'sort_order', 'title', 'link_url', 'link_new_tab', 'is_active', 'heading', 'subtext', 'cta_label', 'cta_url', 'show_subtext', 'show_cta'])
                 : [],
             // Options for the product-section widget.
             'categories' => $this->resolver->categoryOptions(),
@@ -355,6 +355,8 @@ class PagesController extends Controller
                 'help'   => $field['help'] ?? null,
                 'fields' => $field['fields'] ?? null,
                 'variant' => $field['variant'] ?? null,
+                // A small on/off shown beside another field's label.
+                'pair'    => $field['pair'] ?? null,
             ];
         }
 
@@ -455,9 +457,11 @@ class PagesController extends Controller
                 'required', 'string', 'max:255',
                 Rule::unique('pages', 'slug')->ignore($page->id),
             ];
-            $rules['meta_title']       = 'nullable|string|max:255';
-            $rules['meta_description'] = 'nullable|string|max:500';
         }
+
+        // Every page has its own search title and description.
+        $rules['meta_title']       = 'nullable|string|max:255';
+        $rules['meta_description'] = 'nullable|string|max:500';
 
         foreach ($meta['site_fields'] as $key => $field) {
             $rules['fields.' . $key] = match ($field['type']) {
@@ -483,14 +487,14 @@ class PagesController extends Controller
                     'blocks'       => $blocks,
                     'content'      => $this->renderer->render($blocks),
                     'is_published' => $request->boolean('is_published', true),
+                    'meta_title'       => $data['meta_title'] ?? null,
+                    'meta_description' => $data['meta_description'] ?? null,
                 ];
 
                 if ($page->is_custom) {
                     // Normalised rather than taken as typed, so a pasted title
                     // or a stray slash cannot produce an address that 404s.
                     $attributes['slug'] = Page::uniqueSlug($data['slug'], $page->id);
-                    $attributes['meta_title'] = $data['meta_title'] ?? null;
-                    $attributes['meta_description'] = $data['meta_description'] ?? null;
                 }
 
                 Page::updateOrCreate(['type' => $type], $attributes);

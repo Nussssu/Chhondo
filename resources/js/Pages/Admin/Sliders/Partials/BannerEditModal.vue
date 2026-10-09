@@ -28,6 +28,12 @@ const form = useForm({
   mobile_image_path_library_path: '',
   // Carousel details
   title: props.banner?.title ?? '',
+  heading: props.banner?.heading ?? '',
+  subtext: props.banner?.subtext ?? '',
+  cta_label: props.banner?.cta_label ?? '',
+  cta_url: props.banner?.cta_url ?? '',
+  show_subtext: props.banner?.show_subtext !== false,
+  show_cta: props.banner?.show_cta !== false,
   link_url: props.banner?.link_url ?? '',
   link_new_tab: Boolean(props.banner?.link_new_tab),
   is_active: props.banner ? props.banner.is_active !== false : true,
@@ -150,6 +156,27 @@ function submit() {
       <!-- ── Carousel details ─────────────────────────────────── -->
       <div class="bn-details">
         <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="bn-heading">Heading</label>
+            <textarea id="bn-heading" v-model="form.heading" class="form-control" rows="2" maxlength="1000"></textarea>
+            <p class="bn-hint mt-1 mb-0">Use *stars* for gold words and Enter for a new line.</p>
+            <p v-if="form.errors.heading" class="invalid-note">{{ form.errors.heading }}</p>
+          </div>
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-1"><label class="form-label mb-0" for="bn-subtext">Small line</label><input v-model="form.show_subtext" type="checkbox" class="form-check-input" role="switch" aria-label="Show this banner's small line" /></div>
+            <input id="bn-subtext" v-model="form.subtext" class="form-control" maxlength="255" />
+            <p v-if="form.errors.subtext" class="invalid-note">{{ form.errors.subtext }}</p>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-1"><label class="form-label mb-0" for="bn-cta-label">Button text</label><input v-model="form.show_cta" type="checkbox" class="form-check-input" role="switch" aria-label="Show this banner's CTA button" /></div>
+            <input id="bn-cta-label" v-model="form.cta_label" class="form-control" maxlength="150" />
+            <p v-if="form.errors.cta_label" class="invalid-note">{{ form.errors.cta_label }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="bn-cta-url">Button link</label>
+            <input id="bn-cta-url" v-model="form.cta_url" class="form-control" maxlength="500" placeholder="/shop or https://…" />
+            <p v-if="form.errors.cta_url" class="invalid-note">{{ form.errors.cta_url }}</p>
+          </div>
           <div class="col-md-6">
             <label class="form-label" for="bn-title">Alt text</label>
             <input id="bn-title" v-model="form.title" type="text" class="form-control" maxlength="150" placeholder="e.g. Puja collection banner" />

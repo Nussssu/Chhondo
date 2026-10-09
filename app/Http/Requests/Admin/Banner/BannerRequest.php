@@ -40,6 +40,16 @@ class BannerRequest extends FormRequest
             'link_url'     => 'nullable|string|max:500',
             'link_new_tab' => 'nullable|boolean',
             'is_active'    => 'nullable|boolean',
+            'heading'      => 'nullable|string|max:1000',
+            'subtext'      => 'nullable|string|max:255',
+            'cta_label'    => 'nullable|string|max:150',
+            'cta_url'      => ['nullable', 'string', 'max:500', function ($attribute, $value, $fail) {
+                if ($value && ! preg_match('#^(?:/(?!/)|https?://)#i', $value)) {
+                    $fail('Use a site path such as /shop or an http/https link.');
+                }
+            }],
+            'show_subtext' => 'nullable|boolean',
+            'show_cta'     => 'nullable|boolean',
         ];
     }
 
