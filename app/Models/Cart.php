@@ -16,11 +16,14 @@ class Cart extends Model
         'discount_value',
         'attribute_hash',
         'blouse_choice',
+        'blouse_customization',
     ];
 
     protected $attributes = [
         'attribute_hash' => null, 
     ];
+
+    protected $casts = ['blouse_customization' => 'array'];
 
     // Define relationship with CartAttribute if needed
     public function attributes()

@@ -35,6 +35,7 @@
                 <div
                     ref="scrollArea"
                     @scroll="updateScrollbar"
+                    :style="{ '--qv-sbw': infoScrollbarWidth + 'px' }"
                     class="preview-scroll flex flex-col md:flex-row md:items-start gap-4 md:gap-6 p-4 md:p-6"
                 >
                     <!-- Left: Image Carousel -->
@@ -64,7 +65,7 @@
                                         v-else-if="productItems[activeIndex].host === 'Youtube' || productItems[activeIndex].host === 'Gdrive'"
                                         class="absolute inset-0 flex items-center justify-center text-white/70 text-sm px-6 text-center"
                                     >
-                                        This video link could not be read.
+                                        ভিডিও লিংকটি পড়া যায়নি।
                                     </div>
 
                                     <!-- Self-hosted video: plays as part of the gallery -->
@@ -78,7 +79,7 @@
                                         class="absolute inset-0 w-full h-full object-cover pointer-events-none"
                                     >
                                         <source :src="productItems[activeIndex].src" type="video/mp4" />
-                                        Your browser does not support the video tag.
+                                        আপনার ব্রাউজার ভিডিওটি সমর্থন করে না।
                                     </video>
                                 </div>
 
@@ -149,6 +150,7 @@
                     <!-- Right: Product Info -->
                     <div
                         v-if="product"
+                        ref="infoArea"
                         class="preview-info w-full md:flex-1 flex flex-col gap-6 md:max-h-[520px] md:overflow-y-auto md:pr-1"
                     >
                         <!-- Name + Price + Description -->
@@ -220,11 +222,11 @@
 
 
                         <!-- Blouse Option (only when product has it) -->
-                        <div v-if="hasBlouseOption">
+                        <div v-if="hasBlouseOption || customBlouseOptions.length">
                             <label class="preview-option-label preview-option-label--blouse">ব্লাউজ:</label>
                             <div class="preview-blouse-row mt-6">
                                 <label
-                                    v-for="opt in blouseChoices"
+                                    v-for="opt in (hasBlouseOption ? blouseChoices : [])"
                                     :key="opt.value"
                                     :class="[
                                         'preview-pill',
@@ -247,8 +249,31 @@
                                         </svg>
                                     </span>
                                 </label>
+                                <!-- Custom blouse: the same card as the blouse-piece options -->
+                                <label
+                                  v-for="opt in customBlouseOptions"
+                                  :key="`custom-${opt.id}`"
+                                  :class="['preview-pill', customBlouse?.option_id === opt.id ? 'preview-pill--active' : '']"
+                                >
+                                  <input
+                                    type="radio"
+                                    name="preview_blouse_option"
+                                    :checked="customBlouse?.option_id === opt.id"
+                                    class="sr-only"
+                                    @click="chooseCustomBlouse(opt)"
+                                  />
+                                  <span>{{ opt.label }}</span>
+                                  <span class="preview-pill-extra">(+ <s v-if="opt.regular_price" class="opacity-60 font-normal">{{ Number(opt.regular_price).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}৳</s> {{ Number(opt.price).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}৳)</span>
+                                  <span v-if="customBlouse?.option_id === opt.id" class="preview-pill-check">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  </span>
+                                </label>
                             </div>
                         </div>
+
+                        <BlouseCustomizationPicker ref="customBlousePicker" v-model="customBlouse" :settings="blouseSettings" inline-options />
 
                         <!-- Dynamic Attributes -->
                         <div
@@ -256,7 +281,7 @@
                             :key="attributeName"
                         >
                             <label class="preview-option-label">{{ attributeName }}:</label>
-                            <div class="flex flex-wrap gap-4 mt-2">
+                            <div class="preview-attr-row flex flex-wrap gap-4 mt-2">
                                 <button
                                     v-for="option in groupedAttributes[attributeName]"
                                     :key="option.id"
@@ -334,7 +359,7 @@
                     </div>
 
                     <div v-else class="w-full md:flex-1 p-8 flex items-center justify-center">
-                        <p class="text-gray-400">Loading...</p>
+                        <p class="text-gray-400">লোড হচ্ছে...</p>
                     </div>
                 </div>
             </div>
@@ -363,6 +388,8 @@ import { parseGalleryImages } from "@/utils/galleryImages";
 import { isOutOfStock, isPreOrder, isVariantOutOfStock, preOrderNote } from '@/utils/stock'
 import { priceFor, priceForAmount, wasPriceFor, blousePriceFor } from '@/utils/productPrice'
 import { videoEmbedUrl, videoThumbnailUrl } from "@/utils/videoEmbed";
+import BlouseCustomizationPicker from './BlouseCustomizationPicker.vue';
+import { useBlouseCustomization } from '@/composables/useBlouseCustomization';
 
 const props = defineProps({
     isOpen: Boolean,
@@ -471,10 +498,22 @@ const hasBlouseOption = computed(() => {
     return !!p?.has_blouse_option && blousePriceFor(p) > 0;
 });
 const blouseChoice = ref("without");
-const blouseChoices = [
-    { value: "without", label: "ব্লাউজ পিস ছাড়া" },
-    { value: "with", label: "ব্লাউজ পিস সহ" },
-];
+const { settings: blouseSettings, selection: customBlouse, picker: customBlousePicker, fee: customBlouseFee, snapshot: customBlouseSnapshot, validate: validateCustomBlouse } = useBlouseCustomization(blouseChoice, () => mergedProduct.value);
+// Custom blouse cards (Products › Blouse options), drawn in the blouse row.
+const customBlouseOptions = computed(() =>
+  blouseSettings.value.enabled ? (blouseSettings.value.options || []).filter((row) => row.enabled !== false) : []
+)
+// A second click on the selected card clears it (back to "without").
+function chooseCustomBlouse(opt) {
+  customBlouse.value = customBlouse.value?.option_id === opt.id
+    ? null
+    : { option_id: opt.id, sleeve_type: '', size: '', requirements: '' }
+}
+// Each button can be switched off in Store settings › Product details.
+const blouseChoices = computed(() => [
+    { value: "without", label: blouseSettings.value.legacy_without_label || "ব্লাউজ ছাড়া", enabled: blouseSettings.value.legacy_without_enabled !== false },
+    { value: "with", label: blouseSettings.value.legacy_with_label || "ব্লাউজ সহ", enabled: blouseSettings.value.legacy_with_enabled !== false },
+].filter((opt) => opt.enabled));
 
 // Extra cost of the with-blouse option, shown as "+ N৳" on the pill.
 const blouseExtra = computed(() => {
@@ -651,7 +690,7 @@ const getSelectedAttributeIds = () => {
 };
 
 const displayPrice = computed(() => {
-    return formatPrice(basePrice.value);
+    return formatPrice(basePrice.value + customBlouseFee.value);
 });
 
 const formatPrice = (price) => {
@@ -670,7 +709,7 @@ const withBlouse = computed(() => hasBlouseOption.value && blouseChoice.value ==
 // variant as the price beside it.
 const wasPrice = computed(() => {
     const was = wasPriceFor(mergedProduct.value ?? props.product, withBlouse.value);
-    return was ? Math.round(was) : null;
+    return was ? Math.round(was + customBlouseFee.value) : null;
 });
 
 /**
@@ -745,7 +784,16 @@ const showScrollbar = ref(false);
 const thumbHeight = ref(0);
 const thumbTop = ref(0);
 
+// Desktop: the details column runs to the popup's right edge so its scrollbar
+// sits flush there; the column's right padding is 24px less that scrollbar's
+// real width (0 where scrollbars overlay), matching the 24px on the left.
+const infoArea = ref(null);
+const infoScrollbarWidth = ref(0);
+
 const updateScrollbar = () => {
+    if (infoArea.value) {
+        infoScrollbarWidth.value = Math.max(0, infoArea.value.offsetWidth - infoArea.value.clientWidth);
+    }
     const el = scrollArea.value;
     if (!el) return;
 
@@ -756,7 +804,7 @@ const updateScrollbar = () => {
         return;
     }
 
-    const trackHeight = clientHeight - 16; // track inset, see .preview-scrollbar
+    const trackHeight = clientHeight - 65; // track inset (57px top, 8px bottom), see .preview-scrollbar
     const height = Math.max(36, (clientHeight / scrollHeight) * trackHeight);
     const maxTop = trackHeight - height;
     const progress = scrollTop / (scrollHeight - clientHeight);
@@ -867,6 +915,7 @@ const guardUnavailable = () => {
 
 const addToCart = () => {
     const cartStore = useCartStore();
+    if (!validateCustomBlouse()) return;
 
     if (guardUnavailable()) return;
 
@@ -876,7 +925,8 @@ const addToCart = () => {
         cartStore.addToCart({
             product_id:    props.product.id,
             quantity:      quantity.value,
-            blouse_choice: hasBlouseOption.value ? blouseChoice.value : null,
+            blouse_choice: customBlouseSnapshot.value ? 'custom' : (hasBlouseOption.value ? blouseChoice.value : null),
+            blouse_customization: customBlouseSnapshot.value,
             attribute_values: selectedAttributeIds,
         }, mergedProduct.value ?? props.product);
 
@@ -887,6 +937,7 @@ const addToCart = () => {
 
 const buyNow = () => {
     const cartStore = useCartStore();
+    if (!validateCustomBlouse()) return;
 
     if (guardUnavailable()) return;
 
@@ -895,7 +946,11 @@ const buyNow = () => {
         const productData = {
             product_id: props.product.id,
             product_name: props.product.product_name,
-            price: props.product.price,
+            price: customBlouseSnapshot.value ? basePrice.value + customBlouseFee.value : props.product.price,
+            price_without_customization: basePrice.value,
+            blouse_choice: customBlouseSnapshot.value ? 'custom' : (hasBlouseOption.value ? blouseChoice.value : null),
+            blouse_customization: customBlouseSnapshot.value,
+            custom_blouse: mergedProduct.value?.custom_blouse ?? null,
             featured_image: props.product.featured_image,
             quantity: quantity.value,
             is_pre_order: isPreOrderProduct.value,
@@ -1420,8 +1475,9 @@ const buyNow = () => {
         overflow-y: auto;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
-        /* room for the always-visible scrollbar + the close button */
-        padding-right: 14px;
+        /* 16px, as on the left; the drawn 6px scrollbar sits flush on the
+           right edge inside it. */
+        padding-right: 16px;
     }
 
     .preview-close {
@@ -1439,8 +1495,9 @@ const buyNow = () => {
     .preview-scrollbar {
         display: block;
         position: absolute;
-        top: 8px;
-        right: 4px;
+        /* Starts 10px below the close button (16px + 31px). */
+        top: 57px;
+        right: 0;
         bottom: 8px;
         width: 6px;
         background: #ece5de;
@@ -1466,6 +1523,19 @@ const buyNow = () => {
 
     .preview-scroll::-webkit-scrollbar {
         display: none;
+    }
+}
+
+/* Desktop: the scrollbar sits flush on the popup's right edge, and content is
+   24px from both edges — on the right that 24px includes the scrollbar. */
+@media (min-width: 768px) {
+    .preview-scroll {
+        padding-right: 0;
+    }
+
+    .preview-info {
+        scrollbar-gutter: stable;
+        padding-right: max(0px, calc(24px - var(--qv-sbw, 0px)));
     }
 }
 
@@ -1678,5 +1748,49 @@ const buyNow = () => {
 @media (max-width: 767px) {
     .preview-product-name { font-size: 26px; line-height: 34px; }
     .preview-pill { min-width: 0; flex: 1 1 auto; padding: 0 14px; font-size: 14px; }
+}
+/* Options two to a row; Add to cart and View details side by side —
+   desktop and mobile alike. */
+.preview-blouse-row,
+.preview-attr-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.preview-blouse-row .preview-pill,
+.preview-attr-row .preview-pill {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    justify-content: center;
+}
+.preview-buy-row {
+    flex-direction: row;
+}
+.preview-buy-row .preview-add-to-cart,
+.preview-buy-row .preview-view-details {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 0 10px;
+}
+@media (max-width: 767px) {
+    /* Half-width on a phone: a long name and price wrap inside the button. */
+    .preview-blouse-row .preview-pill,
+    .preview-attr-row .preview-pill {
+        height: auto;
+        min-height: 40px;
+        padding: 4px 8px;
+        flex-wrap: wrap;
+        align-content: center;
+        column-gap: 4px;
+        row-gap: 0;
+        line-height: 18px;
+        text-align: center;
+        white-space: normal;
+    }
+    .preview-buy-row .preview-add-to-cart,
+    .preview-buy-row .preview-view-details { font-size: 14px; gap: 6px; }
+    .preview-buy-row .preview-add-to-cart img { width: 20px; height: 20px; }
 }
 </style>

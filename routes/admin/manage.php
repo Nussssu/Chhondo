@@ -25,6 +25,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::get('/social-media-links', [ManageController::class, 'socialMediaLinks'])->name('social.media.links');
 
+        // Product page: the Call / WhatsApp / Share buttons and the custom
+        // blouse contact note.
+        Route::get('/product-details', [\App\Http\Controllers\Admin\Manage\ProductDetailsController::class, 'edit'])->name('product-details');
+        Route::put('/product-details', [\App\Http\Controllers\Admin\Manage\ProductDetailsController::class, 'update'])->name('product-details.update');
+
     });
 });
 ;

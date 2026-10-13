@@ -130,9 +130,9 @@ const submitReview = () => {
         <!-- Header -->
         <div class="review-modal-header">
           <div>
-            <h2 class="review-modal-title">Write a Review</h2>
+            <h2 class="review-modal-title">রিভিউ লিখুন</h2>
             <p v-if="product" class="review-modal-subtitle">
-              for <span class="review-modal-product-name">{{ product.product_name }}</span>
+              পণ্য: <span class="review-modal-product-name">{{ product.product_name }}</span>
             </p>
           </div>
           <button type="button" class="review-modal-close" @click="closeModal" aria-label="Close">
@@ -147,7 +147,7 @@ const submitReview = () => {
           <form class="flex flex-col gap-4" @submit.prevent="submitReview">
             <!-- Overall Rating -->
             <div>
-              <label class="review-label">Overall Rating <span class="review-required">*</span></label>
+              <label class="review-label">সামগ্রিক রেটিং <span class="review-required">*</span></label>
               <div class="flex gap-2 mt-2">
                 <button
                   v-for="n in 5"
@@ -179,14 +179,14 @@ const submitReview = () => {
             <!-- Name + Contact -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="review-label">Your Name <span class="review-required">*</span></label>
+                <label class="review-label">আপনার নাম <span class="review-required">*</span></label>
                 <input v-model="name" type="text" class="review-field mt-1.5" placeholder="" />
                 <p v-if="errors.name" class="review-error">{{ errors.name }}</p>
               </div>
               <div>
-                <label class="review-label">Email Address or Phone number <span class="review-required">*</span></label>
+                <label class="review-label">ইমেইল ঠিকানা অথবা ফোন নম্বর <span class="review-required">*</span></label>
                 <input v-model="contact" type="text" class="review-field mt-1.5" placeholder="" />
-                <p class="review-hint">Not shown publicly</p>
+                <p class="review-hint">সবার কাছে দেখানো হবে না</p>
                 <p v-if="errors.contact" class="review-error">{{ errors.contact }}</p>
               </div>
             </div>
@@ -194,7 +194,7 @@ const submitReview = () => {
             <!-- Review text -->
             <div>
               <div class="flex items-center justify-between">
-                <label class="review-label">Your Review <span class="review-required">*</span></label>
+                <label class="review-label">আপনার রিভিউ <span class="review-required">*</span></label>
                 <span class="review-counter">{{ reviewLength }} / {{ MAX_REVIEW_LENGTH }}</span>
               </div>
               <textarea
@@ -208,7 +208,7 @@ const submitReview = () => {
 
             <!-- Photo upload -->
             <div>
-              <label class="review-label">Add Photo</label>
+              <label class="review-label">ছবি যোগ করুন</label>
               <input
                 ref="fileInput"
                 type="file"
@@ -232,8 +232,8 @@ const submitReview = () => {
                   </svg>
                 </span>
                 <span class="text-left">
-                  <span class="review-upload-title">Upload photos (Max 5 images)</span>
-                  <span class="review-upload-subtitle">JPG or PNG, up to 5 MB</span>
+                  <span class="review-upload-title">ছবি আপলোড করুন (সর্বোচ্চ ৫টি)</span>
+                  <span class="review-upload-subtitle">JPG অথবা PNG, সর্বোচ্চ ৫ MB</span>
                 </span>
               </button>
 
@@ -254,11 +254,11 @@ const submitReview = () => {
         <!-- Footer -->
         <div class="review-modal-footer">
           <button type="button" class="review-submit-btn" :disabled="submitting" @click="submitReview">
-            {{ submitting ? 'Submitting...' : 'Submit Review' }}
+            {{ submitting ? 'জমা হচ্ছে...' : 'রিভিউ জমা দিন' }}
           </button>
           <p class="review-footer-note">
-            By submitting you agree to our <span class="review-footer-link">review guidelines</span>.<br />
-            Your email or mobile number will never be shared.
+            জমা দেওয়ার মাধ্যমে আপনি আমাদের <span class="review-footer-link">রিভিউ নীতিমালায়</span> সম্মতি দিচ্ছেন।<br />
+            আপনার ইমেইল অথবা মোবাইল নম্বর কখনো শেয়ার করা হবে না।
           </p>
         </div>
       </div>

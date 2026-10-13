@@ -7,35 +7,34 @@ const cartStore = useCartStore();
 
 const currentUrl = computed(() => usePage().url.split('?')[0]);
 
-// Figma "phone navbar": Home, Categories, Cart, Contact. Account and wishlist
-// stay one tap away in the menu drawer.
+// Figma "phone navbar": Home, Categories, Cart, Account. Labels are in Bangla.
 const navItems = computed(() => [
   {
-    label: "Home",
+    label: "হোম",
     href: "/",
     icon: "/assets/chhondo/nav-home.svg",
     match: (url) => url === "/" || url === "",
     action: null,
   },
   {
-    label: "Categories",
+    label: "ক্যাটাগরি",
     href: "/categories",
     icon: "/assets/chhondo/nav-categories.svg",
     match: (url) => url.startsWith("/categories") || url.startsWith("/product-category"),
     action: null,
   },
   {
-    label: "Cart",
+    label: "কার্ট",
     href: null,
     icon: "/assets/chhondo/nav-bag.svg",
     match: (url) => cartStore.isCartOpen || url === '/cart' || url === '/checkout',
     action: () => cartStore.toggleCart(),
   },
   {
-    label: "Contact",
-    href: "/contact-us",
-    icon: "/assets/chhondo/nav-contact.svg",
-    match: (url) => url.startsWith("/contact-us"),
+    label: "অ্যাকাউন্ট",
+    href: "/account",
+    icon: "/assets/chhondo/profile.svg",
+    match: (url) => url.startsWith("/account"),
     action: null,
   },
 ]);
@@ -52,7 +51,7 @@ const isActive = (item) => item.match(currentUrl.value);
         type="button"
         class="nav-item"
         :class="{ 'nav-item--active': isActive(item) }"
-        :aria-label="`Cart (${cartStore.cartCount})`"
+        :aria-label="`কার্ট (${cartStore.cartCount})`"
         :aria-expanded="cartStore.isCartOpen"
         @click="item.action"
       >
@@ -94,6 +93,7 @@ const isActive = (item) => item.match(currentUrl.value);
     right: 0;
     z-index: 40;
     gap: 4px;
+    /* Fully white bar, as before. */
     background-color: rgba(255, 255, 255, .97);
     border-top: 1px solid #eee5d4;
     border-radius: 20px 20px 0 0;
@@ -134,7 +134,8 @@ const isActive = (item) => item.match(currentUrl.value);
   display: block;
   width: 24px;
   height: 24px;
-  background-color: #8c8066;
+  /* Chhondo dark green icons on the white bar. */
+  background-color: #252f17;
   -webkit-mask: var(--icon) center / contain no-repeat;
   mask: var(--icon) center / contain no-repeat;
   transition: transform 0.2s ease, background-color 0.2s ease;
@@ -143,11 +144,11 @@ const isActive = (item) => item.match(currentUrl.value);
 .nav-item:active .nav-icon { transform: scale(0.92); }
 
 .nav-label {
-  font-family: "Poppins", sans-serif;
+  font-family: "Li Ador Noirrit", "Hind Siliguri", "Poppins", sans-serif;
   font-size: 11px;
   font-weight: 400;
   line-height: 15px;
-  color: #746b59;
+  color: #252f17;
   white-space: nowrap;
 }
 

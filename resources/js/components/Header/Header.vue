@@ -299,7 +299,7 @@ watch(
                                 </span>
                                 <input
                                     type="text"
-                                    placeholder="Search Here"
+                                placeholder="এখানে খুঁজুন"
                                     v-model="searchQuery"
                                     @input="onSearchInputChange"
                                     @focus="showDropdown = true"
@@ -312,7 +312,7 @@ watch(
                                 v-if="showDropdown && searchQuery.length > 0"
                                 class="search_results absolute bg-white shadow-lg mt-1 w-[320px] right-0 z-30 rounded-lg overflow-hidden"
                             >
-                                <div v-if="isLoading" class="p-4 text-center text-gray-500">Loading...</div>
+                                <div v-if="isLoading" class="p-4 text-center text-gray-500">লোড হচ্ছে...</div>
                                 <ul v-else-if="filteredProducts.length > 0" class="max-h-80 overflow-y-auto">
                                     <li
                                         v-for="product in filteredProducts"
@@ -332,7 +332,7 @@ watch(
                                         </Link>
                                     </li>
                                 </ul>
-                                <div v-else class="p-4 text-center text-gray-500 body-1-r">No products found</div>
+                                <div v-else class="p-4 text-center text-gray-500 body-1-r">কোনো পণ্য পাওয়া যায়নি</div>
                             </div>
                         </div>
 
@@ -345,8 +345,8 @@ watch(
                             @click="goToAccount"
                             type="button"
                             class="header-icon-btn"
-                            :title="authStore.isAuthenticated ? 'My Account' : 'Login'"
-                            :aria-label="authStore.isAuthenticated ? 'My Account' : 'Login'"
+                            :title="authStore.isAuthenticated ? 'আমার অ্যাকাউন্ট' : 'লগ ইন'"
+                            :aria-label="authStore.isAuthenticated ? 'আমার অ্যাকাউন্ট' : 'লগ ইন'"
                         >
                             <!-- Figma: the same outline icon signed in or out -->
                             <img :src="'/assets/chhondo/profile.svg'" alt="" class="header-figma-icon-img" />
@@ -358,8 +358,8 @@ watch(
                             @click="goToWishlist"
                             type="button"
                             class="header-icon-btn"
-                            title="Wishlist"
-                            :aria-label="`Wishlist (${wishlistStore.count})`"
+                            title="পছন্দের তালিকা"
+                            :aria-label="`পছন্দের তালিকা (${wishlistStore.count})`"
                         >
                             <img :src="'/assets/chhondo/heart.svg'" alt="" class="header-figma-icon-img" />
                             <span v-if="wishlistStore.count > 0" class="header-count-badge">{{ wishlistStore.count > 99 ? '99+' : wishlistStore.count }}</span>
@@ -388,8 +388,9 @@ watch(
                     </Link>
                 </div>
 
-                <!-- Right: Search + Burger on phones (Figma); tablets also keep
-                     account and wishlist, as they have no bottom nav. -->
+                <!-- Right: Search, wishlist, burger on phones (like the
+                     reference); tablets also keep account, as they have no
+                     bottom nav. -->
                 <div class="flex items-center gap-5">
                     <HeaderSearch v-if="headerSettings.show_search !== false" compact />
                     <!-- Account lives in the bottom nav on phones; kept here for
@@ -405,7 +406,7 @@ watch(
                     <button
                         v-if="headerSettings.show_wishlist !== false"
                         @click="goToWishlist"
-                        class="relative hidden md:inline-flex text-gray-600 hover:text-theme focus:outline-none"
+                        class="relative inline-flex text-gray-600 hover:text-theme focus:outline-none"
                         aria-label="Wishlist"
                     >
                         <img :src="'/assets/chhondo/heart.svg'" alt="" class="w-6 h-6" />

@@ -9,6 +9,29 @@ import { useAuthPromptStore } from "@/Store/authPromptStore";
 const GUEST_KEY = "guest_wishlist";        // localStorage: array of product ids
 const NUDGE_KEY = "wishlist_nudge_shown";  // sessionStorage: one nudge per session
 
+let removeNoticeTimer = null;
+let removeNoticeElement = null;
+
+const showWishlistNotice = (message) => {
+  if (typeof document === "undefined") return;
+
+  window.clearTimeout(removeNoticeTimer);
+  removeNoticeElement?.remove();
+
+  const notice = document.createElement("div");
+  notice.className = "wishlist-remove-toast";
+  notice.setAttribute("role", "status");
+  notice.setAttribute("aria-live", "polite");
+  notice.textContent = message;
+  document.body.appendChild(notice);
+  removeNoticeElement = notice;
+
+  removeNoticeTimer = window.setTimeout(() => {
+    notice.remove();
+    if (removeNoticeElement === notice) removeNoticeElement = null;
+  }, 2200);
+};
+
 export const useWishlistStore = defineStore("wishlist", () => {
   const page = usePage();
   const authStore = useAuthStore();
@@ -111,10 +134,10 @@ export const useWishlistStore = defineStore("wishlist", () => {
     try {
       if (wasWishlisted) {
         await axiosInstance.post(`/remove/from/wishlist/${productId}`);
-        toast.success("পছন্দের তালিকা থেকে সরানো হয়েছে");
+        showWishlistNotice("পছন্দের তালিকা থেকে সরানো হয়েছে");
       } else {
         await axiosInstance.post(`/add/to/wishlist/${productId}`);
-        toast.success("পছন্দের তালিকায় যোগ হয়েছে");
+        showWishlistNotice("পছন্দের তালিকায় যোগ হয়েছে");
       }
     } catch (e) {
       // Revert optimistic change on failure.

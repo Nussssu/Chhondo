@@ -77,7 +77,7 @@
                 value="1"
               >
               <label class="form-check-label" for="free_shipping_enabled">
-                Offer free shipping
+                বিনামূল্যে ডেলিভারি দিন
               </label>
             </div>
             <p class="text-muted small mb-0">

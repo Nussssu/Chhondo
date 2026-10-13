@@ -1,14 +1,12 @@
 <script setup>
 import { router } from "@inertiajs/vue3"
 import { computed, ref } from "vue"
-import { useCartStore } from "@/Store/cartStore"
 import { useWishlistStore } from "@/Store/wishlistStore"
 import { parseGalleryImages } from "@/utils/galleryImages"
 import ResponsiveImage from "@/components/ResponsiveImage.vue"
 import { isOutOfStock, isPreOrder } from '@/utils/stock'
 import { priceFor, wasPriceFor } from '@/utils/productPrice'
 
-const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 
 const props = defineProps({
@@ -58,23 +56,15 @@ const galleryImage = computed(() => {
  */
 const hoverLoaded = ref(false)
 
-const addingToCart = ref(false)
-
 const soldOut = computed(() => isOutOfStock(props.product))
 const preOrder = computed(() => isPreOrder(props.product))
 
-const addToCart = () => {
-  // The button is disabled; this covers a re-enabled one and a stale card.
-  if (addingToCart.value || soldOut.value) return
-  addingToCart.value = true
-
-  cartStore.addToCart({
-    product_id:       props.product.id,
-    quantity:         1,
-    attribute_values: [],
-  }, props.product)
-
-  setTimeout(() => { addingToCart.value = false }, 1500)
+// "অপশন নির্বাচন করুন": the blouse and the other options are chosen in the
+// quick view, so the card opens it instead of adding straight to the cart.
+const selectOption = () => {
+  if (soldOut.value) return
+  if (props.openPreview) props.openPreview(props.product)
+  else router.visit(`/product/${props.product.slug}`)
 }
 </script>
 
@@ -172,11 +162,11 @@ const addToCart = () => {
       </p>
     </div>
 
-    <!-- Add to Cart Button -->
+    <!-- Select option: opens the quick view -->
     <div>
       <button
-        @click.stop="addToCart"
-        :disabled="addingToCart || soldOut"
+        @click.stop="selectOption"
+        :disabled="soldOut"
         :aria-disabled="soldOut"
         class="collection-buy-btn"
         :class="{ 'is-soldout': soldOut, 'is-preorder': preOrder }"
@@ -184,7 +174,7 @@ const addToCart = () => {
         <template v-if="soldOut">স্টকে নেই</template>
         <template v-else>
           <img :src="'/assets/chhondo/cart-light.svg'" alt="" width="24" height="24" />
-          {{ addingToCart ? 'যোগ হচ্ছে...' : (preOrder ? 'প্রি-অর্ডার' : buttonLabel) }}
+          অপশন নির্বাচন করুন
         </template>
       </button>
     </div>

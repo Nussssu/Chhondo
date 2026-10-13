@@ -274,7 +274,8 @@ class ManageOrdersController extends Controller
 
             foreach ($orders as $order) {
                 $products = $order->items->map(function ($item) {
-                    return ($item->product_info->product_name ?? 'N/A') . ' x' . $item->quantity;
+                    $description = \App\Services\BlouseCustomization::describe($item->blouse_customization);
+                    return ($item->product_info->product_name ?? 'N/A') . ' x' . $item->quantity . ($description ? ' ['.$description.']' : '');
                 })->implode('; ');
 
                 $total = $order->total_price + $order->delivery_charge - $order->discount;
@@ -974,6 +975,8 @@ class ManageOrdersController extends Controller
                     "quantity"      => $item->quantity,
                     "availableQty"  => $availableQty,
                     "totalPrice"    => $item->price * $item->quantity,
+                    "blouse_choice" => $item->blouse_choice,
+                    "blouse_customization" => $item->blouse_customization,
                 ];
             })->toArray();
         }
@@ -1179,6 +1182,8 @@ class ManageOrdersController extends Controller
                     'product_id' => $cartItem['productId'],
                     'price'      => $cartItem['price'],
                     'quantity'   => $cartItem['quantity'],
+                    'blouse_choice' => $cartItem['blouse_choice'] ?? null,
+                    'blouse_customization' => $cartItem['blouse_customization'] ?? null,
                 ]);
 
                 if (!empty($cartItem['selected'])) {
@@ -1976,7 +1981,7 @@ class ManageOrdersController extends Controller
 
     public function froudeCheckJson($phone_number)
     {
-        $url    = rtrim(env('FRONTEND', config('app.url')), '/');
+        $url    = rtrim((config('app.frontend_url') ?: config('app.url')), '/');
         $apiUrl = "https://efraudscan.com/api/check-succfull-fraud/{$phone_number}";
 
         try {
@@ -2010,7 +2015,7 @@ class ManageOrdersController extends Controller
 
     public function froudeCheckData($phone_number)
     {
-        $url    = rtrim(env('FRONTEND', config('app.url')), '/');
+        $url    = rtrim((config('app.frontend_url') ?: config('app.url')), '/');
         $apiUrl = "https://efraudscan.com/api/check-succfull-fraud/{$phone_number}";
 
         try {

@@ -25,7 +25,20 @@ class CartRepository implements CartRepositoryInterface
             ])
             ->get();
 
-        $cartData = $cartItems->map(function ($cartItem) {
+        $blouseService = app(\App\Services\BlouseCustomization::class);
+        $cartData = $cartItems->map(function ($cartItem) use ($blouseService) {
+            $customization = $cartItem->blouse_customization;
+            $blouseAvailable = true;
+            $blouseError = null;
+            if ($customization) {
+                try {
+                    $customization = $blouseService->resolve($customization, $cartItem->product);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $blouseAvailable = false;
+                    $blouseError = 'This blouse option is no longer available. Please remove and re-add the product with an available blouse selection.';
+                }
+            }
+            $customFee = (float) ($customization['unit_price'] ?? 0);
             $attributesPrice = $cartItem->cartAttributes->sum(function ($cartAttribute) {
                 return $cartAttribute->productAttribute->price ?? 0;
             });
@@ -66,7 +79,7 @@ class CartRepository implements CartRepositoryInterface
             // The customer gets whichever single discount is larger.
             $couponDiscount = (float) $cartItem->product->discount_amount;
 
-            $finalIndividualPrice = max(0, $priceBeforeCampaign - max($campDiscount, $couponDiscount));
+            $finalIndividualPrice = max(0, $priceBeforeCampaign - max($campDiscount, $couponDiscount)) + $customFee;
             $finalPrice           = $finalIndividualPrice * $cartItem->quantity;
 
             $appliedDiscount = max($campDiscount, $couponDiscount);
@@ -81,6 +94,7 @@ class CartRepository implements CartRepositoryInterface
                 $previousPrice > $basePrice => round($previousPrice + $attributesPrice, 2),
                 default                 => null,
             };
+            if ($regularIndividualPrice !== null) $regularIndividualPrice += $customFee;
 
             return [
                 'id'                => $cartItem->id,
@@ -93,6 +107,9 @@ class CartRepository implements CartRepositoryInterface
                 'coupon_discount'   => round($couponDiscount, 2),
                 'saving'            => round($appliedDiscount * $cartItem->quantity, 2),
                 'blouse_choice'     => $cartItem->blouse_choice,
+                'blouse_customization' => $customization,
+                'blouse_available' => $blouseAvailable,
+                'blouse_error' => $blouseError,
                 'product'           => [
                     'id'               => $cartItem->product->id,
                     'product_name'     => $cartItem->product->product_name,
@@ -222,7 +239,7 @@ class CartRepository implements CartRepositoryInterface
                     }
 
                     $cart->increment('quantity', $quantity);
-                    $cart->update(['attribute_hash' => $attributeHash]);
+                    if (! $cart->blouse_customization) $cart->update(['attribute_hash' => $attributeHash]);
                 } else {
                     // Handle products without attributes
                     $productStock = Product::where('id', $productId)->value('quantity');
@@ -260,10 +277,15 @@ class CartRepository implements CartRepositoryInterface
             // are distinct cart lines for the same product + attribute combo.
             $blouseChoice = $data['blouse_choice']
                 ?? ($data['product']['blouse_choice'] ?? null);
-            $blouseChoice = in_array($blouseChoice, ['with', 'without'], true) ? $blouseChoice : null;
+            $customization = app(\App\Services\BlouseCustomization::class)->resolve($data['blouse_customization'] ?? ($data['product']['blouse_customization'] ?? null), $productId);
+            if ($blouseChoice === 'custom' && ! $customization) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['blouse_customization' => 'Please complete the blouse details.']);
+            }
+            $blouseChoice = $customization ? 'custom' : (in_array($blouseChoice, ['with', 'without'], true) ? $blouseChoice : null);
 
             $hashSource    = (empty($attributeIds) ? 'default' : serialize($attributeIds))
                 . '|blouse:' . ($blouseChoice ?? 'none');
+            if ($customization) $hashSource .= '|custom:' . app(\App\Services\BlouseCustomization::class)->identity($customization);
             $attributeHash = md5($hashSource);
 
             // Update the stock check to account for the new logic with ProductAttribute 'id'
@@ -287,6 +309,7 @@ class CartRepository implements CartRepositoryInterface
 
             $cart->quantity += $quantity;
             $cart->blouse_choice = $blouseChoice;
+            $cart->blouse_customization = $customization;
             $cart->save();
 
             // Add attributes to the cart if they exist

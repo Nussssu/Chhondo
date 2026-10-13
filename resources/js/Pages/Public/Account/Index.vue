@@ -5,6 +5,10 @@
 
   <AccountLayout>
     <div class="profile-page">
+      <Transition name="copy-toast">
+        <div v-if="primaryNotice" class="copy-toast" role="status" aria-live="polite">প্রাথমিক ঠিকানা আপডেট হয়েছে</div>
+      </Transition>
+
       <div class="stat-row">
         <StatCard :value="stats.totalOrders ?? 0" label="মোট অর্ডার" />
         <StatCard :value="stats.wishlistItems ?? 0" label="উইশলিস্ট আইটেম" />
@@ -45,30 +49,31 @@
           <p class="profile-email">{{ authStore.user?.email }}</p>
         </div>
 
-        <!-- Figma: a dark "Back to Shop" button with a pencil icon -->
-        <Link href="/shop" class="profile-edit-btn">
-          <img :src="'/assets/images/account/edit-pencil.svg'" alt="" /> Back to Shop</Link>
+        <button type="button" class="profile-edit-btn" @click="openEdit">
+          <img :src="'/assets/images/account/edit-pencil.svg'" alt="" />
+          প্রোফাইল এডিট করুন
+        </button>
       </div>
 
-      <!-- Figma: details and delivery address in one card. Each field opens
-           its editor, so editing stays where it was. -->
+      <!-- Profile details stay read-only here; the edit button above opens the
+           single profile editor. -->
       <div class="profile-details-card">
         <div class="profile-info-grid">
           <div class="profile-field">
             <p class="profile-field-label">নাম</p>
-            <button type="button" class="profile-field-value" aria-label="নাম এডিট করুন" @click="openEdit">{{ authStore.user?.name }}</button>
+            <div class="profile-field-value">{{ authStore.user?.name }}</div>
           </div>
           <div class="profile-field">
             <p class="profile-field-label">ই-মেইল অ্যাড্রেস</p>
-            <button type="button" class="profile-field-value" aria-label="ই-মেইল এডিট করুন" @click="openEdit">{{ authStore.user?.email }}</button>
+            <div class="profile-field-value">{{ authStore.user?.email }}</div>
           </div>
           <div class="profile-field">
             <p class="profile-field-label">ফোন নম্বর</p>
-            <button type="button" class="profile-field-value" aria-label="ফোন নম্বর এডিট করুন" @click="openEdit">{{ authStore.user?.phone }}</button>
+            <div class="profile-field-value">{{ authStore.user?.phone }}</div>
           </div>
           <div class="profile-field">
             <p class="profile-field-label">জন্ম তারিখ</p>
-            <button type="button" class="profile-field-value" aria-label="জন্ম তারিখ এডিট করুন" @click="openEdit">{{ authStore.user?.date_of_birth }}</button>
+            <div class="profile-field-value">{{ authStore.user?.date_of_birth }}</div>
           </div>
         </div>
 
@@ -77,26 +82,9 @@
           ডেলিভারি ঠিকানা
         </p>
 
-        <!-- The primary address, laid out as the Figma fields -->
-        <template v-if="!managingAddress">
-          <div class="profile-field">
-            <p class="profile-field-label">বিস্তারিত ঠিকানা</p>
-            <button type="button" class="profile-field-value" aria-label="ঠিকানা এডিট করুন" @click="openAddressManager">{{ primaryAddress?.address }}</button>
-          </div>
-          <div class="profile-address-row">
-            <div class="profile-field">
-              <p class="profile-field-label">শহর</p>
-              <button type="button" class="profile-field-value" aria-label="শহর এডিট করুন" @click="openAddressManager">{{ CITIES_BN[primaryAddress?.city] || '' }}</button>
-            </div>
-            <div class="profile-field">
-              <p class="profile-field-label">পোস্টাল কোড</p>
-              <button type="button" class="profile-field-value" aria-label="ঠিকানা এডিট করুন" @click="openAddressManager"></button>
-            </div>
-          </div>
-        </template>
-
-        <!-- The address manager, as before -->
-        <div v-else class="address-card">
+        <!-- Keep delivery addresses visible and ready to use without requiring
+             the customer to discover and click an empty field first. -->
+        <div class="address-card">
           <p v-if="!addresses.length && !drafts.length" class="address-empty">
             এখনো কোনো ঠিকানা সেভ করা নেই — নিচে যোগ করুন, চেকআউটে এটিই বসে যাবে।
           </p>
@@ -163,7 +151,6 @@
             {{ addresses.length ? 'আরেকটি ঠিকানা যোগ করুন' : 'ঠিকানা যোগ করুন' }}
           </button>
 
-          <button type="button" class="addr-btn" @click="closeAddressManager">বন্ধ করুন</button>
         </div>
       </div>
     </div>
@@ -171,7 +158,7 @@
     <!-- Edit Profile Modal -->
     <div v-if="isEditOpen" class="modal-overlay" @click.self="closeEdit">
       <div class="modal-card">
-        <h2 class="modal-title">Edit Profile</h2>
+        <h2 class="modal-title">প্রোফাইল সম্পাদনা</h2>
 
         <form @submit.prevent="submitProfile">
           <div class="modal-field">
@@ -181,7 +168,7 @@
 
           <div class="modal-field">
             <label class="modal-label">ই-মেইল অ্যাড্রেস</label>
-            <input v-model="form.email" type="email" class="modal-input" placeholder="you@example.com" />
+            <input v-model="form.email" type="email" class="modal-input" placeholder="ইমেইল ঠিকানা" />
           </div>
 
           <div class="modal-field">
@@ -189,6 +176,7 @@
             <PhoneField
               v-model="form.phone"
               v-model:valid="phoneValid"
+              bangladesh-only
               :invalid="Boolean(phoneError)"
             />
             <p v-if="phoneError" class="modal-error">{{ phoneError }}</p>
@@ -216,8 +204,8 @@ import AccountLayout from '@/Layouts/AccountLayout.vue';
 import StatCard from '@/components/Account/StatCard.vue';
 import AddressFields from '@/components/Account/AddressFields.vue';
 import PhoneField from '@/components/Form/PhoneField.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { toast } from '@steveyuowo/vue-hot-toast';
 import { useAuthStore } from '@/Store/authStore';
@@ -242,31 +230,16 @@ watch(
  * one can be written before saving. Exactly one saved address is primary, and
  * that is the one checkout fills itself in from.
  */
-const drafts = ref([]);
+const drafts = ref(addresses.value.length ? [] : [{
+  ...blankAddress(),
+  is_default: true,
+}]);
 const editingId = ref(null);
 const editForm = ref(blankAddress());
 const errors = ref({});
 const busy = ref(false);
 
 const isPrimary = (addr) => Number(addr.is_default) === 1;
-
-// The Figma card shows the primary address as fields; clicking one opens the
-// manager below it.
-const CITIES_BN = { inside: 'ঢাকার ভেতরে', outside: 'ঢাকার বাইরে' };
-const primaryAddress = computed(() => addresses.value.find(isPrimary) || addresses.value[0] || null);
-const managingAddress = ref(false);
-
-function openAddressManager() {
-  managingAddress.value = true;
-  if (!addresses.value.length && !drafts.value.length) addDraft();
-}
-
-function closeAddressManager() {
-  managingAddress.value = false;
-  editingId.value = null;
-  drafts.value = [];
-  errors.value = {};
-}
 
 function addDraft() {
   errors.value = {};
@@ -315,8 +288,24 @@ function saveEdit(addr) {
 
 function makePrimary(addr) {
   if (isPrimary(addr)) return;
-  router.post(route('address.primary', addr.id), {}, requestOptions());
+  router.post(route('address.primary', addr.id), {}, requestOptions(() => {
+    showPrimaryNotice();
+  }));
 }
+
+// Primary-address confirmation, shown in exactly the Order History
+// copy-toast style (same markup, timing and CSS below). The server sends
+// no flash for this action, so this is the only notice that appears.
+const primaryNotice = ref(false);
+let primaryNoticeTimer;
+
+const showPrimaryNotice = () => {
+  primaryNotice.value = true;
+  window.clearTimeout(primaryNoticeTimer);
+  primaryNoticeTimer = window.setTimeout(() => { primaryNotice.value = false; }, 2200);
+};
+
+onBeforeUnmount(() => window.clearTimeout(primaryNoticeTimer));
 
 function remove(addr) {
   if (!window.confirm('Remove this address?')) return;
@@ -417,6 +406,28 @@ const submitProfile = () => {
   flex-direction: column;
   gap: 24px;
 }
+
+/* Primary-address notice: byte-for-byte the Order History copy toast
+   (position, size, background, radius, type, spacing, animation). */
+.copy-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 10000;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #fefaf3;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+  font: 500 14px/20px "Poppins", sans-serif;
+  color: #2c1a0e;
+  pointer-events: none;
+}
+
+.copy-toast-enter-active,
+.copy-toast-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.copy-toast-enter-from,
+.copy-toast-leave-to { opacity: 0; transform: translate(-50%, -8px); }
 
 .stat-row {
   display: flex;
@@ -956,14 +967,13 @@ const submitProfile = () => {
   border-radius: 8px;
   background: #f3f3f3;
   font: 400 16px/24px "Poppins", "Li Ador Noirrit", sans-serif;
-  color: #9c9591;
+  color: #1a1817;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
+  cursor: default;
 }
-.profile-field-value:hover { border-color: #d1cdca; }
 .address-card-title {
   margin: 0;
   gap: 8px;

@@ -51,6 +51,11 @@ class CheckoutWebController extends Controller
             // 'cod', 'online' (SSLCommerz) or 'bkash'. Anything else, or an
             // absent value, is cash.
             'payment_type'  => 'nullable|in:cod,online,bkash',
+            'direct_item.blouse_customization' => 'nullable|array',
+            'direct_item.blouse_customization.option_id' => 'required_with:direct_item.blouse_customization|string|max:80',
+            'direct_item.blouse_customization.sleeve_type' => 'required_with:direct_item.blouse_customization|string|max:80',
+            'direct_item.blouse_customization.size' => 'required_with:direct_item.blouse_customization|string|max:80',
+            'direct_item.blouse_customization.requirements' => 'nullable|string|max:2000',
         ]);
 
         // Optional: create a customer account during checkout. The email is the
@@ -101,6 +106,7 @@ class CheckoutWebController extends Controller
                     'quantity'         => max(1, (int) ($directItem['quantity'] ?? 1)),
                     'attribute_values' => array_values(array_filter((array) ($directItem['attribute_values'] ?? []), 'is_numeric')),
                     'blouse_choice'    => $directItem['blouse_choice'] ?? null,
+                    'blouse_customization' => $directItem['blouse_customization'] ?? null,
                 ]);
 
                 $cartItems = $this->cartService->getCartItems($scratch);
@@ -136,8 +142,14 @@ class CheckoutWebController extends Controller
                 'coupon_discount'   => 0,
                 'original_price'    => $item['individual_price'],
                 'blouse_choice'     => $item['blouse_choice'] ?? null,
+                'blouse_customization' => $item['blouse_customization'] ?? null,
+                'blouse_available' => $item['blouse_available'] ?? true,
             ];
         })->values()->toArray();
+
+        if (collect($items)->contains(fn ($item) => $item['blouse_available'] === false)) {
+            return back()->withErrors(['cart' => 'A selected blouse option is no longer available. Please remove and re-add that product with an available blouse selection.']);
+        }
 
         // A cart outlives the stock it was filled from, so what is still for
         // sale is checked here rather than trusted from the browser. Pre-orders
@@ -180,7 +192,7 @@ class CheckoutWebController extends Controller
         [$coupon, $discount] = $this->resolveCoupon(
             $request->input('coupon_code'),
             collect($items)->pluck('product_id')->all(),
-            $subtotal
+            max(0, $subtotal - collect($items)->sum(fn ($item) => (float) ($item['blouse_customization']['unit_price'] ?? 0) * $item['quantity']))
         );
 
         $data = [
@@ -266,7 +278,10 @@ class CheckoutWebController extends Controller
         // Cash on delivery is confirmed the moment it is placed. An online
         // order waits for the money before its confirmation goes out.
         try {
-            \App\Jobs\SendOrderConfirmation::dispatch($order->id);
+            // After the response: the customer reaches the success page at once
+            // instead of waiting for the SMS gateway and the emails (with no
+            // queue worker running, the job used to run before the redirect).
+            \App\Jobs\SendOrderConfirmation::dispatch($order->id)->afterResponse();
         } catch (\Throwable $e) {
             // The order is saved; notification failure must not cause a retry.
             Log::error('Order confirmation could not be queued: '.$e->getMessage());

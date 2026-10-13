@@ -127,7 +127,8 @@
                                 </span><br>
                                 @endforeach
                                 @endif
-                                @if (!empty($item['blouse_choice']))
+                                @include('partials.blouse-customization', ['customization' => $item['blouse_customization'] ?? null, 'hideNote' => true])
+                                @if (!empty($item['blouse_choice']) && empty($item['blouse_customization']))
                                 <span class="badge"
                                     style="background-color: {{ $item['blouse_choice'] === 'with' ? '#252f17' : '#8c7256' }};
                                            color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px;">

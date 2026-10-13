@@ -52,7 +52,7 @@ class ProductController extends Controller
         'product'          => $products->values(),
         'category'         => $data['categories'],
         'selectedCategory' => $request->category_id ?? '',
-        'frontendUrl'      => env('FRONTEND', ''),
+        'frontendUrl'      => (config('app.frontend_url') ?? ''),
     ]);
 }
 
@@ -112,6 +112,7 @@ class ProductController extends Controller
             'attributes'       => $data['attributes'],
             'attributeOptions' => $data['attributeOptions'],
             'categories'       => $data['categories'],
+            'blouseDefaults'   => app(\App\Services\BlouseCustomization::class)->settings(),
         ]);
     }
 
@@ -245,6 +246,7 @@ class ProductController extends Controller
             // Primary first, so the form can show which one names the product.
             'selectedCategoryIds'   => $product->categoryIds(),
             'savedProductAttributes'=> $savedProductAttributes,
+            'blouseDefaults'        => app(\App\Services\BlouseCustomization::class)->settings(),
         ]);
     }
 
@@ -422,6 +424,8 @@ class ProductController extends Controller
             'has_blouse_option' => ! empty($validatedData['has_blouse_option']),
             'price_with_blouse' => ! empty($validatedData['has_blouse_option']) ? $blousePrice : null,
             'previous_price_with_blouse' => ! empty($validatedData['has_blouse_option']) ? $previousBlousePrice : null,
+            // Only written when the form sent it, so other callers leave it as it was.
+            'custom_blouse'     => $request->has('custom_blouse') ? \App\Services\BlouseCustomization::sanitizeProductInput($request->input('custom_blouse')) : $product->custom_blouse,
             'category_id'       => $categoryIds[0] ?? $product->category_id,
             'meta_title'        => $validatedData['meta_title'],
             'meta_description'  => $validatedData['meta_description'],
@@ -645,7 +649,7 @@ class ProductController extends Controller
             'product'          => $product->values(),
             'category'         => $category,
             'selectedCategory' => $request->category_id ?? '',
-            'frontendUrl'      => env('FRONTEND', ''),
+            'frontendUrl'      => (config('app.frontend_url') ?? ''),
         ]);
     }
 

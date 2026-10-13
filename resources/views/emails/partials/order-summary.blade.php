@@ -34,7 +34,8 @@
             <tr>
                 <td style="padding:12px 8px 12px 0; border-bottom:1px solid #f2ede6; font-size:14px; line-height:20px; color:#3f3b37;">
                     {{ $item->product?->product_name ?? 'Item' }}
-                    @if ($item->blouse_choice)
+                    @include('partials.blouse-customization', ['customization' => $item->blouse_customization])
+                    @if ($item->blouse_choice && !$item->blouse_customization)
                         <br /><span style="font-size:12px; color:#8b847d;">{{ $item->blouse_choice }}</span>
                     @endif
                     @foreach ($item->options as $option)

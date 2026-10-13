@@ -35,7 +35,11 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'saved', 'comments-updated'])
 
-const commentsList = ref([...props.comments])
+const validComments = (comments) => comments.filter((comment) => (
+  comment.status === 'active' && comment.name?.trim()
+))
+
+const commentsList = ref(validComments(props.comments))
 const newCommentText = ref('')
 const selectedCommentId = ref(props.order.comment?.id ?? '')
 const addingComment = ref(false)
@@ -49,7 +53,7 @@ async function addComment() {
       order_id: props.order.id,
       name: newCommentText.value,
     })
-    commentsList.value = res.data.data
+    commentsList.value = validComments(res.data.data)
     emit('comments-updated', commentsList.value)
     const created = commentsList.value.find((c) => c.name === newCommentText.value)
     if (created) selectedCommentId.value = created.id

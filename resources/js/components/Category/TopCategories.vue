@@ -22,7 +22,7 @@ const props = defineProps({
         <h2
             class="c-title text-center mb-8 relative body-3-sb uppercase flex items-center justify-center before:content-[''] before:flex-grow before:border-t before:border-black before:mr-4 after:content-[''] after:flex-grow after:border-t after:border-black after:ml-4"
         >
-            TOP CATEGORIES
+            জনপ্রিয় ক্যাটাগরি
         </h2>
         <button
             class="custom-prev-button absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition-colors"

@@ -19,10 +19,12 @@ class OrderItem extends Model
         'discount_type',
         'campaign_id',
         'blouse_choice',
+        'blouse_customization',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'blouse_customization' => 'array',
     ];
 
     // Relationship to Product

@@ -458,8 +458,9 @@ defineExpose({ selectedIds, bulkDelete, bulkUpdateStatus })
   .orders-table.is-daily-compact .date-cell-date,
   .orders-table.is-daily-compact .note-cell,
   .orders-table.is-daily-compact .courier-links,
-  .orders-table.is-daily-compact :deep(.dt-actions),
-  .orders-table.is-daily-compact :deep(.product-item) { justify-content: center; }
+  .orders-table.is-daily-compact :deep(.dt-actions) { justify-content: center; }
+  /* Product lines stay left-aligned (OrderProductsCell), so every row's
+     image and name sit in the same place. */
   .orders-table.is-daily-compact .total-cell,
   .orders-table.is-daily-compact .total-pay,
   .orders-table.is-daily-compact .pay-cell { align-items: center; }

@@ -185,7 +185,7 @@ async function copyCallback() {
                     <div class="form-check form-switch">
                       <input id="bk-active" v-model="form.is_active" class="form-check-input" type="checkbox" role="switch">
                       <label class="form-check-label" for="bk-active">
-                        {{ form.is_active ? 'Enabled — bKash is offered at checkout' : 'Disabled — bKash is hidden at checkout' }}
+                        {{ form.is_active ? 'চালু — চেকআউটে বিকাশ দেখানো হবে' : 'বন্ধ — চেকআউটে বিকাশ দেখানো হবে না' }}
                       </label>
                     </div>
                   </div>

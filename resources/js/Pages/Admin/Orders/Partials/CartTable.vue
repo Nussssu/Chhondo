@@ -20,6 +20,7 @@
               <img v-if="productFor(item)?.featured_image" :src="asset(productFor(item).featured_image)" width="40" height="40" class="cart-product-thumb">
               <span class="cart-item-name" :title="item.name">{{ limit(item.name, 24) }}</span>
             </div>
+            <BlouseCustomizationSummary :customization="item.blouse_customization" />
           </td>
           <td>
             <div v-if="attributeText(item).length" class="cart-attr-list">
@@ -73,6 +74,7 @@
 </template>
 
 <script setup>
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import { computed } from 'vue'
 import { Minus, Plus, Trash2 } from 'lucide-vue-next'
 import { toast } from '@/utils/toast'

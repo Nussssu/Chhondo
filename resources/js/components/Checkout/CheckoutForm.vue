@@ -6,6 +6,8 @@ import { useAuthStore } from "@/Store/authStore"
 import { toast } from "@steveyuowo/vue-hot-toast"
 import { router, usePage } from "@inertiajs/vue3"
 import { useStoreInfo } from "@/Store/storeInfo"
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
+import { blouseSettingsFor } from '@/composables/useBlouseCustomization'
 
 const storeInfo = useStoreInfo()
 
@@ -30,6 +32,13 @@ const authStore = useAuthStore()
 
 const cartItems = computed(() => cartStore.cartItems)
 const directOrderProduct = ref(null)
+const blouseSettings = computed(() => usePage().props.blouseSettings || {})
+const directBlouse = computed(() => {
+  const chosen = directOrderProduct.value?.blouse_customization
+  if (!chosen) return null
+  const option = blouseSettingsFor(blouseSettings.value, directOrderProduct.value).options?.find(row => row.id === chosen.option_id && row.enabled !== false)
+  return { ...chosen, unit_price: Number(option?.price ?? chosen.unit_price), label: option?.label || chosen.label, note: blouseSettings.value.note || chosen.note }
+})
 
 onMounted(() => {
   if (typeof window !== "undefined") {
@@ -59,6 +68,7 @@ const subtotal = computed(() => {
 
 const directOrderProductSubtotal = computed(() => {
   if (!directOrderProduct.value) return 0
+  if (directBlouse.value) return ((Number(directOrderProduct.value.price_without_customization) || 0) + directBlouse.value.unit_price) * directOrderProduct.value.quantity
   let basePrice = parseFloat(directOrderProduct.value.price || 0)
   const additionalPrices = directOrderProduct.value.selectedAttributes.reduce(
     (total, attr) => total + parseFloat(attr.attribute_option_price || 0),
@@ -106,7 +116,7 @@ const form = ref({
   order_type: "checkout",
   delivery: "cod",
   delivery_area: "inside",
-  payment_type: "",
+  payment_type: "cod",
   delivery_charge: 0,
   discount: 0,
   create_account: false,
@@ -210,7 +220,7 @@ function applyPrefill(data) {
   if (!form.value.mobile && data.phone) form.value.mobile = data.phone
   if (!form.value.address) form.value.address = data.address || ""
 
-  if (!form.value.delivery_area && data.delivery_area) {
+  if (data.delivery_area) {
     form.value.delivery_area = data.delivery_area
     // The area decides the shipping fee, so the total has to follow it.
     updateDeliveryCharge()
@@ -273,10 +283,14 @@ const couponDiscount = () => {
   const coupon = appliedCoupon.value
   if (!coupon) return 0
   const amount = Number(coupon.discount_amount) || 0
+  const blouseFees = cartStore.is_direct_order
+    ? (Number(directBlouse.value?.unit_price) || 0) * (directOrderProduct.value?.quantity || 0)
+    : cartItems.value.reduce((sum, item) => sum + (Number(item.blouse_customization?.unit_price) || 0) * item.quantity, 0)
+  const eligibleSubtotal = Math.max(0, subtotal.value - blouseFees)
   const discount = coupon.discount_type === "percentage"
-    ? (subtotal.value * amount) / 100
+    ? (eligibleSubtotal * amount) / 100
     : amount
-  return Math.round(Math.min(discount, subtotal.value) * 100) / 100
+  return Math.round(Math.min(discount, eligibleSubtotal) * 100) / 100
 }
 
 // A percentage coupon was worked out once, at Apply; changing a quantity
@@ -451,7 +465,8 @@ const createIncompleteOrder = async () => {
           campaign_discount: 0,
           coupon_discount: 0,
           original_price: individualPrice,
-          blouse_choice: directOrderData.has_blouse_option ? directOrderData.blouse_choice : null,
+          blouse_choice: directOrderData.blouse_customization ? 'custom' : (directOrderData.has_blouse_option ? directOrderData.blouse_choice : null),
+          blouse_customization: directOrderData.blouse_customization || null,
         },
       ]
     }
@@ -472,6 +487,7 @@ const createIncompleteOrder = async () => {
         coupon_discount: item.coupon_discount || 0,
         original_price: parseFloat(item.original_price || item.price || 0),
         blouse_choice: item.blouse_choice || null,
+        blouse_customization: item.blouse_customization || null,
       }
     })
   }
@@ -558,6 +574,7 @@ const placeOrder = async () => {
     }
   }
 
+  if (payload.direct_item) payload.direct_item.blouse_customization = directOrderProduct.value.blouse_customization || null
   router.post("/checkout/submit", payload, {
     onSuccess: () => {
       if (typeof window !== "undefined") {
@@ -652,7 +669,7 @@ onUnmounted(() => {
                 <input
                   v-model="form.email"
                   type="email"
-                  placeholder="example@email.com"
+                placeholder="ইমেইল ঠিকানা"
                   class="checkout-input checkout-placeholder--poppins"
                 />
                 <p v-if="fieldErrors.email" class="text-red-500 text-xs mt-1">{{ fieldErrors.email }}</p>
@@ -879,12 +896,13 @@ onUnmounted(() => {
                         <img :src="'/assets/chhondo/checkout/trash.svg'" alt="" />
                       </button>
                     </div>
+                    <BlouseCustomizationSummary :customization="directBlouse" badge />
                     <p class="order-item-price">
                       {{ directOrderProduct?.price }}
                       <span class="bangla-font">৳</span>
                     </p>
-                    <span
-                      v-if="directOrderProduct?.has_blouse_option && directOrderProduct?.blouse_choice"
+<span
+                      v-if="directOrderProduct?.has_blouse_option && directOrderProduct?.blouse_choice && !directOrderProduct?.blouse_customization"
                       class="blouse-badge"
                       :class="directOrderProduct.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                     >
@@ -943,6 +961,8 @@ onUnmounted(() => {
                           <img :src="'/assets/chhondo/checkout/trash.svg'" alt="" />
                         </button>
                       </div>
+                      <BlouseCustomizationSummary :customization="item.blouse_customization" badge />
+                      <p v-if="item.blouse_available === false" class="text-red-600 text-xs mt-1">{{ item.blouse_error }}</p>
                       <p class="order-item-price">
                         <span
                           v-if="item.regular_individual_price"
@@ -956,8 +976,8 @@ onUnmounted(() => {
                           <span class="bangla-font">৳</span>
                         </span>
                       </p>
-                      <span
-                        v-if="item.blouse_choice"
+<span
+                        v-if="item.blouse_choice && !item.blouse_customization"
                         class="blouse-badge"
                         :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                       >

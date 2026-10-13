@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, computed, ref } from "vue"
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import { useCartStore } from "@/Store/cartStore"
 import { isOutOfStock, isPreOrder } from '@/utils/stock'
 
@@ -130,6 +131,12 @@ const updateQuantity = (item, change) => {
                 </button>
               </div>
 
+              <!-- Custom blouse: right under the name, above the price -->
+              <div v-if="item.blouse_customization" class="cart-custom-blouse">
+                <BlouseCustomizationSummary :customization="item.blouse_customization" badge with-choice />
+                <p v-if="item.blouse_available === false" class="text-red-600 text-xs mt-1">{{ item.blouse_error }}</p>
+              </div>
+
               <!-- Price — Gold/500 -->
               <p class="cart-item-price">
                 <span
@@ -143,17 +150,16 @@ const updateQuantity = (item, change) => {
                    bought. A line can go out of stock after it was added,
                    and checkout will refuse it, so it has to say so here. -->
               <div
-                v-if="item.blouse_choice || isPreOrder(item.product) || isOutOfStock(item.product)"
+                v-if="(item.blouse_choice && !item.blouse_customization) || isPreOrder(item.product) || isOutOfStock(item.product)"
                 class="cart-badges"
               >
-                <span
-                  v-if="item.blouse_choice"
+<span
+                  v-if="item.blouse_choice && !item.blouse_customization"
                   class="cart-badge"
                   :class="item.blouse_choice === 'with' ? 'cart-badge--with' : 'cart-badge--without'"
                 >
                   {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                 </span>
-
                 <span v-if="isPreOrder(item.product)" class="cart-badge cart-badge--preorder">
                   প্রি-অর্ডার
                 </span>
@@ -425,4 +431,5 @@ const updateQuantity = (item, change) => {
   background-color: #fdecec;
   color: #c0392b;
 }
+.cart-custom-blouse :deep(.blouse-custom-badge) { margin-top: 0; }
 </style>

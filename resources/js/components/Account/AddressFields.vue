@@ -9,6 +9,7 @@
  * city, which is what lets a saved address set the shipping zone directly.
  */
 import { CITIES, TYPES } from '@/constants/address'
+import AddressSelect from './AddressSelect.vue'
 
 defineProps({
   modelValue: { type: Object, required: true },
@@ -27,25 +28,30 @@ defineEmits(['update:modelValue'])
         class="af-input"
         rows="2"
         :class="{ 'is-invalid': errors.address }"
-        placeholder="House, road, area"
+        placeholder="বাড়ি, রাস্তা, এলাকা"
       ></textarea>
       <p v-if="errors.address" class="af-error">{{ errors.address }}</p>
     </div>
 
     <div class="af-field">
       <label class="af-label">শহর</label>
-      <select v-model="modelValue.city" class="af-input" :class="{ 'is-invalid': errors.city }">
-        <option value="" disabled>নির্বাচন করুন</option>
-        <option v-for="(label, key) in CITIES" :key="key" :value="key">{{ label }}</option>
-      </select>
+      <!-- Opens inside the screen; a native list could spill past it. -->
+      <AddressSelect
+        v-model="modelValue.city"
+        :options="CITIES"
+        placeholder="নির্বাচন করুন"
+        :invalid="Boolean(errors.city)"
+      />
       <p v-if="errors.city" class="af-error">{{ errors.city }}</p>
     </div>
 
     <div class="af-field">
       <label class="af-label">ঠিকানার ধরন</label>
-      <select v-model="modelValue.type" class="af-input" :class="{ 'is-invalid': errors.type }">
-        <option v-for="(label, key) in TYPES" :key="key" :value="key">{{ label }}</option>
-      </select>
+      <AddressSelect
+        v-model="modelValue.type"
+        :options="TYPES"
+        :invalid="Boolean(errors.type)"
+      />
       <p v-if="errors.type" class="af-error">{{ errors.type }}</p>
     </div>
   </div>

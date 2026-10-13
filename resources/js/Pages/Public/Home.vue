@@ -43,7 +43,12 @@ const blocksOfType = (type) => computed(() =>
 
 // Product sections and the banner are widgets in Content › Pages › Home —
 // their headings, products and links all come from there.
-const productBlocks = blocksOfType("product_section")
+const productBlocksSource = blocksOfType("product_section")
+const productBlocks = computed(() => productBlocksSource.value.map((block) =>
+  block.title?.trim().toLowerCase() === "offer on going"
+    ? { ...block, title: "চলমান অফার" }
+    : block,
+))
 const ctaBlocks = blocksOfType("cta_banner")
 const videoBlocks = blocksOfType("video_strip")
 const otherBlocks = computed(() =>

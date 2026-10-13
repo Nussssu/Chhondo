@@ -123,6 +123,7 @@ class ProductRepository implements ProductRepositoryInterface
             'has_blouse_option'   => ! empty($data['has_blouse_option']),
             'price_with_blouse'   => ! empty($data['has_blouse_option']) ? $blousePrice : null,
             'previous_price_with_blouse' => ! empty($data['has_blouse_option']) ? $previousBlousePrice : null,
+            'custom_blouse'       => \App\Services\BlouseCustomization::sanitizeProductInput($data['custom_blouse'] ?? null),
             'category_id'         => $categoryIds[0] ?? null,
             'meta_title'          => $data['meta_title'] ?? null,
             'video_title'         => $data['video_title']??'',

@@ -47,10 +47,10 @@ const goToRegister = () => {
 
                     <div class="auth-prompt-actions">
                         <button type="button" class="auth-prompt-btn primary" @click="goToLogin">
-                            Log in
+                            লগ ইন করুন
                         </button>
                         <button type="button" class="auth-prompt-btn secondary" @click="goToRegister">
-                            Create an account
+                            অ্যাকাউন্ট তৈরি করুন
                         </button>
                     </div>
                 </div>

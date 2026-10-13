@@ -12,7 +12,7 @@
           <img :src="'/assets/images/account/nav-wishlist.svg'" alt="" />
         </span>
         <div>
-          <p class="section-header-title">Wishlist</p>
+          <p class="section-header-title">পছন্দের তালিকা</p>
           <p class="section-header-subtitle">পছন্দের তালিকা</p>
         </div>
       </div>

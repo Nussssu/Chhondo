@@ -68,7 +68,15 @@ const form = useForm({
   texts: { ...(props.page.texts ?? {}) },
   title: props.page.title ?? '',
   subtitle: props.page.subtitle ?? '',
-  blocks: (props.page.blocks ?? []).map((b) => ({ id: b.id ?? nextId(), ...b })),
+  blocks: (props.page.blocks ?? []).map((b) => {
+    const block = { id: b.id ?? nextId(), ...b }
+
+    if (block.type === 'product_section' && block.title?.trim().toLowerCase() === 'offer on going') {
+      block.title = 'চলমান অফার'
+    }
+
+    return block
+  }),
   is_published: props.page.is_published ?? true,
   // A page you created owns its address and its own search-engine wording; a
   // built-in page's URL is a fixed route, so these are sent for custom pages only.

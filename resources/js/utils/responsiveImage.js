@@ -31,6 +31,10 @@ export const ORIGINAL_WIDTH = 1400
 export function canUseVariants(src) {
     if (!src || typeof src !== 'string' || src.startsWith('data:')) return false
 
+    // The site's own design images (/assets/chhondo/) are shipped as single
+    // files, never resized, so asking for "-320" copies only produces 404s.
+    if (src.split(/[?#]/)[0].includes('/assets/chhondo/')) return false
+
     // Ignore any query or hash when looking at the extension.
     return /\.(webp|jpe?g|png)$/i.test(src.split(/[?#]/)[0])
 }

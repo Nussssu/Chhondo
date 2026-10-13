@@ -5,10 +5,13 @@ import PageBlocks from "@/components/Page/PageBlocks.vue"
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { toast } from "@steveyuowo/vue-hot-toast";
 import { on, shown } from "@/utils/cms";
+import { getOrderStatusLabel } from "@/utils/orderStatus";
 
 // Each part of the order card has its own on/off in Content › Pages ›
 // Track order; a part with no saved switch shows, as it always did.
 const show = (key) => on(props.texts[`${key}_show`] ?? "1");
+// A search message, or nothing when its switch is off.
+const msg = (key) => (show(key) ? props.texts[key] : "");
 
 // Props from Inertia (server passes orderData and invoice from trackOrder method)
 const props = defineProps({
@@ -26,13 +29,13 @@ const orderData     = ref(props.orderData || null);
 const loading       = ref(false);
 // Opened with a number that matches no order (a shared link, a refresh):
 // say so straight away.
-const errorMessage  = ref(props.invoice && !props.orderData ? props.texts.search_not_found : "");
+const errorMessage  = ref(props.invoice && !props.orderData ? msg('search_not_found') : "");
 
 // Sync when Inertia navigates back with results
 watch(() => page.props.orderData, (val) => {
     orderData.value = val;
     if (!val && invoiceNumber.value) {
-        errorMessage.value = props.texts.search_not_found;
+        errorMessage.value = msg('search_not_found');
     } else {
         errorMessage.value = "";
     }
@@ -40,7 +43,7 @@ watch(() => page.props.orderData, (val) => {
 
 const trackOrder = () => {
     if (!invoiceNumber.value) {
-        errorMessage.value = props.texts.search_empty;
+        errorMessage.value = msg('search_empty');
         return;
     }
     loading.value     = true;
@@ -55,7 +58,7 @@ const trackOrder = () => {
         onSuccess: (visit) => {
             const found = visit.props.orderData;
             orderData.value = found || null;
-            errorMessage.value = found ? "" : props.texts.search_not_found;
+            errorMessage.value = found ? "" : msg('search_not_found');
         },
         onFinish: () => { loading.value = false; },
     });
@@ -93,7 +96,7 @@ const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয�
                                 type="text"
                                 v-model="invoiceNumber"
                                 @keyup.enter="trackOrder"
-                                :placeholder="texts.search_placeholder"
+                                :placeholder="show('search_placeholder') ? texts.search_placeholder : ''"
                                 class="track-input w-full pl-12 pr-4 focus:outline-none text-sm"
                             />
                         </div>
@@ -109,7 +112,7 @@ const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয�
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                             </svg>
-                            {{ loading ? texts.search_loading : texts.search_button }}
+                            {{ loading ? msg('search_loading') : msg('search_button') }}
                         </button>
                     </div>
 
@@ -133,7 +136,7 @@ const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয�
                                 <p v-if="show('t13')" class="text-xs text-[#9ca3af] mt-0.5 tracking-wide">{{ texts.t13 }}{{ orderData.invoice_number }}</p>
                             </div>
                             <span :class="['status-badge', 'badge-' + orderData.order_status?.toLowerCase().replace(/\s+/g, '_')]">
-                                {{ orderData.order_status }}
+                                {{ getOrderStatusLabel(orderData.order_status) }}
                             </span>
                         </div>
 
@@ -146,7 +149,7 @@ const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয�
                                 </div>
                                 <div>
                                     <p class="info-label">{{ texts.t3 }}</p>
-                                    <p class="info-value">{{ orderData.customer_name ?? 'N/A' }}</p>
+                                    <p class="info-value">{{ orderData.customer_name ?? 'প্রযোজ্য নয়' }}</p>
                                 </div>
                             </div>
                             <div v-if="show('t4')" class="info-row">
@@ -226,11 +229,11 @@ const onCopy = () => toast.success(props.texts.copy_toast || "কপি হয�
 
                             <!-- Total Footer -->
                             <div class="px-5 md:px-7 py-4 bg-[#FEF8F0] border-t border-[#f2e3cf] flex items-center justify-between">
-                                <p v-if="show('t14')" class="text-sm text-[#6d6560]">{{ orderData.items.length }} {{ texts.t14 }}{{ orderData.items.length !== 1 ? 's' : '' }}</p>
+                                <p v-if="show('t14')" class="text-sm text-[#6d6560]">{{ orderData.items.length }} {{ texts.t14 }}</p>
                                 <div v-if="show('t12')" class="text-right ms-auto">
                                     <p class="text-xs text-[#9ca3af] uppercase tracking-wider font-medium">{{ texts.t12 }}</p>
                                     <p class="text-xl font-bold text-theme">৳ {{ orderData.total_price }}</p>
-                                    <p v-if="orderData.payment_summary && show('t15')" class="mt-0.5 text-xs text-[#6d6560]">{{ texts.t15 ?? 'Payment:' }} {{ orderData.payment_summary }}</p>
+                                    <p v-if="orderData.payment_summary && show('t15')" class="mt-0.5 text-xs text-[#6d6560]">{{ texts.t15 ?? 'পেমেন্ট:' }} {{ orderData.payment_summary }}</p>
                                 </div>
                             </div>
                         </div>

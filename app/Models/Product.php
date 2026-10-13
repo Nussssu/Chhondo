@@ -96,6 +96,7 @@ class Product extends Model
         'has_blouse_option' => 'boolean',
         'price_with_blouse' => 'decimal:2',
         'previous_price_with_blouse' => 'decimal:2',
+        'custom_blouse' => 'array',
     ];
 
     /**

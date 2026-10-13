@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue"
 import PageBlocks from "@/components/Page/PageBlocks.vue"
+import PhoneField from "@/components/Form/PhoneField.vue"
 import { Head, router } from "@inertiajs/vue3"
 import { computed, ref } from "vue"
 import { on, plain } from "@/utils/cms"
@@ -27,6 +28,9 @@ const form = ref({
 const errors = ref({})
 const isSubmitting = ref(false)
 
+// Reported by PhoneField.
+const phoneValid = ref(false)
+
 const validateForm = () => {
   errors.value = {}
 
@@ -42,7 +46,9 @@ const validateForm = () => {
 
   if (!form.value.phone.trim()) {
     errors.value.phone = "ফোন নম্বর লিখুন"
-  } else if (!/^\+?[0-9]{8,15}$/.test(form.value.phone.replace(/[\s()-]/g, ""))) {
+  } else if (!phoneValid.value) {
+    // Checked by PhoneField against the chosen country's numbering plan,
+    // the same check Edit Profile and Checkout use.
     errors.value.phone = "সঠিক ফোন নম্বর দিন"
   }
 
@@ -108,14 +114,14 @@ const submitForm = async () => {
 
               <div>
                 <label for="phone" class="contact-label">{{ t.phone_label }}</label>
-                <input
+                <!-- Country picker (Bangladesh first), as in Edit Profile -->
+                <PhoneField
                   id="phone"
                   v-model="form.phone"
-                  type="tel"
-                  inputmode="tel"
+                  v-model:valid="phoneValid"
+                  bangladesh-only
                   :placeholder="t.phone_placeholder"
-                  class="contact-input contact-input--latin"
-                  :class="{ 'border-red-500': errors.phone }"
+                  :invalid="Boolean(errors.phone)"
                 />
                 <p v-if="errors.phone" class="mt-1 text-sm text-red-500">
                   {{ errors.phone }}

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed,onMounted } from 'vue'
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import { XIcon } from 'lucide-vue-next'
 import EmptyCart from './EmptyCart.vue'
 import { useCartStore } from "@/Store/cartStore";
@@ -133,13 +134,15 @@ const updateQuantity = (item, change) => {
                       class="soldout-badge self-start"
                       >স্টকে নেই</span
                     >
-                    <span
-                      v-if="item.blouse_choice"
+<span
+                      v-if="item.blouse_choice && !item.blouse_customization"
                       class="blouse-badge"
                       :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                     >
                       {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                     </span>
+                    <BlouseCustomizationSummary :customization="item.blouse_customization" badge with-choice />
+                    <p v-if="item.blouse_available === false" class="text-red-600 text-xs mt-1">{{ item.blouse_error }}</p>
                   </div>
                 </div>
               </td>
@@ -179,13 +182,15 @@ const updateQuantity = (item, change) => {
                     class="soldout-badge self-start"
                     >স্টকে নেই</span
                   >
-                  <span
-                    v-if="item.blouse_choice"
+<span
+                    v-if="item.blouse_choice && !item.blouse_customization"
                     class="blouse-badge self-start"
                     :class="item.blouse_choice === 'with' ? 'blouse-badge--with' : 'blouse-badge--without'"
                   >
                     {{ item.blouse_choice === 'with' ? 'ব্লাউজ পিস সহ' : 'ব্লাউজ পিস ছাড়া' }}
                   </span>
+                    <BlouseCustomizationSummary :customization="item.blouse_customization" badge with-choice />
+                    <p v-if="item.blouse_available === false" class="text-red-600 text-xs mt-1">{{ item.blouse_error }}</p>
                 </div>
                 <button @click="cartStore.removeItem(item.id)" class="text-gray-400 hover:text-gray-600">
                   <XIcon class="h-4 w-4" />
@@ -245,7 +250,7 @@ const updateQuantity = (item, change) => {
           </div>
 
           <button @click="cartStore.goToCheckout"  class="w-full block text-center btn__primary">
-            PROCEED TO CHECKOUT
+            চেকআউটে এগিয়ে যান
           </button>
         </div>
       </div>

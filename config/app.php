@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Storefront address used in some admin links; read here (not with env()
+    // in controllers) so it still works once the config is cached.
+    'frontend_url' => env('FRONTEND'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

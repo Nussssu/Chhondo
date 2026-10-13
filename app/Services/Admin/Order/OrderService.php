@@ -124,6 +124,13 @@ class OrderService implements OrderServiceInterface
             $item['total']            = (float) $item['total'];
             $item['individual_price'] = (float) $item['individual_price'];
             $item['quantity']         = (int) $item['quantity'];
+            if ($enforceAvailability && ! empty($item['blouse_customization'])) {
+                $customization = app(\App\Services\BlouseCustomization::class)->resolve($item['blouse_customization'], $item['product_id']);
+                $oldFee = (float) ($item['blouse_customization']['unit_price'] ?? 0);
+                $item['individual_price'] = max(0, $item['individual_price'] - $oldFee) + $customization['unit_price'];
+                $item['total'] = round($item['individual_price'] * $item['quantity'], 2);
+                $item['blouse_customization'] = $customization;
+            }
         }
 
         unset($item);
@@ -272,7 +279,7 @@ class OrderService implements OrderServiceInterface
 
             // Create order item
             $blouseChoice = $item['blouse_choice'] ?? null;
-            $blouseChoice = in_array($blouseChoice, ['with', 'without'], true) ? $blouseChoice : null;
+            $blouseChoice = in_array($blouseChoice, ['with', 'without', 'custom'], true) ? $blouseChoice : null;
 
             $orderItem = $this->orderRepository->createOrderItem($order->id, [
                 'product_id'    => $item['product_id'],
@@ -281,6 +288,7 @@ class OrderService implements OrderServiceInterface
                 'discount'      => $item['coupon_discount'] ?? 0,
                 'discount_type' => 'fixed',
                 'blouse_choice' => $blouseChoice,
+                'blouse_customization' => $item['blouse_customization'] ?? null,
             ]);
 
             // Process attributes if exists

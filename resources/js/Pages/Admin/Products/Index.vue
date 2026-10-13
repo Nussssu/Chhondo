@@ -3,6 +3,7 @@
     <div class="page-content products-admin-page">
       <PageHeader title="Products" :subtitle="`${props.product.length} products in the catalogue`">
         <template #actions>
+          <a :href="route('products.blouse-settings')" class="btn btn-fig-secondary btn-fig-sm">Blouse options</a>
           <button
             type="button"
             class="btn btn-fig-secondary btn-fig-sm d-inline-flex align-items-center"
@@ -11,9 +12,9 @@
           >
             <Share2 :size="16" class="me-1" /> Export for social media
           </button>
-          <button type="button" @click="productEditor = { productId: null }" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center">
+          <a :href="route('products.create')" class="btn btn-fig-primary btn-fig-sm d-inline-flex align-items-center">
             <Plus :size="16" class="me-1" /> Add product
-          </button>
+          </a>
         </template>
       </PageHeader>
 
@@ -136,9 +137,9 @@
             </template>
 
             <template #empty-action>
-              <button type="button" @click="productEditor = { productId: null }" class="btn btn-fig-primary btn-fig-sm">
+              <a :href="route('products.create')" class="btn btn-fig-primary btn-fig-sm">
                 <Plus :size="16" class="me-1" /> Add product
-              </button>
+              </a>
             </template>
           </DataTable>
 

@@ -23,6 +23,8 @@ const props = defineProps({
   inputClass: { type: String, default: "" },
   // Most customers are local, so Bangladesh is preselected and listed first.
   defaultCountry: { type: String, default: "bd" },
+  // Bangladesh only: no other country is offered (Contact, Edit Profile).
+  bangladeshOnly: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(["update:modelValue", "update:valid", "blur"])
@@ -50,6 +52,10 @@ onMounted(() => {
   iti = intlTelInput(el.value, {
     initialCountry: props.defaultCountry,
     countryOrder: [props.defaultCountry],
+    // Bangladesh-only fields (Contact Us, Edit Profile): only +880 exists,
+    // shown as a fixed prefix, and the country selector is off entirely, so
+    // there is no dropdown, no search box and no other country to pick.
+    ...(props.bangladeshOnly ? { onlyCountries: ["bd"], countrySelectorMode: "OFF", separateDialCode: true } : {}),
     // Keeps the dial code out of the text box, so a local number is typed the
     // way people actually write it.
     nationalMode: true,
@@ -96,7 +102,7 @@ watch(
 </script>
 
 <template>
-  <div class="phone-field" :class="{ 'is-invalid': invalid }">
+  <div class="phone-field" :class="{ 'is-invalid': invalid, 'phone-field--bd-only': bangladeshOnly }">
     <input
       :id="id"
       ref="el"
@@ -136,5 +142,23 @@ watch(
 .phone-field :deep(.iti__dropdown-content) {
   font-family: inherit;
   text-align: left;
+}
+
+/* Bangladesh-only fields: the +880 prefix is fixed text. Nothing to open,
+   so the flag is not clickable and no dropdown, arrow or search can appear. */
+.phone-field--bd-only :deep(.iti__selected-country) {
+  pointer-events: none;
+  cursor: default;
+}
+
+.phone-field--bd-only :deep(.iti__arrow),
+.phone-field--bd-only :deep(.iti__dropdown-content),
+.phone-field--bd-only :deep(.iti__search-input) {
+  display: none !important;
+}
+
+.phone-field--bd-only :deep(.iti__selected-dial-code) {
+  font: inherit;
+  color: inherit;
 }
 </style>

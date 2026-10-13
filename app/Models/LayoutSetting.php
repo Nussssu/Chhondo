@@ -42,7 +42,7 @@ class LayoutSetting extends Model
             // The Chhondo footer, word for word.
             'footer' => [
                 'about_text'  => "রুচিশীল বুনন আর আরামদায়ক অনুভূতির ছোঁয়ায় 'ছন্দ' হয়ে উঠুক আপনার প্রতিদিনের সাবলীল সাজের সঙ্গী।",
-                'follow_label' => 'Follow Us',
+                'follow_label' => 'আমাদের অনুসরণ করুন',
                 'show_logo'   => true,
                 'about_enabled'   => true,
                 'columns_enabled' => true,

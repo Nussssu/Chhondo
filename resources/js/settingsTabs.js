@@ -8,6 +8,7 @@ export const STORE_TABS = [
   { label: 'Delivery',    route: 'admin.manage.delivery', permission: 'BasicInformation' },
   { label: 'Site logo',   route: 'admin.media.index', permission: 'MediaManage' },
   { label: 'Email / SMTP', route: 'admin.manage.smtpSetting', permission: 'BasicInformation' },
+  { label: 'Product details', route: 'admin.manage.product-details', permission: 'BasicInformation' },
 ]
 
 export const LAYOUT_TABS = [

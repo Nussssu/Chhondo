@@ -1,28 +1,28 @@
 <template>
-  <Head><title>{{ tx('acc_tab_title', 'Track Order') }}</title></Head>
+  <Head><title>{{ tx('acc_tab_title', 'অর্ডার ট্র্যাক করুন') }}</title></Head>
 
   <AccountLayout>
     <div class="track-page" @copy="onCopy">
       <div class="section-header">
         <span class="section-header-icon"><img :src="'/assets/images/account/track-heading.svg'" alt="" /></span>
         <div>
-          <p class="section-header-title">{{ tx('acc_title', 'Track Order') }}</p>
-          <p class="section-header-subtitle">{{ tx('acc_subtitle', 'অর্ডার ট্র্যাক') }}</p>
+          <p v-if="shown('acc_title')" class="section-header-title">{{ tx('acc_title', 'অর্ডার ট্র্যাক করুন') }}</p>
+          <p v-if="shown('acc_subtitle')" class="section-header-subtitle">{{ tx('acc_subtitle', 'অর্ডার ট্র্যাক') }}</p>
         </div>
       </div>
 
       <section class="track-card track-search-card">
         <div class="track-card-heading">
-          <h2>{{ tx('acc_search_heading', 'Track Your Order') }}</h2>
-          <p>{{ tx('acc_search_text', 'Enter your order ID to see real-time status') }}</p>
+          <h2 v-if="shown('acc_search_heading')">{{ tx('acc_search_heading', 'আপনার অর্ডার ট্র্যাক করুন') }}</h2>
+          <p v-if="shown('acc_search_text')">{{ tx('acc_search_text', 'সর্বশেষ অবস্থা দেখতে অর্ডার আইডি লিখুন') }}</p>
         </div>
 
         <div class="track-search-row">
-          <input v-model="invoiceNumber" type="text" :placeholder="tx('acc_search_placeholder', 'e.g. CHK-2025-0481')" class="track-search-input" @keyup.enter="trackOrder" />
+          <input v-model="invoiceNumber" type="text" :placeholder="msg('acc_search_placeholder', 'যেমন: CHK-2025-0481')" class="track-search-input" @keyup.enter="trackOrder" />
           <button type="button" class="track-search-btn" :disabled="loading" @click="trackOrder">
             <img v-if="!loading" :src="'/assets/images/account/track-button.svg'" alt="" />
             <span v-else class="track-spinner" aria-hidden="true" />
-            {{ loading ? tx('acc_search_loading', 'Searching...') : tx('acc_search_button', 'Track') }}
+            {{ loading ? msg('acc_search_loading', 'খোঁজা হচ্ছে...') : msg('acc_search_button', 'ট্র্যাক করুন') }}
           </button>
         </div>
 
@@ -33,20 +33,20 @@
         <section class="track-card track-summary-card">
           <div class="track-summary-header">
             <div class="track-summary-copy">
-              <p class="track-summary-label">{{ tx('acc_order_id_label', 'ORDER ID') }}</p>
+              <p v-if="shown('acc_order_id_label')" class="track-summary-label">{{ tx('acc_order_id_label', 'অর্ডার আইডি') }}</p>
               <p class="track-summary-value">{{ orderData.invoice_number }}</p>
-              <p class="track-summary-meta">{{ tx('acc_placed_on', 'Placed on') }} {{ formatDate(orderData.created_at) }}</p>
+              <p v-if="shown('acc_placed_on')" class="track-summary-meta">{{ tx('acc_placed_on', 'অর্ডারের তারিখ') }} {{ formatDate(orderData.created_at) }}</p>
             </div>
             <span class="order-status-pill" :style="badgeStyle(orderData.order_status)">{{ statusLabel(orderData.order_status) }}</span>
           </div>
-          <p class="track-summary-address">
+          <p v-if="orderData.address || shown('acc_no_address')" class="track-summary-address">
             <img :src="'/assets/images/account/track-location.svg'" alt="" />
             <span>{{ orderData.address || tx('acc_no_address', 'কোনো ঠিকানা নেই') }}</span>
           </p>
         </section>
 
         <section v-if="!isExceptionStatus(orderData.order_status)" class="track-card track-progress-card">
-          <h2 class="track-section-title">{{ tx('acc_progress_title', 'Shipment Progress') }}</h2>
+          <h2 v-if="shown('acc_progress_title')" class="track-section-title">{{ tx('acc_progress_title', 'ডেলিভারির অগ্রগতি') }}</h2>
           <OrderStepper variant="vertical" :current-step-index="getOrderStepIndex(orderData.order_status) ?? 0" :placed-at="orderData.created_at" :updated-at="orderData.updated_at" />
         </section>
 
@@ -56,16 +56,16 @@
               <img :src="item.product?.featured_image || '/placeholder.svg'" :alt="item.product?.product_name || ''" class="order-item-thumb" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
               <div class="order-item-info">
                 <p class="order-item-name">{{ item.product?.product_name || 'পণ্য' }}</p>
-                <p class="order-item-qty">{{ tx('acc_qty_label', 'Qty:') }} {{ item.quantity }}</p>
+                <p v-if="shown('acc_qty_label')" class="order-item-qty">{{ tx('acc_qty_label', 'পরিমাণ:') }} {{ item.quantity }}</p>
               </div>
               <p class="order-item-price"><span>৳</span>{{ formatMoney(item.price) }}</p>
             </div>
           </div>
-          <div class="track-total-row">
-            <span>{{ tx('acc_total_label', 'Total') }}</span>
+          <div v-if="shown('acc_total_label')" class="track-total-row">
+            <span>{{ tx('acc_total_label', 'মোট') }}</span>
             <span class="track-total-price"><span>৳</span>{{ formatMoney(orderData.total_price) }}</span>
           </div>
-          <div v-if="orderData.payment_summary" class="track-payment-row"><span>{{ tx('acc_payment_label', 'পেমেন্ট') }}</span><span>{{ orderData.payment_summary }}</span></div>
+          <div v-if="orderData.payment_summary && shown('acc_payment_label')" class="track-payment-row"><span>{{ tx('acc_payment_label', 'পেমেন্ট') }}</span><span>{{ orderData.payment_summary }}</span></div>
         </section>
       </div>
     </div>
@@ -78,7 +78,7 @@ import OrderStepper from "@/components/Account/OrderStepper.vue";
 import { ref, watch } from "vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { toast } from "@steveyuowo/vue-hot-toast";
-import { getOrderStepIndex, getOrderStatusBadge, isExceptionStatus } from "@/utils/orderStatus";
+import { getOrderStepIndex, getOrderStatusBadge, getOrderStatusLabel, isExceptionStatus } from "@/utils/orderStatus";
 
 const props = defineProps({
   orderData: { type: Object, default: null },
@@ -89,22 +89,27 @@ const props = defineProps({
 
 // A saved wording, or the one this page always showed.
 const tx = (key, fallback) => props.texts?.[key] || fallback;
+// Each box has a small on/off in Content › Pages › Track order; a box with
+// no saved switch shows, as it always did.
+const shown = (key) => String(props.texts?.[`${key}_show`] ?? "1") !== "0";
+// A wording, or nothing when its switch is off.
+const msg = (key, fallback) => (shown(key) ? tx(key, fallback) : "");
 const page = usePage();
 const invoiceNumber = ref(props.invoice || "");
 const orderData = ref(props.orderData || null);
 const loading = ref(false);
 // Opened with a number that matches no order (a shared link, a refresh):
 // say so straight away.
-const errorMessage = ref(props.invoice && !props.orderData ? tx('acc_search_not_found', 'Order not found.') : "");
+const errorMessage = ref(props.invoice && !props.orderData ? msg('acc_search_not_found', 'অর্ডার পাওয়া যায়নি।') : "");
 
 watch(() => page.props.orderData, (value) => {
   orderData.value = value;
-  errorMessage.value = (!value && invoiceNumber.value) ? tx('acc_search_not_found', 'Order not found.') : "";
+  errorMessage.value = (!value && invoiceNumber.value) ? msg('acc_search_not_found', 'অর্ডার পাওয়া যায়নি।') : "";
 });
 
 const trackOrder = () => {
   const invoice = invoiceNumber.value.trim();
-  if (!invoice) { errorMessage.value = tx('acc_search_empty', 'Please enter a valid order ID.'); return; }
+  if (!invoice) { errorMessage.value = msg('acc_search_empty', 'সঠিক অর্ডার আইডি লিখুন।'); return; }
   invoiceNumber.value = invoice;
   loading.value = true;
   errorMessage.value = "";
@@ -116,7 +121,7 @@ const trackOrder = () => {
     onSuccess: (visit) => {
       const found = visit.props.orderData;
       orderData.value = found || null;
-      errorMessage.value = found ? "" : tx('acc_search_not_found', 'Order not found.');
+      errorMessage.value = found ? "" : msg('acc_search_not_found', 'অর্ডার পাওয়া যায়নি।');
     },
     onFinish: () => { loading.value = false; },
   });
@@ -124,11 +129,11 @@ const trackOrder = () => {
 
 const trackSuggested = (invoice) => { invoiceNumber.value = invoice; trackOrder(); };
 const formatDate = (dateString) => dateString
-  ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(dateString))
+  ? new Intl.DateTimeFormat("bn-BD", { day: "numeric", month: "short", year: "numeric" }).format(new Date(dateString))
   : "—";
 const formatMoney = (value) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(Number(value) || 0);
 const badgeStyle = (status) => { const { bg, text } = getOrderStatusBadge(status); return { backgroundColor: bg, color: text }; };
-const statusLabel = (status) => String(status || "Pending").replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+const statusLabel = getOrderStatusLabel;
 
 // Copying anything here (the order ID, say) confirms with a small toast.
 const onCopy = () => toast.success("কপি হয়েছে!");
@@ -190,6 +195,8 @@ const onCopy = () => toast.success("কপি হয়েছে!");
   .track-page { gap: 16px; }
   .track-search-row { flex-direction: column; }
   .track-search-btn { width: 100%; }
+  /* The box matches the button below it: full width, same 56px height. */
+  .track-search-input { width: 100%; flex: none; }
   .track-card { padding: 20px; }
   .track-suggestions { white-space: normal; }
   .track-progress-card { min-height: 0; }

@@ -103,8 +103,8 @@
                   </div>
                 </div>
                 <div class="col-md-12 mt-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="has_blouse_option" name="has_blouse_option" value="1">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="has_blouse_option" name="has_blouse_option" value="1">
                     <label class="form-check-label" for="has_blouse_option">Add Price With Blouse</label>
                   </div>
                 </div>
@@ -121,6 +121,9 @@
                       <small class="text-muted">Optional — blank charges the price beside it.</small>
                     </div>
                   </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                  <CustomBlouseFields :defaults="blouseDefaults" />
                 </div>
               </div>
             </div>
@@ -366,6 +369,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/components/Admin/PageHeader.vue'
 import MediaLibraryPickerModal from '@/components/Admin/MediaLibraryPickerModal.vue'
 import ProductStockFields from './Partials/ProductStockFields.vue'
+import CustomBlouseFields from './Partials/CustomBlouseFields.vue'
 import CategoryMultiSelect from '@/components/Admin/CategoryMultiSelect.vue'
 import { useStickyTab } from '@/composables/useStickyTab'
 import { useDragSort } from '@/composables/useDragSort'
@@ -374,6 +378,7 @@ import { slugify } from '@/utils/slug'
 const props = defineProps({
   embedded: { type: Boolean, default: false },
   categories: { type: Array, default: () => [] },
+  blouseDefaults: { type: Object, default: () => ({}) },
 })
 
 const tabs = [

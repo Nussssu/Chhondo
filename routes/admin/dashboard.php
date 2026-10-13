@@ -40,6 +40,9 @@ Route::group(['middleware' => ['auth'], 'prefix' => 'admin'], function () {
         ->middleware('permission:AllProduct');
 
     // A read-only download, so it sits behind the same gate as the list.
+    Route::get('products/blouse-settings', [\App\Http\Controllers\Admin\Product\BlouseSettingsController::class, 'edit'])->name('products.blouse-settings')->middleware('permission:AllProduct');
+    Route::put('products/blouse-settings', [\App\Http\Controllers\Admin\Product\BlouseSettingsController::class, 'update'])->name('products.blouse-settings.update')->middleware('permission:AllProduct');
+
     Route::get('products/export-social', [ProductController::class, 'exportSocial'])
         ->name('products.export_social')
         ->middleware('permission:AllProduct');

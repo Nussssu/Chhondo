@@ -53,25 +53,25 @@ const page = usePage();
 const navItems = [
   {
     href: '/account',
-    label: 'My Profile',
+    label: 'প্রোফাইল',
     labelBn: 'প্রোফাইল',
     icon: '/assets/images/account/nav-profile.svg',
   },
   {
     href: '/account/orders',
-    label: 'Order History',
+    label: 'অর্ডার ইতিহাস',
     labelBn: 'অর্ডার ইতিহাস',
     icon: '/assets/images/account/nav-order-history.svg',
   },
   {
     href: '/account/wishlist',
-    label: 'Wishlist',
+    label: 'পছন্দের তালিকা',
     labelBn: 'পছন্দের তালিকা',
     icon: '/assets/images/account/nav-wishlist.svg',
   },
   {
     href: '/account/track-order',
-    label: 'Track Order',
+    label: 'অর্ডার ট্র্যাক',
     labelBn: 'অর্ডার ট্র্যাক',
     icon: '/assets/images/account/nav-track-order.svg',
   },

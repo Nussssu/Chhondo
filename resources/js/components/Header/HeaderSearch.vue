@@ -6,12 +6,12 @@
  * header keeps its height — and suggestions drop down from the field itself.
  * Results come from /search/products, the same endpoint as before.
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import axios from "axios";
 import { XIcon } from "lucide-vue-next";
 
-defineProps({
+const props = defineProps({
     /** Phone header: 24px icon and a narrower field. */
     compact: { type: Boolean, default: false },
 });
@@ -20,6 +20,7 @@ const MIN_QUERY = 2;
 
 const root = ref(null);
 const input = ref(null);
+const mobileInput = ref(null);
 const isOpen = ref(false);
 const query = ref("");
 const results = ref([]);
@@ -69,11 +70,15 @@ function onInput() {
 const hasQuery = computed(() => query.value.trim().length >= MIN_QUERY);
 const showNoResults = computed(() => hasQuery.value && !isLoading.value && !failed.value && results.value.length === 0);
 const more = computed(() => Math.max(0, total.value - results.value.length));
-const showPanel = computed(() => isOpen.value && hasQuery.value);
+const showPanel = computed(() => isOpen.value && hasQuery.value && !props.compact);
+const showMobileOverlay = computed(() => props.compact && isOpen.value);
 
 function open() {
     isOpen.value = true;
-    nextTick(() => input.value?.focus());
+    nextTick(() => {
+        const target = props.compact ? mobileInput.value : input.value;
+        target?.focus({ preventScroll: true });
+    });
 }
 
 function close() {
@@ -107,7 +112,14 @@ function onPointerDown(e) {
 onMounted(() => document.addEventListener("mousedown", onPointerDown));
 onBeforeUnmount(() => {
     document.removeEventListener("mousedown", onPointerDown);
+    document.body.style.overflow = "";
     clearTimeout(timer);
+});
+
+watch(showMobileOverlay, (open) => {
+    if (typeof document !== "undefined") {
+        document.body.style.overflow = open ? "hidden" : "";
+    }
 });
 </script>
 
@@ -142,6 +154,87 @@ onBeforeUnmount(() => {
         <button type="button" class="hs-icon" aria-label="Search products" @click="onIconClick">
             <img :src="'/assets/chhondo/search.svg'" alt="" />
         </button>
+
+        <Transition name="hs-overlay">
+            <div
+                v-if="showMobileOverlay"
+                class="hs-mobile-overlay"
+                role="dialog"
+                aria-modal="true"
+                aria-label="পণ্য খুঁজুন"
+            >
+                <div class="hs-mobile-bar">
+                    <div class="hs-mobile-field">
+                        <span class="hs-mobile-search-icon" aria-hidden="true">
+                            <img :src="'/assets/chhondo/search.svg'" alt="" />
+                        </span>
+                        <input
+                            ref="mobileInput"
+                            v-model="query"
+                            type="search"
+                            inputmode="search"
+                            enterkeyhint="search"
+                            class="hs-mobile-input"
+                            placeholder="শাড়ি খুঁজুন…"
+                            aria-label="পণ্য খুঁজুন"
+                            autofocus
+                            @input="onInput"
+                            @keydown.enter.prevent="submit"
+                            @keydown.esc="close"
+                        />
+                        <button
+                            v-if="query"
+                            type="button"
+                            class="hs-clear hs-mobile-clear"
+                            aria-label="মুছে ফেলুন"
+                            @click="query = ''; onInput(); mobileInput?.focus()"
+                        >
+                            <XIcon :size="14" />
+                        </button>
+                    </div>
+                    <button type="button" class="hs-mobile-close" aria-label="বন্ধ করুন" @click="close">
+                        <XIcon :size="22" />
+                    </button>
+                </div>
+
+                <div class="hs-mobile-results" role="listbox">
+                    <p v-if="!hasQuery" class="hs-state">পণ্যের নাম লিখে খুঁজুন</p>
+                    <p v-else-if="isLoading" class="hs-state">খুঁজছি…</p>
+                    <p v-else-if="failed" class="hs-state">খুঁজতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>
+
+                    <template v-else-if="results.length">
+                        <Link
+                            v-for="product in results"
+                            :key="product.id"
+                            :href="`/product/${product.slug}`"
+                            class="hs-item"
+                            role="option"
+                            @click="close"
+                        >
+                            <img :src="product.featured_image || '/placeholder.svg'" :alt="product.product_name" class="hs-thumb" />
+                            <span class="hs-meta">
+                                <span class="hs-name">{{ product.product_name }}</span>
+                                <span v-if="product.category" class="hs-cat">{{ product.category }}</span>
+                                <span class="hs-price">
+                                    <span class="hs-now">৳{{ product.price }}</span>
+                                    <span
+                                        v-if="product.previous_price && Number(product.previous_price) > Number(product.price)"
+                                        class="hs-was"
+                                    >৳{{ product.previous_price }}</span>
+                                    <span v-if="!product.in_stock" class="hs-oos">স্টকে নেই</span>
+                                </span>
+                            </span>
+                        </Link>
+
+                        <button v-if="more" type="button" class="hs-more" @click="submit">
+                            আরও {{ more }}টি ফলাফল দেখুন
+                        </button>
+                    </template>
+
+                    <p v-else-if="showNoResults" class="hs-state">“{{ query }}” এর কোনো ফলাফল নেই</p>
+                </div>
+            </div>
+        </Transition>
 
         <!-- Suggestions, under the field only -->
         <Transition name="hs-drop">
@@ -263,6 +356,89 @@ onBeforeUnmount(() => {
 .hs.is-compact .hs-icon,
 .hs.is-compact .hs-icon img { width: 24px; height: 24px; }
 
+/* Mobile-only full-screen search. */
+.hs-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #fff;
+}
+
+.hs-mobile-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+    border-bottom: 1px solid #eee4d8;
+    background: #fff;
+}
+
+.hs-mobile-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.hs-mobile-search-icon {
+    position: absolute;
+    left: 12px;
+    z-index: 1;
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+.hs-mobile-search-icon img { display: block; width: 100%; height: 100%; }
+
+.hs-mobile-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 36px 0 42px;
+    border: 1px solid #e4e1e0;
+    border-radius: 8px;
+    background: #f3f3f3;
+    font: 400 16px/24px "Li Ador Noirrit", "Poppins", sans-serif;
+    color: #1a1817;
+    outline: none;
+}
+.hs-mobile-input::placeholder { color: #9c9591; }
+.hs-mobile-input:focus { border-color: #d6af51; background: #fff; }
+.hs-mobile-input::-webkit-search-cancel-button { display: none; }
+
+.hs-mobile-clear { right: 9px; }
+
+.hs-mobile-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #1a1817;
+    cursor: pointer;
+}
+
+.hs-mobile-results {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
 /* Suggestions drop down from the field. */
 .hs-panel {
     position: absolute;
@@ -342,9 +518,16 @@ onBeforeUnmount(() => {
 .hs-drop-enter-from,
 .hs-drop-leave-to { opacity: 0; transform: translateY(-4px); }
 
+.hs-overlay-enter-active,
+.hs-overlay-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.hs-overlay-enter-from,
+.hs-overlay-leave-to { opacity: 0; transform: translateY(-10px); }
+
 @media (prefers-reduced-motion: reduce) {
     .hs-field,
     .hs-drop-enter-active,
-    .hs-drop-leave-active { transition: none; }
+    .hs-drop-leave-active,
+    .hs-overlay-enter-active,
+    .hs-overlay-leave-active { transition: none; }
 }
 </style>

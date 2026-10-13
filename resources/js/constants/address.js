@@ -11,8 +11,8 @@ export const CITIES = {
 }
 
 export const TYPES = {
-  home: 'Home',
-  office: 'Office',
+  home: 'বাসা',
+  office: 'অফিস',
 }
 
 /** A blank address, ready to be filled in. */

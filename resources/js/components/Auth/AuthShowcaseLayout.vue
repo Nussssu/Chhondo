@@ -17,17 +17,17 @@ const props = defineProps({
 // Fallback reviews so the panel is never empty (e.g. before any are added).
 const fallbackReviews = [
     {
-        name: "Nusrat Jahan",
-        city: "Chittagong",
+        name: "নুসরাত জাহান",
+        city: "চট্টগ্রাম",
         rating: 5,
-        review: "Finally a brand that celebrates our heritage without compromise. The Chondrika for Eid drew compliments all evening.",
+        review: "অবশেষে এমন একটি ব্র্যান্ড, যা কোনো আপস ছাড়াই আমাদের ঐতিহ্যকে উদ্‌যাপন করে। ঈদের চন্দ্রিকা শাড়িটি সারাসন্ধ্যা সবার প্রশংসা পেয়েছে।",
         image: "/assets/images/slider/Web-Slider_01.webp",
     },
     {
-        name: "Sabrina Islam",
-        city: "Sylhet",
+        name: "সাবরিনা ইসলাম",
+        city: "সিলেট",
         rating: 5,
-        review: "Authentic handwoven quality you can feel immediately. My mother was moved to tears — this is what we grew up with.",
+        review: "খাঁটি হাতে বোনা মান স্পর্শ করলেই বোঝা যায়। আমার মা আবেগাপ্লুত হয়ে পড়েছিলেন—এটাই আমাদের চিরচেনা ঐতিহ্য।",
         image: "/assets/images/slider/Web-Slider_02.jpg",
     },
 ];

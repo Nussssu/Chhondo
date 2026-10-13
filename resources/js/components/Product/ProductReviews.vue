@@ -71,7 +71,7 @@ const openLightbox = (images, index) => {
                 </svg>
               </div>
               <span class="reviews-avg">{{ averageRating.toFixed(1) }}</span>
-              <span class="reviews-count">({{ reviews.length }} reviews)</span>
+              <span class="reviews-count">({{ reviews.length }}টি রিভিউ)</span>
             </div>
           </div>
           <button type="button" class="reviews-write-btn" @click="isReviewModalOpen = true">

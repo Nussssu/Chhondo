@@ -220,6 +220,7 @@ class HandleInertiaRequests extends Middleware
                 'error'   => session('error'),
             ],
             'storeInfo' => $storeInfo,
+            'blouseSettings' => fn () => ($request->is('admin') || $request->is('admin/*')) ? null : app(\App\Services\BlouseCustomization::class)->settings(),
             // The single source for contact details. Storefront only.
             'contact' => ($request->is('admin') || $request->is('admin/*')) ? [] : $contactInfo,
             'cartItems' => $cartItems,

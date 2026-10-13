@@ -368,8 +368,10 @@ const quickLinks = computed(() =>
     display: flex;
     flex-direction: column;
     width: 87%;
-    max-width: 350px;
+    max-width: min(350px, calc(100vw - 48px));
     height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
     background: #fff;
     border-radius: 0 20px 20px 0;
     /* No shadow while parked off-screen: its 40px blur reached back into the
@@ -444,25 +446,32 @@ const quickLinks = computed(() =>
 .mm-account {
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 12px;
     padding: 14px;
     border-radius: 16px;
     background: #252f17;
     color: #fff;
     box-shadow: 0 6px 18px rgba(37, 47, 23, 0.22);
+    overflow: hidden;
 }
 
 .mm-account-main {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
     color: inherit;
 }
 
+.mm-account-main > .min-w-0 {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .mm-account-greeting {
-    flex: 1;
+    flex: 1 1 140px;
     min-width: 0;
 }
 
@@ -490,6 +499,7 @@ const quickLinks = computed(() =>
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .mm-account-sub {
@@ -497,6 +507,8 @@ const quickLinks = computed(() =>
     font-size: 12px;
     line-height: 18px;
     color: rgba(255, 255, 255, 0.78);
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 
 .mm-logout {
@@ -514,19 +526,27 @@ const quickLinks = computed(() =>
 .mm-auth-actions {
     display: flex;
     gap: 8px;
-    flex-shrink: 0;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .mm-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 36px;
-    padding: 0 14px;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
     border-radius: 999px;
     font-family: "Poppins", sans-serif;
     font-size: 13px;
     font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: opacity 0.2s ease;
 }
 
@@ -581,13 +601,15 @@ const quickLinks = computed(() =>
 }
 
 .mm-row-link {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
     font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
     font-size: 15px;
     font-weight: 500;
     line-height: 22px;
     color: inherit;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .mm-row--sub {
@@ -637,9 +659,21 @@ const quickLinks = computed(() =>
 .mm-sub > .mm-sub-inner {
     overflow: hidden;
     min-height: 0;
+    min-width: 0;
     margin-left: 20px;
     padding-left: 10px;
     border-left: 1.5px solid #ecdfd0;
+}
+
+/* Deeper levels get a tighter indent so text keeps room and never clips. */
+.mm-sub .mm-sub > .mm-sub-inner {
+    margin-left: 12px;
+    padding-left: 8px;
+}
+
+.mm-sub .mm-sub .mm-sub > .mm-sub-inner {
+    margin-left: 8px;
+    padding-left: 8px;
 }
 
 /* ===== Quick links card ===== */
@@ -654,6 +688,7 @@ const quickLinks = computed(() =>
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
     padding: 12px 14px;
     color: #3a322b;
     border-bottom: 1px solid #f6efe6;
@@ -681,11 +716,14 @@ const quickLinks = computed(() =>
 }
 
 .mm-quick-label {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     font-family: "Poppins", "Li Ador Noirrit", "Hind Siliguri", sans-serif;
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .mm-quick-caret {
@@ -700,5 +738,26 @@ const quickLinks = computed(() =>
     font-size: 12px;
     line-height: 20px;
     color: #b3a191;
+    overflow-wrap: break-word;
+}
+
+/* Narrow phones: reclaim a little side padding so nothing clips,
+   while keeping the same visual rhythm and spacing. */
+@media (max-width: 360px) {
+    .mm-body {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    .mm-account {
+        padding: 12px;
+        gap: 10px;
+    }
+    .mm-row {
+        padding-left: 12px;
+    }
+    .mm-quick {
+        gap: 10px;
+        padding: 12px;
+    }
 }
 </style>

@@ -42,7 +42,7 @@
                 </svg>
               </div>
               <span class="pdp-rating-text">{{ averageRating.toFixed(1) }}</span>
-              <span class="pdp-rating-text">({{ pageReviews.length }} reviews)</span>
+              <span class="pdp-rating-text">({{ pageReviews.length }}টি রিভিউ)</span>
             </div>
           </div>
 
@@ -62,9 +62,9 @@
             <span v-if="savingAmount > 0" class="pdp-saving">
               {{ savingAmount }}৳ ছাড়
             </span>
-            <span v-if="isPreOrderProduct" class="pdp-stock pdp-stock--preorder">Pre Order</span>
-            <span v-else-if="isSoldOut" class="pdp-stock pdp-stock--soldout">Out of Stock</span>
-            <span v-else class="pdp-stock">In stock</span>
+            <span v-if="isPreOrderProduct" class="pdp-stock pdp-stock--preorder">প্রি-অর্ডার</span>
+            <span v-else-if="isSoldOut" class="pdp-stock pdp-stock--soldout">স্টক শেষ</span>
+            <span v-else class="pdp-stock">স্টকে আছে</span>
           </div>
         </div>
 
@@ -75,11 +75,11 @@
         ></div>
 
         <!-- Blouse Option (only when has_blouse_option) -->
-        <div v-if="hasBlouseOption" class="space-y-2">
+        <div v-if="hasBlouseOption || customBlouseOptions.length" class="space-y-2">
           <label class="pdp-option-label">ব্লাউজ:</label>
           <div class="pdp-blouse-row">
             <label
-              v-for="opt in blouseChoices"
+              v-for="opt in (hasBlouseOption ? blouseChoices : [])"
               :key="opt.value"
               :class="[
                 'pdp-pill',
@@ -94,8 +94,29 @@
                 class="sr-only"
               />
               <span>{{ opt.label }}</span>
-              <span v-if="opt.value === 'with' && blouseExtra" class="whitespace-nowrap">(+ {{ blouseExtra }}৳)</span>
+              <span v-if="opt.value === 'with' && blouseExtra" class="whitespace-nowrap">+ {{ blouseExtra }}৳</span>
               <span v-if="blouseChoice === opt.value" class="pdp-pill-check">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+            </label>
+            <!-- Custom blouse: the same card as the blouse-piece options -->
+            <label
+              v-for="opt in customBlouseOptions"
+              :key="`custom-${opt.id}`"
+              :class="['pdp-pill', customBlouse?.option_id === opt.id ? 'pdp-pill--active' : '']"
+            >
+              <input
+                type="radio"
+                name="blouse_option"
+                :checked="customBlouse?.option_id === opt.id"
+                class="sr-only"
+                @click="chooseCustomBlouse(opt)"
+              />
+              <span>{{ opt.label }}</span>
+              <span class="whitespace-nowrap">+ <s v-if="opt.regular_price" class="opacity-60 font-normal">{{ Number(opt.regular_price).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}৳</s> {{ Number(opt.price).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}৳</span>
+              <span v-if="customBlouse?.option_id === opt.id" class="pdp-pill-check">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -103,6 +124,8 @@
             </label>
           </div>
         </div>
+
+        <BlouseCustomizationPicker ref="customBlousePicker" v-model="customBlouse" :settings="blouseSettings" inline-options />
 
         <!-- Dynamic Attributes -->
         <div
@@ -187,7 +210,20 @@
               </svg>
             </button>
           </div>
-
+          <!-- Wishlist, beside the quantity (as in the reference design) -->
+          <button
+            v-if="!cannotBuy"
+            type="button"
+            class="pdp-wish-btn"
+            :class="{ 'is-active': wishlistStore.isWishlisted(product) }"
+            :aria-pressed="wishlistStore.isWishlisted(product)"
+            :aria-label="wishlistStore.isWishlisted(product) ? 'পছন্দের তালিকা থেকে সরান' : 'পছন্দের তালিকায় যোগ করুন'"
+            @click="wishlistStore.toggle(product)"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" :fill="wishlistStore.isWishlisted(product) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
           </div>
         </div>
 
@@ -321,7 +357,7 @@
         </div>
       </section>
 
-      <div v-else class="p-4 text-center">Loading product details...</div>
+      <div v-else class="p-4 text-center">পণ্যের তথ্য লোড হচ্ছে...</div>
     </div>
   </div>
 
@@ -353,6 +389,9 @@ import { useHead } from "@vueuse/head"
 import { usePage } from "@inertiajs/vue3"
 import { isOutOfStock, isPreOrder, isVariantOutOfStock, preOrderNote } from '@/utils/stock'
 import { priceFor, priceForAmount, wasPriceFor, discountFor, blousePriceFor } from '@/utils/productPrice'
+import BlouseCustomizationPicker from './BlouseCustomizationPicker.vue'
+import { useWishlistStore } from '@/Store/wishlistStore'
+import { useBlouseCustomization } from '@/composables/useBlouseCustomization'
 
 const props = defineProps({
   product: {
@@ -501,10 +540,24 @@ const hasBlouseOption = computed(
   () => !!props.product?.has_blouse_option && blousePriceFor(props.product) > 0
 )
 const blouseChoice = ref("without") // 'without' | 'with' — default Without Blouse
-const blouseChoices = [
-  { value: "without", label: "ব্লাউজ পিস ছাড়া" },
-  { value: "with", label: "ব্লাউজ পিস সহ" },
-]
+const { settings: blouseSettings, selection: customBlouse, picker: customBlousePicker, fee: customBlouseFee, snapshot: customBlouseSnapshot, validate: validateCustomBlouse } = useBlouseCustomization(blouseChoice, () => props.product)
+const wishlistStore = useWishlistStore()
+
+// Custom blouse cards (Products › Blouse options), drawn in the blouse row.
+const customBlouseOptions = computed(() =>
+  blouseSettings.value.enabled ? (blouseSettings.value.options || []).filter((row) => row.enabled !== false) : []
+)
+// A second click on the selected card clears it (back to "without").
+function chooseCustomBlouse(opt) {
+  customBlouse.value = customBlouse.value?.option_id === opt.id
+    ? null
+    : { option_id: opt.id, sleeve_type: '', size: '', requirements: '' }
+}
+// Each button can be switched off in Store settings › Product details.
+const blouseChoices = computed(() => [
+  { value: "without", label: blouseSettings.value.legacy_without_label || "ব্লাউজ ছাড়া", enabled: blouseSettings.value.legacy_without_enabled !== false },
+  { value: "with", label: blouseSettings.value.legacy_with_label || "ব্লাউজ সহ", enabled: blouseSettings.value.legacy_with_enabled !== false },
+].filter((opt) => opt.enabled))
 
 // Extra cost of the with-blouse option, shown as "+ N৳" on the pill
 const blouseExtra = computed(() => {
@@ -733,7 +786,7 @@ const selectedVariantSoldOut = computed(() => {
 const cannotBuy = computed(() => isSoldOut.value || selectedVariantSoldOut.value)
 
 const displayPrice = computed(() => {
-  return formatPrice(basePrice.value)
+  return formatPrice(basePrice.value + customBlouseFee.value)
 })
 
 const formatPrice = (price) => {
@@ -751,7 +804,7 @@ const withBlouse = computed(() => hasBlouseOption.value && blouseChoice.value ==
 // same variant as the price beside it.
 const wasPrice = computed(() => {
   const was = wasPriceFor(props.product, withBlouse.value)
-  return was ? Math.round(was) : null
+  return was ? Math.round(was + customBlouseFee.value) : null
 })
 
 const savingAmount = computed(() => Math.round(discountFor(props.product)))
@@ -850,7 +903,7 @@ const getStorage = () => {
 
 const pushAddToCartEvent = (product, quantity, selectedAttributes) => {
   if (product?.id) {
-    const unitPrice = basePrice.value || product.price || 0
+    const unitPrice = (basePrice.value || product.price || 0) + customBlouseFee.value
     window.dataLayer = window.dataLayer || []
     window.dataLayer.push({ ecommerce: null })
     window.dataLayer.push({
@@ -894,6 +947,7 @@ const guardUnavailable = () => {
 
 const addToCart = () => {
   const cartStore = useCartStore()
+  if (!validateCustomBlouse()) return
 
   // The button is gone, so this catches a re-enabled one, a page left open
   // since before the product sold out, and a call from anywhere else.
@@ -905,7 +959,8 @@ const addToCart = () => {
     cartStore.addToCart({
       product_id:       props.product.id,
       quantity:         quantity.value,
-      blouse_choice:    hasBlouseOption.value ? blouseChoice.value : null,
+      blouse_choice:    customBlouseSnapshot.value ? 'custom' : (hasBlouseOption.value ? blouseChoice.value : null),
+      blouse_customization: customBlouseSnapshot.value,
       attribute_values: selectedAttributeIds,
     }, props.product)
 
@@ -918,6 +973,7 @@ const addToCart = () => {
 
 const buyNow = () => {
   const cartStore = useCartStore()
+  if (!validateCustomBlouse()) return
 
   if (guardUnavailable()) return
 
@@ -926,12 +982,15 @@ const buyNow = () => {
     const productData = {
       product_id: props.product.id,
       product_name: props.product.product_name,
-      price: basePrice.value,
+      price: basePrice.value + customBlouseFee.value,
+      price_without_customization: basePrice.value,
       featured_image: props.product.featured_image,
       quantity: quantity.value,
       is_pre_order: isPreOrderProduct.value,
       has_blouse_option: hasBlouseOption.value,
-      blouse_choice: hasBlouseOption.value ? blouseChoice.value : null,
+      blouse_choice: customBlouseSnapshot.value ? 'custom' : (hasBlouseOption.value ? blouseChoice.value : null),
+      blouse_customization: customBlouseSnapshot.value,
+      custom_blouse: props.product?.custom_blouse ?? null,
       // What the server prices the line from; see CheckoutWebController.
       attribute_values: selectedAttributeIds,
       selectedAttributes: selectedAttributeIds.map((id) => {
@@ -1277,6 +1336,25 @@ useHead({
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* Wishlist beside the quantity: a square as tall as the stepper (56px
+   at every width), with the option cards' border. */
+.pdp-wish-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border: 1px solid #d1cdca;
+  border-radius: 8px;
+  background: #fff;
+  color: #3c3834;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease;
+}
+.pdp-wish-btn:hover { border-color: #3e711d; color: #3e711d; }
+.pdp-wish-btn.is-active { border-color: #3e711d; color: #c0392b; }
 
 .pdp-qty-btn {
   width: 32px;

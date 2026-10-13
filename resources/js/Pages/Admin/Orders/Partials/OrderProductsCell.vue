@@ -11,9 +11,10 @@
           <span v-for="opt in compact ? [] : (item.option || [])" :key="opt.id" class="text-muted">
             {{ opt.attributeOption?.attribute?.name ?? 'N/A' }}: {{ opt.attributeOption?.name ?? 'N/A' }}<br>
           </span>
-          <span v-if="!compact && item.blouse_choice" class="badge" :style="{ backgroundColor: item.blouse_choice === 'with' ? '#252f17' : '#8c7256', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }">
+<span v-if="!compact && item.blouse_choice && !item.blouse_customization" class="badge" :style="{ backgroundColor: item.blouse_choice === 'with' ? '#252f17' : '#8c7256', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }">
             {{ item.blouse_choice === 'with' ? 'With Blouse' : 'Without Blouse' }}
           </span>
+          <BlouseCustomizationSummary v-if="!compact" :customization="item.blouse_customization" badge class="d-block" />
         </div>
       </div>
     </div>
@@ -25,6 +26,7 @@
 </template>
 
 <script setup>
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import { asset, limit } from '@/utils/orderFormatting'
 
 defineProps({
@@ -47,11 +49,17 @@ defineEmits(['toggle-expanded'])
   gap: 6px;
   padding: 4px 6px;
   min-width: 0;
+  /* Every row starts at the same place: the image in a fixed spot on the
+     left, the name and details beside it. Centred, a longer name pushed the
+     image left and every row sat differently. */
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .product-text {
   min-width: 0;
   overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .product-thumb {
@@ -93,4 +101,6 @@ defineEmits(['toggle-expanded'])
   font-size: 10.5px;
   color: var(--text-muted);
 }
+/* Custom blouse: the cart's small gold badge, under the code and quantity. */
+.product-text :deep(.blouse-custom-badge) { margin-top: 3px; padding: 1px 8px; font-size: 11px; line-height: 1.5; }
 </style>

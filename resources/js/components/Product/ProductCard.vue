@@ -166,13 +166,13 @@ const toggleWishlist = () => {
                 v-if="isPreOrderProduct"
                 class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded z-10"
             >
-                Pre Order
+                প্রি-অর্ডার
             </div>
             <div
                 v-else-if="isSoldOut"
                 class="absolute top-2 left-2 soldout-badge text-xs font-bold px-2 py-1 rounded z-10"
             >
-                Out of Stock
+                স্টক শেষ
             </div>
         </div>
 

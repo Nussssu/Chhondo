@@ -70,7 +70,7 @@
             </thead>
             <tbody>
               <tr v-for="item in order.items" :key="item.id">
-                <td>{{ item.product_info?.product_name ?? 'N/A' }}</td>
+                <td>{{ item.product_info?.product_name ?? 'N/A' }}<BlouseCustomizationSummary :customization="item.blouse_customization" detailed /></td>
                 <td>
                   <span v-if="item.option && item.option.length">
                     <span v-for="(opt, i) in item.option" :key="opt.id">
@@ -80,7 +80,15 @@
                   <span v-else class="text-muted">—</span>
                 </td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.price }}</td>
+                <td :class="{ 'price-top': item.blouse_customization }">
+                  <!-- Custom blouse: the saree's price level with its name, the
+                       blouse's level with "কাস্টম ব্লাউজ"; Total adds the two. -->
+                  <template v-if="item.blouse_customization">
+                    <div>{{ (Number(item.price) - Number(item.blouse_customization.unit_price || 0)).toFixed(2) }}</div>
+                    <div class="blouse-price-line">{{ Number(item.blouse_customization.unit_price || 0).toFixed(2) }}</div>
+                  </template>
+                  <template v-else>{{ item.price }}</template>
+                </td>
                 <td>{{ (item.price * item.quantity).toFixed(2) }}</td>
               </tr>
               <tr v-if="!order.items || !order.items.length">
@@ -111,6 +119,7 @@
 </template>
 
 <script setup>
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import StatusPill from '@/components/Admin/StatusPill.vue'
@@ -158,6 +167,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Same type as the saree price above it; the gap keeps it level with "কাস্টম ব্লাউজ". */
+td.price-top { vertical-align: top !important; }
+.blouse-price-line { margin-top: 5px; }
 .modal-backdrop-custom {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5);
   display: flex; align-items: center; justify-content: center; z-index: 1055; padding: 20px;

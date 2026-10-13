@@ -602,7 +602,7 @@ class Page extends Model
             't4' => [
                 'section' => 'campaign',
                 'label' => 'Sale badge on product photos',
-                'default' => 'SALE',
+                'default' => 'অফার',
             ],
             't5' => [
                 'section' => 'campaign',
@@ -681,7 +681,7 @@ class Page extends Model
             'email_hint' => [
                 'section' => 'form',
                 'label' => 'Email — note under the field',
-                'default' => 'Please provide your email address to receive your cash memo.',
+                'default' => 'ক্যাশ মেমো পেতে আপনার ইমেইল ঠিকানা দিন।',
             ],
             'phone_label' => [
                 'section' => 'form',
@@ -795,7 +795,7 @@ class Page extends Model
             't2' => [
                 'section' => 'page',
                 'label' => 'Message when there are no categories',
-                'default' => 'No categories available',
+                'default' => 'কোনো ক্যাটাগরি পাওয়া যায়নি',
             ],
         ],
         'cart' => [
@@ -815,7 +815,7 @@ class Page extends Model
             'search_placeholder' => [
                 'section' => 'search',
                 'label' => 'Search box placeholder',
-                'default' => 'e.g. CHK-2025-0481',
+                'default' => 'যেমন: CHK-2025-0481',
             ],
             'search_show' => [
                 'section' => 'search',
@@ -826,28 +826,28 @@ class Page extends Model
             'search_button' => [
                 'section' => 'search',
                 'label' => 'Button',
-                'default' => 'Track',
+                'default' => 'ট্র্যাক করুন',
             ],
             'search_loading' => [
                 'section' => 'search',
                 'label' => 'Button while searching',
-                'default' => 'Searching...',
+                'default' => 'খোঁজা হচ্ছে...',
             ],
             'search_empty' => [
                 'section' => 'search',
                 'label' => 'Message when the box is empty',
-                'default' => 'Please enter a valid invoice number.',
+                'default' => 'সঠিক ইনভয়েস নম্বর লিখুন।',
             ],
             'search_not_found' => [
                 'section' => 'search',
                 'label' => 'Message when no order matches',
-                'default' => 'Order not found.',
+                'default' => 'অর্ডার পাওয়া যায়নি।',
             ],
             // My Account › Track Order — the same wording that page showed.
             'acc_title' => [
                 'section' => 'acc_header',
                 'label' => 'Title',
-                'default' => 'Track Order',
+                'default' => 'অর্ডার ট্র্যাক করুন',
             ],
             'acc_subtitle' => [
                 'section' => 'acc_header',
@@ -857,52 +857,52 @@ class Page extends Model
             'acc_tab_title' => [
                 'section' => 'acc_header',
                 'label' => 'Browser tab title',
-                'default' => 'Track Order',
+                'default' => 'অর্ডার ট্র্যাক করুন',
             ],
             'acc_search_heading' => [
                 'section' => 'acc_search',
                 'label' => 'Card heading',
-                'default' => 'Track Your Order',
+                'default' => 'আপনার অর্ডার ট্র্যাক করুন',
             ],
             'acc_search_text' => [
                 'section' => 'acc_search',
                 'label' => 'Line under the heading',
-                'default' => 'Enter your order ID to see real-time status',
+                'default' => 'সর্বশেষ অবস্থা দেখতে অর্ডার আইডি লিখুন',
             ],
             'acc_search_placeholder' => [
                 'section' => 'acc_search',
                 'label' => 'Search box placeholder',
-                'default' => 'e.g. CHK-2025-0481',
+                'default' => 'যেমন: CHK-2025-0481',
             ],
             'acc_search_button' => [
                 'section' => 'acc_search',
                 'label' => 'Button',
-                'default' => 'Track',
+                'default' => 'ট্র্যাক করুন',
             ],
             'acc_search_loading' => [
                 'section' => 'acc_search',
                 'label' => 'Button while searching',
-                'default' => 'Searching...',
+                'default' => 'খোঁজা হচ্ছে...',
             ],
             'acc_search_empty' => [
                 'section' => 'acc_search',
                 'label' => 'Message when the box is empty',
-                'default' => 'Please enter a valid order ID.',
+                'default' => 'সঠিক অর্ডার আইডি লিখুন।',
             ],
             'acc_search_not_found' => [
                 'section' => 'acc_search',
                 'label' => 'Message when no order matches',
-                'default' => 'Order not found.',
+                'default' => 'অর্ডার পাওয়া যায়নি।',
             ],
             'acc_order_id_label' => [
                 'section' => 'acc_result',
                 'label' => 'Order ID label',
-                'default' => 'ORDER ID',
+                'default' => 'অর্ডার আইডি',
             ],
             'acc_placed_on' => [
                 'section' => 'acc_result',
                 'label' => 'Date prefix',
-                'default' => 'Placed on',
+                'default' => 'অর্ডারের তারিখ',
             ],
             'acc_no_address' => [
                 'section' => 'acc_result',
@@ -912,17 +912,17 @@ class Page extends Model
             'acc_progress_title' => [
                 'section' => 'acc_result',
                 'label' => 'Progress heading',
-                'default' => 'Shipment Progress',
+                'default' => 'ডেলিভারির অগ্রগতি',
             ],
             'acc_qty_label' => [
                 'section' => 'acc_result',
                 'label' => 'Quantity label',
-                'default' => 'Qty:',
+                'default' => 'পরিমাণ:',
             ],
             'acc_total_label' => [
                 'section' => 'acc_result',
                 'label' => 'Total label',
-                'default' => 'Total',
+                'default' => 'মোট',
             ],
             'acc_payment_label' => [
                 'section' => 'acc_result',
@@ -939,22 +939,22 @@ class Page extends Model
             't2' => [
                 'section' => 'result',
                 'label' => 'Order card heading',
-                'default' => 'Order Details',
+                'default' => 'অর্ডারের বিস্তারিত',
             ],
             't13' => [
                 'section' => 'result',
                 'label' => 'Invoice prefix',
-                'default' => 'Invoice #',
+                'default' => 'ইনভয়েস #',
             ],
             't3' => [
                 'section' => 'result',
                 'label' => 'Customer label',
-                'default' => 'Customer',
+                'default' => 'গ্রাহক',
             ],
             't4' => [
                 'section' => 'result',
                 'label' => 'Total label',
-                'default' => 'Total Amount',
+                'default' => 'মোট মূল্য',
             ],
             'result_boxes' => [
                 'section' => 'result',
@@ -971,52 +971,52 @@ class Page extends Model
             't5' => [
                 'section' => 'result',
                 'label' => 'Items heading',
-                'default' => 'Order Items',
+                'default' => 'অর্ডারের পণ্য',
             ],
             't6' => [
                 'section' => 'result',
                 'label' => 'Column — product',
-                'default' => 'Product',
+                'default' => 'পণ্য',
             ],
             't7' => [
                 'section' => 'result',
                 'label' => 'Column — quantity',
-                'default' => 'Qty',
+                'default' => 'পরিমাণ',
             ],
             't8' => [
                 'section' => 'result',
                 'label' => 'Column — price',
-                'default' => 'Price',
+                'default' => 'মূল্য',
             ],
             't9' => [
                 'section' => 'result',
                 'label' => 'Column — total',
-                'default' => 'Total',
+                'default' => 'মোট',
             ],
             't10' => [
                 'section' => 'result',
                 'label' => 'Quantity label (phone)',
-                'default' => 'Qty:',
+                'default' => 'পরিমাণ:',
             ],
             't11' => [
                 'section' => 'result',
                 'label' => 'Price label (phone)',
-                'default' => 'Price:',
+                'default' => 'মূল্য:',
             ],
             't14' => [
                 'section' => 'result',
                 'label' => 'Item count word',
-                'default' => 'item',
+                'default' => 'টি পণ্য',
             ],
             't12' => [
                 'section' => 'result',
                 'label' => 'Grand total label',
-                'default' => 'Grand Total',
+                'default' => 'সর্বমোট',
             ],
             't15' => [
                 'section' => 'result',
                 'label' => 'Payment label (under the grand total)',
-                'default' => 'Payment:',
+                'default' => 'পেমেন্ট:',
             ],
             // The small on/off beside each box above ("pair" = the box it switches).
             't2_show' => [
@@ -1074,6 +1074,91 @@ class Page extends Model
             't15_show' => [
                 'section' => 'result', 'type' => 'toggle', 'pair' => 't15',
                 'label' => 'Show the payment line', 'default' => '1',
+            ],
+            // A small on/off beside each search and My Account box.
+            'search_placeholder_show' => [
+                'section' => 'search', 'type' => 'toggle', 'pair' => 'search_placeholder',
+                'label' => 'Show the placeholder', 'default' => '1',
+            ],
+            'search_button_show' => [
+                'section' => 'search', 'type' => 'toggle', 'pair' => 'search_button',
+                'label' => 'Show the button text', 'default' => '1',
+            ],
+            'search_loading_show' => [
+                'section' => 'search', 'type' => 'toggle', 'pair' => 'search_loading',
+                'label' => 'Show the searching text', 'default' => '1',
+            ],
+            'search_empty_show' => [
+                'section' => 'search', 'type' => 'toggle', 'pair' => 'search_empty',
+                'label' => 'Show the empty-box message', 'default' => '1',
+            ],
+            'search_not_found_show' => [
+                'section' => 'search', 'type' => 'toggle', 'pair' => 'search_not_found',
+                'label' => 'Show the not-found message', 'default' => '1',
+            ],
+            'acc_title_show' => [
+                'section' => 'acc_header', 'type' => 'toggle', 'pair' => 'acc_title',
+                'label' => 'Show the title', 'default' => '1',
+            ],
+            'acc_subtitle_show' => [
+                'section' => 'acc_header', 'type' => 'toggle', 'pair' => 'acc_subtitle',
+                'label' => 'Show the line under the title', 'default' => '1',
+            ],
+            'acc_search_heading_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_heading',
+                'label' => 'Show the card heading', 'default' => '1',
+            ],
+            'acc_search_text_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_text',
+                'label' => 'Show the line under the heading', 'default' => '1',
+            ],
+            'acc_search_placeholder_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_placeholder',
+                'label' => 'Show the placeholder', 'default' => '1',
+            ],
+            'acc_search_button_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_button',
+                'label' => 'Show the button text', 'default' => '1',
+            ],
+            'acc_search_loading_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_loading',
+                'label' => 'Show the searching text', 'default' => '1',
+            ],
+            'acc_search_empty_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_empty',
+                'label' => 'Show the empty-box message', 'default' => '1',
+            ],
+            'acc_search_not_found_show' => [
+                'section' => 'acc_search', 'type' => 'toggle', 'pair' => 'acc_search_not_found',
+                'label' => 'Show the not-found message', 'default' => '1',
+            ],
+            'acc_order_id_label_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_order_id_label',
+                'label' => 'Show the order ID label', 'default' => '1',
+            ],
+            'acc_placed_on_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_placed_on',
+                'label' => 'Show the date line', 'default' => '1',
+            ],
+            'acc_no_address_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_no_address',
+                'label' => 'Show the no-address text', 'default' => '1',
+            ],
+            'acc_progress_title_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_progress_title',
+                'label' => 'Show the progress heading', 'default' => '1',
+            ],
+            'acc_qty_label_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_qty_label',
+                'label' => 'Show the quantity line', 'default' => '1',
+            ],
+            'acc_total_label_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_total_label',
+                'label' => 'Show the total row', 'default' => '1',
+            ],
+            'acc_payment_label_show' => [
+                'section' => 'acc_result', 'type' => 'toggle', 'pair' => 'acc_payment_label',
+                'label' => 'Show the payment row', 'default' => '1',
             ],
         ],
         'order_success' => [

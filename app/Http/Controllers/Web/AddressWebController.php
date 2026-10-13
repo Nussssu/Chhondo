@@ -97,7 +97,10 @@ class AddressWebController extends Controller
 
         DB::transaction(fn () => $this->makeOnlyDefault($address));
 
-        return back()->with('success', 'Primary address updated.');
+        // No flash: the profile page confirms with its own notice, styled
+        // exactly like the Order History copy toast. Flashing here as well
+        // would show a second, differently-styled toast on top of it.
+        return back();
     }
 
     public function destroy(Request $request, $id)

@@ -79,6 +79,13 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
+        $request->validate([
+            'blouse_customization' => 'nullable|array',
+            'blouse_customization.option_id' => 'required_with:blouse_customization|string|max:80',
+            'blouse_customization.sleeve_type' => 'required_with:blouse_customization|string|max:80',
+            'blouse_customization.size' => 'required_with:blouse_customization|string|max:80',
+            'blouse_customization.requirements' => 'nullable|string|max:2000',
+        ]);
         $identifier = $this->getUserIdentifier($request);
 
         // The storefront hides the button, but a disabled attribute is a
@@ -95,6 +102,8 @@ class CartController extends Controller
 
         try {
             $this->cartService->addToCart($data);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $message = \App\Helpers\SafeError::message($e, 'Could not add that item to your cart.', 'Cart add failed');
 

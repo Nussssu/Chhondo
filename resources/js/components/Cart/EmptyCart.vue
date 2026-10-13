@@ -18,18 +18,17 @@ const emptyCartIcon = ref('/assets/images/icons/empty-cart.png');
       </div>
       
       <h1 class="headline-3 mb-6">
-        Your cart is currently empty.
+        আপনার কার্ট বর্তমানে খালি।
       </h1>
       
       <p class="body-2-r text-gray-600 mb-8 max-w-lg mx-auto">
-        Before proceed to checkout you must add some products to your shopping cart. 
-        You will find a lot of interesting products on our "Shop" page.
+        চেকআউটে যাওয়ার আগে কার্টে পণ্য যোগ করুন। আমাদের শপ পেজে আপনার পছন্দের অনেক পণ্য পাবেন।
       </p>
       
       <Link href="/shop" 
         class="btn__primary inline-block"
       >
-        RETURN TO SHOP
+        শপে ফিরে যান
       </Link>
     </div>
   </div>

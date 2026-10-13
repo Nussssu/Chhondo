@@ -177,7 +177,7 @@ const discountPercentage = computed(() => {
                             v-else-if="item.host === 'Youtube' || item.host === 'Gdrive'"
                             class="absolute inset-0 flex items-center justify-center text-white/70 text-sm px-6 text-center"
                         >
-                            This video link could not be read.
+                            ভিডিও লিংকটি পড়া যায়নি।
                         </div>
 
                         <!-- No controls: the video plays as part of the gallery
@@ -194,7 +194,7 @@ const discountPercentage = computed(() => {
                             class="absolute inset-0 w-full h-full object-cover pointer-events-none"
                         >
                             <source :src="item.src" type="video/mp4" />
-                            Your browser does not support the video tag.
+                            আপনার ব্রাউজার ভিডিওটি সমর্থন করে না।
                         </video>
                     </div>
                 </swiper-slide>

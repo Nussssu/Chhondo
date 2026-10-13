@@ -6,7 +6,7 @@
   <AccountLayout>
     <div class="orders-page">
       <Transition name="copy-toast">
-        <div v-if="copyNotice" class="copy-toast" role="status" aria-live="polite">Copied</div>
+        <div v-if="copyNotice" class="copy-toast" role="status" aria-live="polite">কপি হয়েছে</div>
       </Transition>
 
       <div class="section-header">
@@ -14,7 +14,7 @@
           <img :src="'/assets/images/account/nav-order-history.svg'" alt="" />
         </span>
         <div>
-          <p class="section-header-title">Order History</p>
+          <p class="section-header-title">অর্ডার ইতিহাস</p>
           <p class="section-header-subtitle">অর্ডার ইতিহাস</p>
         </div>
       </div>
@@ -41,7 +41,7 @@
                   role="button"
                   tabindex="0"
                   class="order-copy-btn"
-                  title="Copy order ID"
+                  title="অর্ডার আইডি কপি করুন"
                   @click.stop="copyId(order.invoice_number)"
                   @keydown.enter.stop.prevent="copyId(order.invoice_number)"
                   @keydown.space.stop.prevent="copyId(order.invoice_number)"
@@ -49,12 +49,12 @@
                   <img :src="'/assets/images/account/copy.svg'" alt="" />
                 </span>
               </span>
-              <span class="order-meta">{{ formatDate(order.created_at) }} · {{ (order.items?.length || 0) }} item{{ (order.items?.length || 0) === 1 ? '' : 's' }}</span>
+              <span class="order-meta">{{ formatDate(order.created_at) }} · {{ (order.items?.length || 0) }}টি পণ্য</span>
             </span>
 
             <span class="order-right">
               <span class="order-price">৳{{ order.total_price }}</span>
-              <span class="order-status-pill" :style="badgeStyle(order.order_status)">{{ order.order_status }}</span>
+              <span class="order-status-pill" :style="badgeStyle(order.order_status)">{{ getOrderStatusLabel(order.order_status) }}</span>
               <img
                 :src="'/assets/images/account/expand-chevron.svg'"
                 alt=""
@@ -72,7 +72,8 @@
                 <img :src="item.product_info?.featured_image || '/placeholder.svg'" alt="" class="order-item-thumb" loading="lazy" decoding="async" @error="$event.target.src = '/placeholder.svg'" />
                 <div class="order-item-info">
                   <p class="order-item-name">{{ item.product_info?.product_name }}</p>
-                  <p class="order-item-qty">Qty: {{ item.quantity }}</p>
+                  <BlouseCustomizationSummary :customization="item.blouse_customization" show-note />
+                  <p class="order-item-qty">পরিমাণ: {{ item.quantity }}</p>
                 </div>
                 <p class="order-item-price">৳{{ item.price }}</p>
               </div>
@@ -93,11 +94,12 @@
 </template>
 
 <script setup>
+import BlouseCustomizationSummary from '@/components/Product/BlouseCustomizationSummary.vue'
 import AccountLayout from "@/Layouts/AccountLayout.vue";
 import OrderStepper from "@/components/Account/OrderStepper.vue";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
-import { getOrderStepIndex, getOrderStatusBadge, isExceptionStatus } from "@/utils/orderStatus";
+import { getOrderStepIndex, getOrderStatusBadge, getOrderStatusLabel, isExceptionStatus } from "@/utils/orderStatus";
 
 const page   = usePage();
 const orders = ref(page.props.orders || []);
@@ -124,7 +126,7 @@ const toggle = (id) => {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 const badgeStyle = (status) => {

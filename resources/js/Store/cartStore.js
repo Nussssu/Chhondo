@@ -99,8 +99,8 @@ export const useCartStore = defineStore("cartStore", () => {
 
       toast.error(
         names
-          ? `${names} is currently out of stock. Please remove it to continue.`
-          : "An item in your cart is currently out of stock."
+          ? `${names} বর্তমানে স্টকে নেই। এগিয়ে যেতে পণ্যটি সরিয়ে দিন।`
+          : "আপনার কার্টের একটি পণ্য বর্তমানে স্টকে নেই।"
       );
       return;
     }
@@ -128,7 +128,7 @@ export const useCartStore = defineStore("cartStore", () => {
 
   /** Lines that can no longer be bought, so checkout can say which. */
   const unavailableItems = computed(() =>
-    cartItems.value.filter((item) => item.product && isOutOfStock(item.product))
+    cartItems.value.filter((item) => item.blouse_available === false || (item.product && isOutOfStock(item.product)))
   );
 
   const subtotal = computed(() =>

@@ -8,6 +8,12 @@ import { router } from '@inertiajs/vue3'
 import { setupMarketingScripts } from '@/utils/marketingScripts'
 import { resolvePage, title } from '@/inertiaPages'
 
+// Suppress only the browser's native image drag/ghost preview. Pointer and
+// click events still flow normally to links, galleries, sliders, and zoom UI.
+document.addEventListener('dragstart', (event) => {
+    if (event.target instanceof HTMLImageElement) event.preventDefault()
+})
+
 createInertiaApp({
     title,
     resolve: resolvePage,

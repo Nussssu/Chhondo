@@ -97,8 +97,8 @@
                   </div>
                 </div>
                 <div class="col-md-12 mt-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="has_blouse_option" name="has_blouse_option" value="1" :checked="!!product.has_blouse_option">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="has_blouse_option" name="has_blouse_option" value="1" :checked="!!product.has_blouse_option">
                     <label class="form-check-label" for="has_blouse_option">Add Price With Blouse</label>
                   </div>
                 </div>
@@ -117,6 +117,9 @@
                       <small class="text-muted">Optional — blank charges the price beside it.</small>
                     </div>
                   </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                  <CustomBlouseFields :value="product.custom_blouse" :defaults="blouseDefaults" />
                 </div>
               </div>
             </div>
@@ -395,6 +398,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/components/Admin/PageHeader.vue'
 import MediaLibraryPickerModal from '@/components/Admin/MediaLibraryPickerModal.vue'
 import ProductStockFields from './Partials/ProductStockFields.vue'
+import CustomBlouseFields from './Partials/CustomBlouseFields.vue'
 import CategoryMultiSelect from '@/components/Admin/CategoryMultiSelect.vue'
 import { useStickyTab } from '@/composables/useStickyTab'
 import { useDragSort } from '@/composables/useDragSort'
@@ -404,6 +408,7 @@ import { parseGalleryImages } from '@/utils/galleryImages'
 const props = defineProps({
   embedded: { type: Boolean, default: false },
   product: { type: Object, default: () => ({}) },
+  blouseDefaults: { type: Object, default: () => ({}) },
   tagValues: { type: Array, default: () => [] },
   specifications: { type: Array, default: () => [] },
   categories: { type: Array, default: () => [] },

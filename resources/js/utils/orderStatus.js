@@ -31,6 +31,18 @@ const BADGE_VARIANTS = {
   incomplete: { bg: '#e4e1e0', text: '#6d6560' },
 };
 
+const STATUS_LABELS = {
+  pending: 'অপেক্ষমাণ',
+  processed: 'প্রক্রিয়াধীন',
+  shipped: 'পাঠানো হয়েছে',
+  'on delivery': 'ডেলিভারিতে আছে',
+  'pending delivery': 'ডেলিভারির অপেক্ষায়',
+  delivered: 'ডেলিভারি সম্পন্ন',
+  cancelled: 'বাতিল হয়েছে',
+  returned: 'ফেরত এসেছে',
+  incomplete: 'অসম্পূর্ণ',
+};
+
 export function isExceptionStatus(status) {
   return EXCEPTION_STATUSES.includes((status || '').toLowerCase());
 }
@@ -43,4 +55,9 @@ export function getOrderStepIndex(status) {
 export function getOrderStatusBadge(status) {
   const key = (status || '').toLowerCase();
   return BADGE_VARIANTS[key] || { bg: '#e4e1e0', text: '#6d6560' };
+}
+
+export function getOrderStatusLabel(status) {
+  const key = (status || '').toLowerCase().replace(/_/g, ' ');
+  return STATUS_LABELS[key] || status || 'অপেক্ষমাণ';
 }

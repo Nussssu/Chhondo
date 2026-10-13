@@ -235,7 +235,8 @@ const values = computed(() => shown(t.value.values))
 }
 .ab-ghost-btn:hover { background: #fff; color: #1a2110; transform: translateY(-2px); }
 .ab-band-media { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end; }
-.ab-band-img { width: 100%; object-fit: cover; border-radius: 5.3px 69.6px 5.3px 69.6px; }
+.ab-band-img { width: 100%; object-fit: cover; border-radius: 5.3px 69.6px 5.3px 69.6px; transition: transform .7s ease; }
+.ab-band-img:hover { transform: scale(1.02); }
 .ab-band-img--short { aspect-ratio: 325 / 349; }
 .ab-band-img--tall { aspect-ratio: 325 / 474; }
 
@@ -256,7 +257,8 @@ const values = computed(() => shown(t.value.values))
 .ab-craft-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 675px 665px; gap: 20px; align-items: center; }
 .ab-craft-media { display: flex; align-items: flex-end; gap: 16px; }
 .ab-frame { display: block; background: #fff; border: 1.5px solid #d6af51; overflow: hidden; }
-.ab-frame img { width: 100%; height: 100%; object-fit: cover; }
+.ab-frame img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s ease; }
+.ab-frame img:hover { transform: scale(1.02); }
 .ab-frame--small { width: 40.7%; aspect-ratio: 275 / 411; padding: 16px; border-radius: 8px 64px 8px 64px; }
 .ab-frame--small img { border-radius: 8px 48px 8px 48px; }
 .ab-frame--large { width: 56.9%; aspect-ratio: 384 / 578; padding: 12px; border-radius: 12px 88px 12px 88px; }

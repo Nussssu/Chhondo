@@ -17,7 +17,7 @@
         <p class="vertical-title">{{ step.label }}</p>
         <p class="vertical-date">{{ index <= currentStepIndex ? stepDate(index) : 'Pending' }}</p>
         <span v-if="index === currentStepIndex" class="current-status">
-          <span class="current-status-dot" />Current status
+          <span class="current-status-dot" />বর্তমান অবস্থা
         </span>
       </div>
     </div>
